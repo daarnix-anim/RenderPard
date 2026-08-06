@@ -20,8 +20,7 @@ public partial class MainWindow : Window
     private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
         // GitHub Updater check. 
-        // NOTE: Replace "YOUR_USERNAME" with actual GitHub username and "1.0.0" with current version reading.
-        _ = GitHubUpdater.CheckForUpdatesAsync("YOUR_USERNAME", "RenderPard", "1.0.0");
+        _ = GitHubUpdater.CheckForUpdatesAsync("daarnix-anim", "RenderPard", "1.0.0");
     }
 
     public void EnqueueFile(string filePath, Preset preset)
