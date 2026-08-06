@@ -1,0 +1,17 @@
+# bin and obj folders
+[Bb]in/
+[Oo]bj/
+
+# publish output
+PublishOutput/
+Output/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio files
+.vs/
+*.pdb

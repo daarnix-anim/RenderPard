@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="RenderPard.Core/RenderPard.Core.csproj" />
+  <Project Path="RenderPard.UI/RenderPard.UI.csproj" />
+</Solution>
