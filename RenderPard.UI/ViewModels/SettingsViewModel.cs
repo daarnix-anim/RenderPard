@@ -10,19 +10,90 @@ namespace RenderPard.UI.ViewModels;
 
 public partial class SettingsViewModel : ObservableObject
 {
-    [ObservableProperty]
-    private ObservableCollection<Preset> _presets;
-
-    [ObservableProperty]
     private Preset _selectedPreset;
+    private bool _openFolderOnCompletion;
+    private bool _minimizeToTrayOnClose;
+    private string _language;
+        
+    public ObservableCollection<Preset> Presets { get; }
+
+    public Preset SelectedPreset
+    {
+        get => _selectedPreset;
+        set => SetProperty(ref _selectedPreset, value);
+    }
+
+    public bool OpenFolderOnCompletion
+    {
+        get => _openFolderOnCompletion;
+        set { if (SetProperty(ref _openFolderOnCompletion, value)) SaveGlobalSettings(); }
+    }
+
+    public bool MinimizeToTrayOnClose
+    {
+        get => _minimizeToTrayOnClose;
+        set { if (SetProperty(ref _minimizeToTrayOnClose, value)) SaveGlobalSettings(); }
+    }
+
+    public string Language
+    {
+        get => _language;
+        set
+        {
+            if (SetProperty(ref _language, value))
+            {
+                SaveGlobalSettings();
+                UpdateLanguageDictionary();
+            }
+        }
+    }
+
+    [RelayCommand]
+    private void ChangeLanguage(string lang)
+    {
+        Language = lang;
+    }
+
+    [RelayCommand]
+    private void OpenGlobalSettings()
+    {
+        var globalSettingsWindow = new GlobalSettingsWindow();
+        globalSettingsWindow.ShowDialog();
+    }
+
+    private void UpdateLanguageDictionary()
+    {
+        string langFile = _language == "en-US" ? "Lang.en-US.xaml" : "Lang.ru-RU.xaml";
+        var uri = new Uri($"/RenderPard.UI;component/Themes/{langFile}", UriKind.RelativeOrAbsolute);
+        
+        var appResources = System.Windows.Application.Current.Resources;
+        var oldDict = appResources.MergedDictionaries.FirstOrDefault(d => d.Source != null && d.Source.OriginalString.Contains("Lang."));
+        if (oldDict != null)
+        {
+            appResources.MergedDictionaries.Remove(oldDict);
+        }
+        appResources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = uri });
+    }
+
+    private void SaveGlobalSettings()
+    {
+        App.Settings.OpenFolderOnCompletion = _openFolderOnCompletion;
+        App.Settings.MinimizeToTrayOnClose = _minimizeToTrayOnClose;
+        App.Settings.Language = _language;
+        AppSettingsManager.SaveSettings(App.Settings);
+    }
 
     public SettingsViewModel()
     {
+        _openFolderOnCompletion = App.Settings.OpenFolderOnCompletion;
+        _minimizeToTrayOnClose = App.Settings.MinimizeToTrayOnClose;
+        _language = App.Settings.Language;
+
         var loadedPresets = App.PresetManager.LoadPresets();
-        _presets = new ObservableCollection<Preset>(loadedPresets);
-        if (_presets.Any())
+        Presets = new ObservableCollection<Preset>(loadedPresets);
+        if (Presets.Any())
         {
-            _selectedPreset = _presets.First();
+            SelectedPreset = Presets.First();
         }
     }
 

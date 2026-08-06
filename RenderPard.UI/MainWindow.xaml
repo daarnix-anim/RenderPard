@@ -4,9 +4,11 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:RenderPard.UI"
+        xmlns:tb="http://www.hardcodet.net/taskbar"
         mc:Ignorable="d"
-        Title="RenderPard Queue" Height="450" Width="800"
-        Style="{StaticResource AnipardWindowStyle}">
+        Title="{DynamicResource AppTitle}" Height="450" Width="800"
+        Style="{StaticResource AnipardWindowStyle}"
+        StateChanged="Window_StateChanged" Closing="Window_Closing">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>
@@ -16,6 +18,19 @@
             <RowDefinition Height="32"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
+
+        <tb:TaskbarIcon x:Name="TrayIcon"
+                        IconSource="/icon.ico"
+                        ToolTipText="RenderPard"
+                        TrayMouseDoubleClick="TrayIcon_TrayMouseDoubleClick"
+                        Visibility="Collapsed">
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Restore" Click="MenuItemRestore_Click"/>
+                    <MenuItem Header="Exit" Click="MenuItemExit_Click"/>
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
         
         <!-- Custom Title Bar Area -->
         <Border Grid.Row="0" Background="{StaticResource AppBackgroundSecondaryBrush}" CornerRadius="0">
@@ -35,19 +50,47 @@
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             
-            <Grid Grid.Row="0" Margin="0,0,0,20">
+            <Grid Grid.Row="0" Margin="0,0,0,10">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="Tasks Queue" FontSize="24" FontWeight="Bold" Foreground="{StaticResource AppTextBrush}"/>
+                <TextBlock Grid.Column="0" Text="{DynamicResource AppTitle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource AppTextBrush}" VerticalAlignment="Center"/>
                 
-                <StackPanel Grid.Column="1" Orientation="Horizontal" Grid.ColumnSpan="3" HorizontalAlignment="Right">
-                    <Button Content="Register Menu" Command="{Binding RegisterMenuCommand}" Margin="0,0,10,0"/>
-                    <Button Content="Remove Menu" Command="{Binding UnregisterMenuCommand}" Margin="0,0,10,0"/>
-                    <Button Content="Settings" Command="{Binding OpenSettingsCommand}"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+                    
+                    <Button Command="{Binding ToggleMenuCommand}" Margin="0,0,10,0" Height="30" Padding="15,0" Background="Transparent" Foreground="{StaticResource AppTextBrush}" BorderThickness="1" BorderBrush="{StaticResource AppBorderBrush}" Cursor="Hand">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Content" Value="Добавить" />
+                                <Setter Property="ToolTip" Value="Добавить пункт в контекстное меню" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="4">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#1AFFFFFF"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsMenuRegistered}" Value="True">
+                                        <Setter Property="Content" Value="Удалить" />
+                                        <Setter Property="ToolTip" Value="Удалить пункт из контекстного меню" />
+                                        <Setter Property="Foreground" Value="#e74c3c" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <Button Command="{Binding OpenSettingsCommand}" ToolTip="{DynamicResource MenuSettings}" Width="30" Height="30" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                        <TextBlock Text="⋮" Foreground="{StaticResource AppTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontWeight="Bold" Margin="0,-4,0,0"/>
+                    </Button>
                 </StackPanel>
             </Grid>
             
@@ -77,34 +120,61 @@
                     </Style>
                 </DataGrid.Resources>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="File" Binding="{Binding FileName}" Width="250"/>
-                    <DataGridTextColumn Header="Preset" Binding="{Binding Preset.Name}" Width="120"/>
-                    <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100"/>
+                    <DataGridTextColumn Header="{DynamicResource ColFile}" Binding="{Binding FileName}" Width="250"/>
+                    <DataGridTextColumn Header="{DynamicResource ColPreset}" Binding="{Binding Preset.Name}" Width="120"/>
+                    <DataGridTextColumn Header="{DynamicResource ColStatus}" Binding="{Binding Status}" Width="100"/>
                     <DataGridTemplateColumn Header="Progress" Width="150">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Grid Margin="0,2">
                                     <ProgressBar Minimum="0" Maximum="1" Value="{Binding Progress, Mode=OneWay}" Height="15" Background="{StaticResource AppBackgroundBrush}" Foreground="{StaticResource AppLinkBrush}" BorderThickness="0"/>
-                                    <TextBlock Text="{Binding Progress, StringFormat={}{0:P1}}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10" Foreground="White"/>
+                                    <TextBlock Text="{Binding Progress, StringFormat={}{0:P1}}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10" Foreground="#111111" FontWeight="Bold"/>
                                 </Grid>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                     <DataGridTextColumn Header="Error" Binding="{Binding ErrorMessage}" Width="*"/>
-                    <DataGridTemplateColumn Header="Action" Width="80">
+                    <DataGridTemplateColumn Header="{DynamicResource ColAction}" Width="80">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Button Content="Remove" Command="{Binding DataContext.RemoveTaskCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Background="Transparent" Foreground="{StaticResource AppTextSecondaryBrush}" BorderThickness="0" Cursor="Hand" ToolTip="Remove Task"/>
+                                <Button Command="{Binding DataContext.RemoveTaskCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Remove Task" Padding="4">
+                                    <Path Data="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" Fill="{StaticResource AppTextSecondaryBrush}" Width="16" Height="16" Stretch="Uniform"/>
+                                </Button>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
             
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
-                <Button Content="Clear Completed/Pending" Command="{Binding ClearAllCommand}" Width="180" Margin="0,0,10,0"/>
-                <Button Content="Cancel All" Command="{Binding CancelAllCommand}" Width="120"/>
-            </StackPanel>
+            <Grid Grid.Row="2" Margin="0,15,0,0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- Queue Controls -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Right">
+                    <Button Command="{Binding ToggleQueueCommand}" Width="40" Height="30" Margin="0,0,10,0" ToolTip="Play / Pause" Background="Transparent" Foreground="{StaticResource AppTextBrush}" BorderThickness="0" Cursor="Hand">
+                        <Viewbox Width="14" Height="14" Stretch="Uniform">
+                            <Canvas Width="24" Height="24">
+                                <Path Fill="{StaticResource AppTextBrush}">
+                                    <Path.Style>
+                                        <Style TargetType="Path">
+                                            <Setter Property="Data" Value="M8,5.14V19.14L19,12.14L8,5.14Z"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsQueueActive}" Value="True">
+                                                    <Setter Property="Data" Value="M14,19H18V5H14M6,19H10V5H6V19Z"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Path.Style>
+                                </Path>
+                            </Canvas>
+                        </Viewbox>
+                    </Button>
+                    <Button Content="{DynamicResource ClearCompleted}" Command="{Binding ClearAllCommand}" Width="150" Height="30" Margin="0,0,10,0" HorizontalContentAlignment="Center"/>
+                    <Button Content="Cancel All" Command="{Binding CancelAllCommand}" Width="100" Height="30" HorizontalContentAlignment="Center"/>
+                </StackPanel>
+            </Grid>
 
             <!-- FFmpeg Missing Overlay -->
             <Border Grid.RowSpan="3" Background="#AA1E1E1E" Visibility="{Binding IsFfmpegMissing, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -112,7 +182,7 @@
                     <StackPanel>
                         <TextBlock Text="FFmpeg is Missing" FontSize="22" FontWeight="Bold" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,15" HorizontalAlignment="Center"/>
                         <TextBlock Text="RenderPard requires FFmpeg to transcode videos.&#x0a;Would you like to download it now from the official source?" TextWrapping="Wrap" TextAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Margin="0,0,0,25"/>
-                        <Button Content="Download FFmpeg" Command="{Binding DownloadFfmpegCommand}" Width="200"/>
+                        <Button Content="{DynamicResource DownloadFfmpeg}" Command="{Binding DownloadFfmpegCommand}" Width="200"/>
                     </StackPanel>
                 </Border>
             </Border>
@@ -121,7 +191,7 @@
             <Border Grid.RowSpan="3" Background="#AA1E1E1E" Visibility="{Binding IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <Border Background="{StaticResource AppBackgroundBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" Padding="40" CornerRadius="12" Width="400" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1">
                     <StackPanel>
-                        <TextBlock Text="Downloading FFmpeg..." FontSize="22" FontWeight="Bold" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,15" HorizontalAlignment="Center"/>
+                        <TextBlock Text="{DynamicResource DownloadingFfmpeg}" FontSize="22" FontWeight="Bold" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,15" HorizontalAlignment="Center"/>
                         <TextBlock Text="{Binding DownloadStatus}" Foreground="{StaticResource AppTextSecondaryBrush}" Margin="0,0,0,15" HorizontalAlignment="Center"/>
                         <ProgressBar Minimum="0" Maximum="1" Value="{Binding DownloadProgress}" Height="8" Margin="0,0,0,15" BorderThickness="0" Background="{StaticResource AppBackgroundSecondaryBrush}" Foreground="{StaticResource AppLinkBrush}"/>
                         <TextBlock Text="{Binding DownloadProgress, StringFormat={}{0:P1}}" HorizontalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}"/>
@@ -131,3 +201,4 @@
         </Grid>
     </Grid>
 </Window>
+

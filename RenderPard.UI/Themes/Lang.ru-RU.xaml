@@ -1,0 +1,64 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:system="clr-namespace:System;assembly=mscorlib">
+
+    <!-- MainWindow -->
+    <system:String x:Key="AppTitle">RenderPard (Очередь)</system:String>
+    <system:String x:Key="MenuSettings">Настройки</system:String>
+    <system:String x:Key="DropFilesHere">Перетащите видео файлы сюда...</system:String>
+    <system:String x:Key="RegisterMenu">Добавить в контекстное меню</system:String>
+    <system:String x:Key="RemoveMenu">Убрать из меню</system:String>
+    <system:String x:Key="ClearCompleted">Очистить список</system:String>
+    <system:String x:Key="DownloadFfmpeg">Скачать FFmpeg</system:String>
+    <system:String x:Key="DownloadingFfmpeg">Загрузка FFmpeg...</system:String>
+    
+    <!-- DataGrid Columns -->
+    <system:String x:Key="ColFile">Файл</system:String>
+    <system:String x:Key="ColPreset">Пресет</system:String>
+    <system:String x:Key="ColStatus">Статус</system:String>
+    <system:String x:Key="ColAction">Действие</system:String>
+
+    <!-- Settings Window -->
+    <system:String x:Key="SettingsTitle">Настройки RenderPard</system:String>
+    <system:String x:Key="PresetsHeader">Пресеты</system:String>
+    <system:String x:Key="AddPreset">Добавить</system:String>
+    <system:String x:Key="RemovePreset">Удалить</system:String>
+    <system:String x:Key="SaveClose">Сохранить и закрыть</system:String>
+
+    <!-- General Tab -->
+    <system:String x:Key="TabGeneral">Основные</system:String>
+    <system:String x:Key="OpenFolderOnCompletion">Открывать папку после завершения очереди</system:String>
+    <system:String x:Key="MinimizeToTrayOnClose">Сворачивать в трей при закрытии (крестиком)</system:String>
+    <system:String x:Key="LanguageLabel">Язык (Language):</system:String>
+    <system:String x:Key="LanguageWarning">Некоторые изменения вступят в силу после перезапуска.</system:String>
+
+    <!-- Video Tab -->
+    <system:String x:Key="TabVideo">Видео</system:String>
+    <system:String x:Key="VideoCodec">Видео кодек:</system:String>
+    <system:String x:Key="TargetBitrate">Целевой битрейт (kbps):</system:String>
+    <system:String x:Key="MaxLongSide">Макс. размер длинной стороны:</system:String>
+    <system:String x:Key="AutoCalcBitrate">Авто-расчет битрейта для целевого размера (МБ):</system:String>
+    <system:String x:Key="ExtractAlphaMask">Разбивать альфа-канал на видео и маску (_mask.mp4)</system:String>
+    <system:String x:Key="PresetName">Название:</system:String>
+    <system:String x:Key="ShowInMenu">Показывать в контекстном меню Windows</system:String>
+
+    <!-- Audio Tab -->
+    <system:String x:Key="TabAudio">Аудио</system:String>
+    <system:String x:Key="AudioMode">Режим аудио:</system:String>
+    <system:String x:Key="AudioCodec">Аудио кодек:</system:String>
+    <system:String x:Key="AudioBitrate">Аудио битрейт (kbps):</system:String>
+
+    <!-- Watermark Tab -->
+    <system:String x:Key="TabWatermark">Водяной знак</system:String>
+    <system:String x:Key="EnableWatermark">Включить водяной знак</system:String>
+    <system:String x:Key="WmText">Текст:</system:String>
+    <system:String x:Key="WmFontSize">Размер шрифта:</system:String>
+    <system:String x:Key="WmColor">Цвет (Hex):</system:String>
+    <system:String x:Key="WmPosition">Позиция:</system:String>
+    <system:String x:Key="WmOpacity">Прозрачность:</system:String>
+
+    <!-- Timecode Tab -->
+    <system:String x:Key="TabTimecode">Таймкод</system:String>
+    <system:String x:Key="EnableTimecode">Включить таймкод</system:String>
+
+</ResourceDictionary>

@@ -35,10 +35,8 @@ public class PresetManager
                     Converters = { new JsonStringEnumConverter() }
                 };
                 var loaded = JsonSerializer.Deserialize<List<Preset>>(json, options);
-                if (loaded != null && loaded.Any())
+                if (loaded != null)
                 {
-                    // Ensure built-ins are always present or updated
-                    MergeBuiltInPresets(loaded);
                     return loaded.OrderBy(p => p.SortOrder).ToList();
                 }
             }

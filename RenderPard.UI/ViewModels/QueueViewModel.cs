@@ -32,11 +32,19 @@ public partial class QueueViewModel : ObservableObject
     [ObservableProperty]
     private string _downloadStatus = string.Empty;
 
+    [ObservableProperty]
+    private bool _isQueueActive;
+
+    [ObservableProperty]
+    private bool _isMenuRegistered;
+
     public QueueViewModel()
     {
         _ffmpeg = new FFmpegWrapper(); // Assumes ffmpeg is in PATH or current dir
         
         CheckFfmpeg();
+        
+        IsMenuRegistered = ContextMenuManager.IsRegistered();
         
         StartQueueProcessor();
     }
@@ -118,22 +126,35 @@ public partial class QueueViewModel : ObservableObject
     {
         Task.Run(async () =>
         {
+            bool wasProcessing = false;
+            string? lastOutputDir = null;
+
             while (!_globalCts.Token.IsCancellationRequested)
             {
                 TranscodeTask? nextTask = null;
+                bool hasPendingOrEncoding = false;
                 
                 // Find next pending task
-                foreach (var task in Tasks)
+                if (IsQueueActive)
                 {
-                    if (task.Status == TranscodeTaskStatus.Pending && !IsFfmpegMissing && !IsDownloading)
+                    foreach (var task in Tasks)
                     {
-                        nextTask = task;
-                        break;
+                        if (task.Status == TranscodeTaskStatus.Pending || task.Status == TranscodeTaskStatus.Encoding || task.Status == TranscodeTaskStatus.Probing)
+                        {
+                            hasPendingOrEncoding = true;
+                        }
+                        if (task.Status == TranscodeTaskStatus.Pending && !IsFfmpegMissing && !IsDownloading)
+                        {
+                            if (nextTask == null) nextTask = task;
+                        }
                     }
                 }
 
                 if (nextTask != null)
                 {
+                    wasProcessing = true;
+                    lastOutputDir = Path.GetDirectoryName(nextTask.TargetFilePath);
+
                     nextTask.Status = TranscodeTaskStatus.Probing;
                     await _ffmpeg.ProbeTaskAsync(nextTask);
 
@@ -144,6 +165,14 @@ public partial class QueueViewModel : ObservableObject
                 }
                 else
                 {
+                    if (wasProcessing && !hasPendingOrEncoding)
+                    {
+                        wasProcessing = false;
+                        if (App.Settings.OpenFolderOnCompletion && !string.IsNullOrEmpty(lastOutputDir) && Directory.Exists(lastOutputDir))
+                        {
+                            System.Diagnostics.Process.Start("explorer.exe", lastOutputDir);
+                        }
+                    }
                     await Task.Delay(1000, _globalCts.Token);
                 }
             }
@@ -154,6 +183,12 @@ public partial class QueueViewModel : ObservableObject
     private void CancelAll()
     {
         _globalCts.Cancel();
+    }
+
+    [RelayCommand]
+    private void ToggleQueue()
+    {
+        IsQueueActive = !IsQueueActive;
     }
 
     [RelayCommand]
@@ -183,18 +218,19 @@ public partial class QueueViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void RegisterMenu()
+    private void ToggleMenu()
     {
-        var presets = App.PresetManager.LoadPresets();
-        ContextMenuManager.Register(presets);
-        System.Windows.MessageBox.Show("Context menu registered successfully.");
-    }
-
-    [RelayCommand]
-    private void UnregisterMenu()
-    {
-        ContextMenuManager.Unregister();
-        System.Windows.MessageBox.Show("Context menu removed successfully.");
+        if (IsMenuRegistered)
+        {
+            ContextMenuManager.Unregister();
+            IsMenuRegistered = false;
+        }
+        else
+        {
+            var presets = App.PresetManager.LoadPresets();
+            ContextMenuManager.Register(presets);
+            IsMenuRegistered = true;
+        }
     }
 
     [RelayCommand]
@@ -202,8 +238,31 @@ public partial class QueueViewModel : ObservableObject
     {
         var settingsWindow = new SettingsWindow();
         settingsWindow.ShowDialog();
-        
-        // After closing, we don't automatically do anything here because the SaveCommand inside SettingsViewModel 
-        // already handles saving and re-registering the menu. We might want to reload presets into memory here if needed.
+    }
+
+    [RelayCommand]
+    private void OpenGlobalSettings()
+    {
+        var globalSettingsWindow = new GlobalSettingsWindow();
+        globalSettingsWindow.ShowDialog();
+    }
+
+    [RelayCommand]
+    private void SwitchLanguage(string lang)
+    {
+        if (App.Settings.Language != lang)
+        {
+            App.Settings.Language = lang;
+            AppSettingsManager.SaveSettings(App.Settings);
+            
+            var uri = new System.Uri($"/RenderPard.UI;component/Themes/Lang.{lang}.xaml", System.UriKind.RelativeOrAbsolute);
+            var appResources = System.Windows.Application.Current.Resources;
+            var oldDict = System.Linq.Enumerable.FirstOrDefault(appResources.MergedDictionaries, d => d.Source != null && d.Source.OriginalString.Contains("Lang."));
+            if (oldDict != null)
+            {
+                appResources.MergedDictionaries.Remove(oldDict);
+            }
+            appResources.MergedDictionaries.Add(new System.Windows.ResourceDictionary { Source = uri });
+        }
     }
 }

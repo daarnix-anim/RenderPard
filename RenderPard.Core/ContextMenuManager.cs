@@ -33,6 +33,19 @@ public static class ContextMenuManager
         }
     }
 
+    public static bool IsRegistered()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey($@"Software\Classes\SystemFileAssociations\.mp4\shell\{MenuName}");
+            return key != null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
     private static void RegisterForExtension(string ext, List<Preset> presets, string exePath)
     {
         try
@@ -44,8 +57,7 @@ public static class ContextMenuManager
                 if (baseKey == null) return;
 
                 baseKey.SetValue("MUIVerb", "RenderPard");
-                string iconPath = Path.Combine(Path.GetDirectoryName(exePath) ?? "", "icon.ico");
-                baseKey.SetValue("Icon", $"\"{iconPath}\"");
+                baseKey.SetValue("Icon", $"\"{exePath}\"");
                 
                 // Use SubCommands empty string for static cascading menus
                 baseKey.SetValue("SubCommands", "");
@@ -85,7 +97,6 @@ public static class ContextMenuManager
                         
                         string exeDir = Path.GetDirectoryName(exePath) ?? "";
                         string presetIconPath = Path.Combine(exeDir, $"icon_{safeName}.ico");
-                        string defaultIconPath = Path.Combine(exeDir, "icon.ico");
                         
                         if (File.Exists(presetIconPath))
                         {
@@ -93,7 +104,7 @@ public static class ContextMenuManager
                         }
                         else
                         {
-                            presetKey.SetValue("Icon", $"\"{defaultIconPath}\"");
+                            presetKey.SetValue("Icon", $"\"{exePath}\"");
                         }
                         
                         using (RegistryKey commandKey = presetKey.CreateSubKey("command"))

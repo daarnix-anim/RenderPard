@@ -17,9 +17,17 @@ public partial class App : Application
     private Mutex? _mutex;
     private bool _ownsMutex;
     public static PresetManager PresetManager { get; } = new PresetManager();
+    public static AppSettings Settings { get; set; } = AppSettingsManager.LoadSettings();
 
     protected override void OnStartup(StartupEventArgs e)
     {
+
+        // Load language dictionary
+        var langDict = new ResourceDictionary();
+        string langFile = Settings.Language == "en-US" ? "Lang.en-US.xaml" : "Lang.ru-RU.xaml";
+        langDict.Source = new Uri($"/RenderPard.UI;component/Themes/{langFile}", UriKind.RelativeOrAbsolute);
+        this.Resources.MergedDictionaries.Add(langDict);
+
         _mutex = new Mutex(true, MutexName, out _ownsMutex);
 
         if (!_ownsMutex)
@@ -36,7 +44,7 @@ public partial class App : Application
         base.OnStartup(e);
 
         // Process own args
-        ProcessArgs(e.Args);
+        ProcessArgs(e.Args, isSecondInstance: false);
     }
 
     private void StartListeningForArgs()
@@ -54,7 +62,7 @@ public partial class App : Application
                     if (!string.IsNullOrEmpty(argsLine))
                     {
                         var args = argsLine.Split('|');
-                        Dispatcher.Invoke(() => ProcessArgs(args));
+                        Dispatcher.Invoke(() => ProcessArgs(args, isSecondInstance: true));
                     }
                 }
                 catch (Exception)
@@ -81,7 +89,7 @@ public partial class App : Application
         }
     }
 
-    private void ProcessArgs(string[] args)
+    private void ProcessArgs(string[] args, bool isSecondInstance)
     {
         string presetName = null;
         string file = null;
@@ -110,6 +118,11 @@ public partial class App : Application
                 // Assuming MainWindow has a ViewModel we can interact with
                 // For now, let's just create a generic event or call a method
                 window.EnqueueFile(file, preset);
+                
+                if (isSecondInstance)
+                {
+                    window.StartQueue();
+                }
             }
         }
     }
