@@ -1,22 +1,36 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
+using CommunityToolkit.Mvvm.ComponentModel;
+
 namespace RenderPard.Core.Models;
 
-public class Preset
+public class Preset : ObservableObject
 {
     public string Name { get; set; } = string.Empty;
     public bool IsBuiltIn { get; set; }
     public bool ShowInContextMenu { get; set; } = true;
     public int SortOrder { get; set; }
 
-    public ContainerFormat Container { get; set; } = ContainerFormat.Mp4;
+    private ContainerFormat _container = ContainerFormat.Mp4;
+    public ContainerFormat Container
+    {
+        get => _container;
+        set => SetProperty(ref _container, value);
+    }
     public VideoCodec VideoCodec { get; set; } = VideoCodec.H264_Nvenc;
     
     // Scale up to this size on the longest side. 1280px by default.
     public int MaxLongSideSize { get; set; } = 1280;
     
     public int TargetVideoBitrateKbps { get; set; } = 2000;
+    
+    private int _gifFps = 15;
+    public int GifFps
+    {
+        get => _gifFps;
+        set => SetProperty(ref _gifFps, value);
+    }
     
     // Web_pre logic
     public bool UseWebPreLogic { get; set; }
@@ -51,6 +65,7 @@ public class Preset
             SortOrder = SortOrder,
             Container = Container,
             VideoCodec = VideoCodec,
+            GifFps = GifFps,
             MaxLongSideSize = MaxLongSideSize,
             TargetVideoBitrateKbps = TargetVideoBitrateKbps,
             UseWebPreLogic = UseWebPreLogic,

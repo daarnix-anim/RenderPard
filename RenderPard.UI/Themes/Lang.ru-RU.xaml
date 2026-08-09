@@ -26,7 +26,7 @@
     <system:String x:Key="SaveClose">Сохранить и закрыть</system:String>
 
     <!-- General Tab -->
-    <system:String x:Key="TabGeneral">Основные</system:String>
+    <system:String x:Key="TabGeneral">Основные настройки</system:String>
     <system:String x:Key="OpenFolderOnCompletion">Открывать папку после завершения очереди</system:String>
     <system:String x:Key="MinimizeToTrayOnClose">Сворачивать в трей при закрытии (крестиком)</system:String>
     <system:String x:Key="LanguageLabel">Язык (Language):</system:String>
@@ -34,6 +34,7 @@
 
     <!-- Video Tab -->
     <system:String x:Key="TabVideo">Видео</system:String>
+    <system:String x:Key="ContainerFormat">Формат (Контейнер):</system:String>
     <system:String x:Key="VideoCodec">Видео кодек:</system:String>
     <system:String x:Key="TargetBitrate">Целевой битрейт (kbps):</system:String>
     <system:String x:Key="MaxLongSide">Макс. размер длинной стороны:</system:String>
@@ -41,6 +42,7 @@
     <system:String x:Key="ExtractAlphaMask">Разбивать альфа-канал на видео и маску (_mask.mp4)</system:String>
     <system:String x:Key="PresetName">Название:</system:String>
     <system:String x:Key="ShowInMenu">Показывать в контекстном меню Windows</system:String>
+    <system:String x:Key="GifFps">Частота кадров (FPS):</system:String>
 
     <!-- Audio Tab -->
     <system:String x:Key="TabAudio">Аудио</system:String>

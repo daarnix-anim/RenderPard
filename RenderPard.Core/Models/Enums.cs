@@ -20,13 +20,15 @@ public enum VideoCodec
     H264,
     H265,
     Vp8,
-    Vp9
+    Vp9,
+    Gif
 }
 
 public enum ContainerFormat
 {
     Mp4,
-    WebM
+    WebM,
+    Gif
 }
 
 public enum Position9

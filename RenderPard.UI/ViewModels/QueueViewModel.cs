@@ -100,7 +100,8 @@ public partial class QueueViewModel : ObservableObject
         }
 
         string originalName = Path.GetFileNameWithoutExtension(filePath);
-        string extension = preset.Container == ContainerFormat.WebM ? ".webm" : ".mp4";
+        string extension = preset.Container == ContainerFormat.WebM ? ".webm" : 
+                           preset.Container == ContainerFormat.Gif ? ".gif" : ".mp4";
         string safePresetName = string.Join("_", preset.Name.Split(Path.GetInvalidFileNameChars())).ToLower();
         string targetFile = Path.Combine(targetDir, $"{originalName}_{safePresetName}{extension}");
 

@@ -163,6 +163,19 @@ public class PresetManager
                 AudioMode = AudioMode.Encode,
                 AudioCodec = AudioCodec.Aac,
                 AudioBitrateKbps = 128
+            },
+            new Preset
+            {
+                Name = "GIF (Web)",
+                IsBuiltIn = true,
+                SortOrder = 5,
+                Container = ContainerFormat.Gif,
+                VideoCodec = VideoCodec.Gif,
+                GifFps = 15,
+                MaxLongSideSize = 480,
+                TargetVideoBitrateKbps = 0,
+                AudioMode = AudioMode.Remove,
+                ExtractAlphaMask = false
             }
         };
     }

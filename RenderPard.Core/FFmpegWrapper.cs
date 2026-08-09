@@ -120,6 +120,12 @@ public class FFmpegWrapper
 
         void AppendVideoOptions(StringBuilder b)
         {
+            if (task.Preset.Container == ContainerFormat.Gif)
+            {
+                b.Append("-c:v gif ");
+                return;
+            }
+
             if (task.Preset.VideoCodec == VideoCodec.H264_Nvenc)
                 b.Append("-c:v h264_nvenc -preset p4 -rc vbr ");
             else if (task.Preset.VideoCodec == VideoCodec.H265_Nvenc)
@@ -132,20 +138,25 @@ public class FFmpegWrapper
                 b.Append("-c:v libvpx -crf 10 -b:v 1M -auto-alt-ref 0 ");
             else if (task.Preset.VideoCodec == VideoCodec.Vp9)
                 b.Append("-c:v libvpx-vp9 -crf 30 -b:v 0 -auto-alt-ref 0 ");
+            else if (task.Preset.VideoCodec == VideoCodec.Gif)
+                b.Append("-c:v gif ");
 
-            int targetBitrate = task.Preset.TargetVideoBitrateKbps;
-            if (task.Preset.UseWebPreLogic)
-                targetBitrate = WebPreCalculator.CalculateVideoBitrateKbps(task, task.Preset);
+            if (task.Preset.VideoCodec != VideoCodec.Gif)
+            {
+                int targetBitrate = task.Preset.TargetVideoBitrateKbps;
+                if (task.Preset.UseWebPreLogic)
+                    targetBitrate = WebPreCalculator.CalculateVideoBitrateKbps(task, task.Preset);
 
-            if (task.Preset.VideoCodec == VideoCodec.H264_Nvenc || task.Preset.VideoCodec == VideoCodec.H265_Nvenc || task.Preset.VideoCodec == VideoCodec.H264 || task.Preset.VideoCodec == VideoCodec.H265)
-            {
-                int maxRate = (int)(targetBitrate * 1.2);
-                int bufSize = targetBitrate * 2;
-                b.Append($"-b:v {targetBitrate}k -maxrate {maxRate}k -bufsize {bufSize}k ");
-            }
-            else if (task.Preset.VideoCodec == VideoCodec.Vp8 || task.Preset.VideoCodec == VideoCodec.Vp9)
-            {
-                 b.Append($"-b:v {targetBitrate}k ");
+                if (task.Preset.VideoCodec == VideoCodec.H264_Nvenc || task.Preset.VideoCodec == VideoCodec.H265_Nvenc || task.Preset.VideoCodec == VideoCodec.H264 || task.Preset.VideoCodec == VideoCodec.H265)
+                {
+                    int maxRate = (int)(targetBitrate * 1.2);
+                    int bufSize = targetBitrate * 2;
+                    b.Append($"-b:v {targetBitrate}k -maxrate {maxRate}k -bufsize {bufSize}k ");
+                }
+                else if (task.Preset.VideoCodec == VideoCodec.Vp8 || task.Preset.VideoCodec == VideoCodec.Vp9)
+                {
+                     b.Append($"-b:v {targetBitrate}k ");
+                }
             }
         }
 
@@ -168,13 +179,27 @@ public class FFmpegWrapper
         {
             if (task.Preset.Container == ContainerFormat.WebM)
                 b.Append("-f webm ");
+            else if (task.Preset.Container == ContainerFormat.Gif)
+                b.Append("-f gif ");
             else
                 b.Append("-f mp4 ");
         }
 
         string filterGraph = BuildFilterGraph(task);
 
-        if (task.Preset.ExtractAlphaMask)
+        if (task.Preset.Container == ContainerFormat.Gif)
+        {
+            string complexFilter = string.IsNullOrEmpty(filterGraph)
+                ? $"[0:v]fps={task.Preset.GifFps},split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse"
+                : $"{filterGraph},fps={task.Preset.GifFps},split[s0][s1];[s0]palettegen[p];[s1][p]paletteuse";
+            
+            sb.Append($"-filter_complex \"{complexFilter}\" ");
+            sb.Append("-an "); // GIF has no audio
+            AppendVideoOptions(sb);
+            AppendContainerOption(sb);
+            sb.Append($"\"{task.TargetFilePath}.part\"");
+        }
+        else if (task.Preset.ExtractAlphaMask)
         {
             string complexFilter = string.IsNullOrEmpty(filterGraph)
                 ? "[0:v]split=2[main][alpha];[main]format=yuv420p[out1];[alpha]alphaextract,format=yuv420p[out2]"

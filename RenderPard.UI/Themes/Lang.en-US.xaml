@@ -26,21 +26,23 @@
     <system:String x:Key="SaveClose">Save &amp; Close</system:String>
 
     <!-- General Tab -->
-    <system:String x:Key="TabGeneral">General</system:String>
-    <system:String x:Key="OpenFolderOnCompletion">Open folder when queue completes</system:String>
-    <system:String x:Key="MinimizeToTrayOnClose">Minimize to tray on close</system:String>
-    <system:String x:Key="LanguageLabel">Language:</system:String>
-    <system:String x:Key="LanguageWarning">Some changes require application restart.</system:String>
+    <system:String x:Key="TabGeneral">Basic Settings</system:String>
+    <system:String x:Key="OpenFolderOnCompletion">Open folder when queue is completed</system:String>
+    <system:String x:Key="MinimizeToTrayOnClose">Minimize to tray on close (X button)</system:String>
+    <system:String x:Key="LanguageLabel">Language (Язык):</system:String>
+    <system:String x:Key="LanguageWarning">Some changes will take effect after restart.</system:String>
 
     <!-- Video Tab -->
     <system:String x:Key="TabVideo">Video</system:String>
+    <system:String x:Key="ContainerFormat">Format (Container):</system:String>
     <system:String x:Key="VideoCodec">Video Codec:</system:String>
     <system:String x:Key="TargetBitrate">Target Bitrate (kbps):</system:String>
     <system:String x:Key="MaxLongSide">Max Long Side Size:</system:String>
-    <system:String x:Key="AutoCalcBitrate">Auto-calculate bitrate to fit target size (MB):</system:String>
-    <system:String x:Key="ExtractAlphaMask">Extract Alpha Mask as a separate file</system:String>
+    <system:String x:Key="AutoCalcBitrate">Auto-calc bitrate for target size (MB):</system:String>
+    <system:String x:Key="ExtractAlphaMask">Extract alpha channel to video + mask (_mask.mp4)</system:String>
     <system:String x:Key="PresetName">Name:</system:String>
-    <system:String x:Key="ShowInMenu">Show in Context Menu</system:String>
+    <system:String x:Key="ShowInMenu">Show in Windows context menu</system:String>
+    <system:String x:Key="GifFps">Framerate (FPS):</system:String>
 
     <!-- Audio Tab -->
     <system:String x:Key="TabAudio">Audio</system:String>
