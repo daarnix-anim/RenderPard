@@ -10,6 +10,7 @@ namespace RenderPard.UI
         public bool MinimizeToTrayOnClose { get; set; } = false;
         public string Language { get; set; } = "ru-RU";
         public bool CreateSubfolderForFiles { get; set; } = true;
+        public bool AlwaysOnTop { get; set; } = false;
         public double WindowWidth { get; set; } = 800;
         public double WindowHeight { get; set; } = 450;
     }

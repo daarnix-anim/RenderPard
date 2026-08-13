@@ -22,6 +22,20 @@ public partial class QueueViewModel : ObservableObject
     [ObservableProperty]
     private double _totalProgress;
 
+    public bool AlwaysOnTop
+    {
+        get => App.Settings.AlwaysOnTop;
+        set
+        {
+            if (App.Settings.AlwaysOnTop != value)
+            {
+                App.Settings.AlwaysOnTop = value;
+                AppSettingsManager.SaveSettings(App.Settings);
+                OnPropertyChanged();
+            }
+        }
+    }
+
     [ObservableProperty]
     private bool _isFfmpegMissing;
 

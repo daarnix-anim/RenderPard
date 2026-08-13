@@ -116,4 +116,60 @@ public partial class MainWindow : Window
     {
         Close();
     }
+
+    private void Window_DragEnter(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            e.Effects = DragDropEffects.Copy;
+        }
+        else
+        {
+            e.Effects = DragDropEffects.None;
+        }
+    }
+
+    private void Window_Drop(object sender, DragEventArgs e)
+    {
+        if (e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            string[] files = (string[])e.Data.GetData(DataFormats.FileDrop);
+            if (files == null || files.Length == 0) return;
+
+            var presets = App.PresetManager.LoadPresets();
+            if (presets == null || presets.Count == 0)
+            {
+                MessageBox.Show("У вас нет созданных пресетов! Сначала создайте пресет в настройках.", "Внимание", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var contextMenu = new System.Windows.Controls.ContextMenu();
+            
+            var headerItem = new System.Windows.Controls.MenuItem 
+            { 
+                Header = "Выберите пресет для обработки:", 
+                IsEnabled = false,
+                FontWeight = FontWeights.Bold
+            };
+            contextMenu.Items.Add(headerItem);
+            contextMenu.Items.Add(new System.Windows.Controls.Separator());
+
+            foreach (var preset in presets)
+            {
+                var menuItem = new System.Windows.Controls.MenuItem { Header = preset.Name };
+                menuItem.Click += (s, args) =>
+                {
+                    foreach (var file in files)
+                    {
+                        EnqueueFile(file, preset);
+                    }
+                    StartQueue();
+                };
+                contextMenu.Items.Add(menuItem);
+            }
+
+            contextMenu.PlacementTarget = this;
+            contextMenu.IsOpen = true;
+        }
+    }
 }

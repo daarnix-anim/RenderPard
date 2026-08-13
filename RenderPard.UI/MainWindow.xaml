@@ -8,7 +8,8 @@
         mc:Ignorable="d"
         Title="{DynamicResource AppTitle}" Height="450" Width="800"
         Style="{StaticResource AnipardWindowStyle}"
-        StateChanged="Window_StateChanged" Closing="Window_Closing">
+        StateChanged="Window_StateChanged" Closing="Window_Closing"
+        Topmost="{Binding AlwaysOnTop}" AllowDrop="True" Drop="Window_Drop" DragEnter="Window_DragEnter">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>
@@ -60,6 +61,36 @@
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                     
+                    <ToggleButton IsChecked="{Binding AlwaysOnTop}" Margin="0,0,10,0" Width="24" Height="24" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource AppBorderBrush}" Cursor="Hand">
+                        <ToggleButton.Style>
+                            <Style TargetType="ToggleButton">
+                                <Setter Property="ToolTip" Value="Обычный режим окна" />
+                                <Setter Property="Foreground" Value="{StaticResource AppTextSecondaryBrush}" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="4">
+                                                <Path Data="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z" 
+                                                      Fill="{TemplateBinding Foreground}" Stretch="Uniform" Width="14" Height="14"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#1AFFFFFF"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter Property="ToolTip" Value="Поверх всех окон" />
+                                        <Setter Property="Foreground" Value="{StaticResource AppLinkBrush}" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ToggleButton.Style>
+                    </ToggleButton>
+
                     <ToggleButton IsChecked="{Binding CreateSubfolderForFiles}" Margin="0,0,10,0" Width="24" Height="24" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource AppBorderBrush}" Cursor="Hand">
                         <ToggleButton.Style>
                             <Style TargetType="ToggleButton">
