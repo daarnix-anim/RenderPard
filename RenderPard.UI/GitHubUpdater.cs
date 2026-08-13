@@ -33,6 +33,9 @@ public static class GitHubUpdater
         [JsonPropertyName("name")]
         public string Name { get; set; } = string.Empty;
 
+        [JsonPropertyName("body")]
+        public string Body { get; set; } = string.Empty;
+
         [JsonPropertyName("assets")]
         public GitHubAsset[] Assets { get; set; } = Array.Empty<GitHubAsset>();
     }
@@ -69,10 +72,18 @@ public static class GitHubUpdater
                         
                         Application.Current.Dispatcher.Invoke(() =>
                         {
+                            string updateMessage = $"Доступно обновление: {latestRelease.Name} ({latestRelease.TagName}).\n\n";
+                            if (!string.IsNullOrWhiteSpace(latestRelease.Body))
+                            {
+                                // Show a truncated version of the body if it's too long
+                                string bodyText = latestRelease.Body.Length > 500 ? latestRelease.Body.Substring(0, 500) + "..." : latestRelease.Body;
+                                updateMessage += $"Что нового:\n{bodyText}\n\n";
+                            }
+                            
                             if (exeAsset != null)
                             {
                                 var result = MessageBox.Show(
-                                    $"Доступно обновление: {latestRelease.Name} ({latestRelease.TagName}).\n\nСкачать и установить его в фоновом режиме прямо сейчас?",
+                                    updateMessage + "Скачать и установить его в фоновом режиме прямо сейчас?",
                                     "Обновление RenderPard",
                                     MessageBoxButton.YesNo,
                                     MessageBoxImage.Information);
@@ -86,7 +97,7 @@ public static class GitHubUpdater
                             {
                                 // Fallback if no .exe is attached
                                 var result = MessageBox.Show(
-                                    $"Доступно обновление: {latestRelease.Name} ({latestRelease.TagName}).\nПерейти на GitHub для скачивания?",
+                                    updateMessage + "Перейти на GitHub для скачивания?",
                                     "Обновление RenderPard",
                                     MessageBoxButton.YesNo,
                                     MessageBoxImage.Information);
