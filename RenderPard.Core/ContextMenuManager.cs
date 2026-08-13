@@ -13,7 +13,7 @@ namespace RenderPard.Core;
 public static class ContextMenuManager
 {
     private static readonly string[] VideoExtensions = { ".mp4", ".mov", ".mkv", ".avi", ".m4v", ".webm" };
-    private static readonly string[] ImageExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".ai", ".pdf" };
+    private static readonly string[] ImageExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".ai", ".pdf", ".heic", ".cr2", ".nef", ".arw", ".dng" };
     private static readonly string[] SupportedExtensions = VideoExtensions.Concat(ImageExtensions).ToArray();
     private const string MenuName = "RenderPard";
 
