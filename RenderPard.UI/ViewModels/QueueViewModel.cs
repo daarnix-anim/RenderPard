@@ -131,6 +131,25 @@ public partial class QueueViewModel : ObservableObject
                 }
             });
         }
+        else if (ext == ".cr2" || ext == ".nef" || ext == ".arw" || ext == ".dng" || ext == ".heic")
+        {
+            Task.Run(() =>
+            {
+                try
+                {
+                    string tempImg = RenderPard.Core.RawImageExtractor.ExtractToTempPng(filePath);
+                    string originalName = Path.GetFileNameWithoutExtension(filePath);
+                    EnqueueSingleFile(tempImg, filePath, preset, originalName, true);
+                }
+                catch (System.Exception ex)
+                {
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        System.Windows.MessageBox.Show($"Failed to process RAW/HEIC image {Path.GetFileName(filePath)}:\n{ex.Message}");
+                    });
+                }
+            });
+        }
         else
         {
             EnqueueSingleFile(filePath, filePath, preset, Path.GetFileNameWithoutExtension(filePath), false);

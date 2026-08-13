@@ -31,7 +31,8 @@ public partial class MainWindow : Window
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
         // GitHub Updater check. 
-        _ = GitHubUpdater.CheckForUpdatesAsync("daarnix-anim", "RenderPard", "1.3.1");
+        string currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.4.0";
+        _ = GitHubUpdater.CheckForUpdatesAsync("daarnix-anim", "RenderPard", currentVersion);
     }
 
     private void Window_StateChanged(object sender, EventArgs e)
