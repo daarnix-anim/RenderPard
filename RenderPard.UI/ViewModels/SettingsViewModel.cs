@@ -193,7 +193,7 @@ public partial class SettingsViewModel : ObservableObject
         if (SelectedPreset == null) return;
         
         var dialog = new IconPickerDialog(AvailableIcons, SelectedPreset.CustomIcon);
-        dialog.Owner = System.Windows.Application.Current.MainWindow;
+        dialog.Owner = System.Windows.Application.Current.Windows.OfType<SettingsWindow>().FirstOrDefault() ?? System.Windows.Application.Current.MainWindow;
         if (dialog.ShowDialog() == true)
         {
             SelectedPreset.CustomIcon = dialog.SelectedIconName;

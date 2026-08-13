@@ -403,6 +403,7 @@ public partial class QueueViewModel : ObservableObject
     private void OpenSettings()
     {
         var settingsWindow = new SettingsWindow();
+        settingsWindow.Owner = App.Current.MainWindow;
         settingsWindow.ShowDialog();
     }
 
@@ -410,6 +411,7 @@ public partial class QueueViewModel : ObservableObject
     private void OpenGlobalSettings()
     {
         var globalSettingsWindow = new GlobalSettingsWindow();
+        globalSettingsWindow.Owner = App.Current.MainWindow;
         globalSettingsWindow.ShowDialog();
     }
 

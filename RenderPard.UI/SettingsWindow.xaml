@@ -410,7 +410,17 @@
 
                                 <!-- IMAGE RESIZE VALUE -->
                                 <TextBlock Grid.Row="20" Grid.Column="0" Text="{DynamicResource ImageResizeValue}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}"/>
-                                <TextBox Grid.Row="20" Grid.Column="1" Text="{Binding ImageResizeValue, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}"/>
+                                <TextBox Grid.Row="20" Grid.Column="1" Text="{Binding ImageResizeValue, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}">
+                                    <TextBox.Style>
+                                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding ImageResizeMode}" Value="Original">
+                                                    <Setter Property="IsEnabled" Value="False"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBox.Style>
+                                </TextBox>
                             </Grid>
                         </ScrollViewer>
                     </TabItem>
