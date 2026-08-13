@@ -176,6 +176,22 @@ public class PresetManager
                 TargetVideoBitrateKbps = 0,
                 AudioMode = AudioMode.Remove,
                 ExtractAlphaMask = false
+            },
+            new Preset
+            {
+                Name = "Фото в JPEG",
+                IsBuiltIn = true,
+                SortOrder = 6,
+                Container = ContainerFormat.Jpeg,
+                ImageQuality = 90
+            },
+            new Preset
+            {
+                Name = "Фото в WebP (Для Web)",
+                IsBuiltIn = true,
+                SortOrder = 7,
+                Container = ContainerFormat.Webp,
+                ImageQuality = 80
             }
         };
     }

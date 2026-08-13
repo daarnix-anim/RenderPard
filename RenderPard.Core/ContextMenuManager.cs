@@ -59,6 +59,20 @@ public static class ContextMenuManager
         bool isVideo = VideoExtensions.Contains(ext);
         bool isImage = ImageExtensions.Contains(ext);
 
+        // Force Windows to recognize the extension so SystemFileAssociations works even if no default app is set
+        try
+        {
+            using (var extKey = Registry.CurrentUser.CreateSubKey($@"Software\Classes\{ext}"))
+            {
+                if (extKey != null)
+                {
+                    if (isImage) extKey.SetValue("PerceivedType", "image");
+                    else if (isVideo) extKey.SetValue("PerceivedType", "video");
+                }
+            }
+        }
+        catch { }
+
         var videoPresets = presets.Where(p => !p.IsImagePreset).ToList();
         var imagePresets = presets.Where(p => p.IsImagePreset).ToList();
 
