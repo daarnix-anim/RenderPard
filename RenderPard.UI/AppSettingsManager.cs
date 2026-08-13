@@ -9,6 +9,9 @@ namespace RenderPard.UI
         public bool OpenFolderOnCompletion { get; set; } = true;
         public bool MinimizeToTrayOnClose { get; set; } = false;
         public string Language { get; set; } = "ru-RU";
+        public bool CreateSubfolderForFiles { get; set; } = true;
+        public double WindowWidth { get; set; } = 800;
+        public double WindowHeight { get; set; } = 450;
     }
 
     public static class AppSettingsManager

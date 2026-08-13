@@ -8,6 +8,12 @@ using RenderPard.Core.Models;
 
 namespace RenderPard.UI.ViewModels;
 
+public class IconItemViewModel
+{
+    public string Name { get; set; } = string.Empty;
+    public System.Windows.Media.ImageSource? Image { get; set; }
+}
+
 public partial class SettingsViewModel : ObservableObject
 {
     private Preset _selectedPreset;
@@ -16,6 +22,10 @@ public partial class SettingsViewModel : ObservableObject
     private string _language;
         
     public ObservableCollection<Preset> Presets { get; }
+    public System.Collections.Generic.IEnumerable<Preset> VideoPresets => Presets.Where(p => !p.IsImagePreset);
+    public System.Collections.Generic.IEnumerable<Preset> ImagePresets => Presets.Where(p => p.IsImagePreset);
+    
+    public ObservableCollection<IconItemViewModel> AvailableIcons { get; } = new();
 
     public Preset SelectedPreset
     {
@@ -91,24 +101,137 @@ public partial class SettingsViewModel : ObservableObject
 
         var loadedPresets = App.PresetManager.LoadPresets();
         Presets = new ObservableCollection<Preset>(loadedPresets);
+        Presets.CollectionChanged += (s, e) => 
+        {
+            OnPropertyChanged(nameof(VideoPresets));
+            OnPropertyChanged(nameof(ImagePresets));
+        };
+        
+        // Load default ICOs from Icons
+        string iconsDir = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Icons");
+        
+        // Always load built-in icons from generator
+        foreach (var iconName in IconGenerator.AvailableIcons)
+        {
+            var image = IconGenerator.GetIconImageSource(iconName);
+            AvailableIcons.Add(new IconItemViewModel { Name = iconName, Image = image });
+        }
+
+        // Add any external icons found in the Icons directory
+        if (System.IO.Directory.Exists(iconsDir))
+        {
+            foreach (var icoFile in System.IO.Directory.GetFiles(iconsDir, "*.ico"))
+            {
+                string iconName = System.IO.Path.GetFileNameWithoutExtension(icoFile);
+                if (!AvailableIcons.Any(i => i.Name == iconName))
+                {
+                    AvailableIcons.Add(new IconItemViewModel 
+                    { 
+                        Name = iconName, 
+                        Image = TryLoadExternalIcon(icoFile)
+                    });
+                }
+            }
+        }
+
+        foreach (var preset in Presets)
+        {
+            if (!string.IsNullOrEmpty(preset.CustomIcon) && !AvailableIcons.Any(i => i.Name == preset.CustomIcon))
+            {
+                AvailableIcons.Add(new IconItemViewModel { Name = preset.CustomIcon, Image = TryLoadExternalIcon(preset.CustomIcon) });
+            }
+        }
+
         if (Presets.Any())
         {
             SelectedPreset = Presets.First();
         }
     }
 
+    private System.Windows.Media.ImageSource? TryLoadExternalIcon(string path)
+    {
+        try
+        {
+            if (System.IO.Path.GetExtension(path).ToLower() == ".ico")
+            {
+                return new System.Windows.Media.Imaging.BitmapImage(new System.Uri(path));
+            }
+        }
+        catch { }
+        return null;
+    }
+
     [RelayCommand]
-    private void AddPreset()
+    private void BrowseCustomIcon()
+    {
+        if (SelectedPreset == null) return;
+        
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "Icon files (*.ico)|*.ico|All files (*.*)|*.*",
+            Title = "Select Custom Icon"
+        };
+        
+        if (dialog.ShowDialog() == true)
+        {
+            if (!AvailableIcons.Any(i => i.Name == dialog.FileName))
+            {
+                AvailableIcons.Add(new IconItemViewModel { Name = dialog.FileName, Image = TryLoadExternalIcon(dialog.FileName) });
+            }
+            
+            SelectedPreset.CustomIcon = dialog.FileName;
+            // Force UI update
+            var temp = SelectedPreset;
+            SelectedPreset = null!;
+            SelectedPreset = temp;
+        }
+    }
+
+    [RelayCommand]
+    private void PickIcon()
+    {
+        if (SelectedPreset == null) return;
+        
+        var dialog = new IconPickerDialog(AvailableIcons, SelectedPreset.CustomIcon);
+        dialog.Owner = System.Windows.Application.Current.MainWindow;
+        if (dialog.ShowDialog() == true)
+        {
+            SelectedPreset.CustomIcon = dialog.SelectedIconName;
+            // Force UI update
+            var temp = SelectedPreset;
+            SelectedPreset = null!;
+            SelectedPreset = temp;
+        }
+    }
+
+    [RelayCommand]
+    private void AddVideoPreset()
     {
         var newPreset = new Preset
         {
-            Name = "New Preset",
+            Name = "New Video Preset",
             ShowInContextMenu = true,
+            Container = ContainerFormat.Mp4,
             VideoCodec = VideoCodec.H264_Nvenc,
             TargetVideoBitrateKbps = 2000,
             AudioMode = AudioMode.Encode,
             AudioCodec = AudioCodec.Aac,
             AudioBitrateKbps = 128
+        };
+        Presets.Add(newPreset);
+        SelectedPreset = newPreset;
+    }
+
+    [RelayCommand]
+    private void AddImagePreset()
+    {
+        var newPreset = new Preset
+        {
+            Name = "New Image Preset",
+            ShowInContextMenu = true,
+            Container = ContainerFormat.Jpeg,
+            ImageQuality = 80,
+            FilenamePattern = "{original}_{preset}"
         };
         Presets.Add(newPreset);
         SelectedPreset = newPreset;
@@ -144,6 +267,11 @@ public partial class SettingsViewModel : ObservableObject
         }
 
         App.PresetManager.SavePresets(Presets.ToList());
+        
+        // Generate icons if they don't exist
+        string currentDir = System.AppDomain.CurrentDomain.BaseDirectory;
+        IconGenerator.EnsureIconsExist(Presets.Select(p => p.CustomIcon), currentDir);
+
         // Auto-register context menu to reflect changes
         ContextMenuManager.Register(Presets.ToList());
         window?.Close();

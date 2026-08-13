@@ -125,8 +125,25 @@ public class FFmpegWrapper
                 b.Append("-c:v gif ");
                 return;
             }
+            if (task.Preset.IsImagePreset)
+            {
+                if (task.Preset.Container == ContainerFormat.Webp)
+                    b.Append($"-c:v libwebp -qscale:v {task.Preset.ImageQuality} ");
+                else if (task.Preset.Container == ContainerFormat.Jpeg)
+                {
+                    int qscale = 31 - ((task.Preset.ImageQuality * 29) / 100);
+                    b.Append($"-c:v mjpeg -q:v {Math.Max(2, qscale)} ");
+                }
+                else if (task.Preset.Container == ContainerFormat.Png)
+                    b.Append("-c:v png ");
+                return;
+            }
 
-            if (task.Preset.VideoCodec == VideoCodec.H264_Nvenc)
+            if (task.Preset.VideoCodec == VideoCodec.XdcamHd422)
+            {
+                b.Append("-c:v mpeg2video -pix_fmt yuv422p -r 25 -s 1920x1080 -b:v 50000k -maxrate 50000k -minrate 50000k -bufsize 17000k -flags +ildct+ilme -top 1 -dc 10 -intra_vlc 1 -qmax 3 -lmin \"1*QP2LAMBDA\" -vtag xd5c -color_primaries 1 -color_trc 1 -colorspace 1 ");
+            }
+            else if (task.Preset.VideoCodec == VideoCodec.H264_Nvenc)
                 b.Append("-c:v h264_nvenc -preset p4 -rc vbr ");
             else if (task.Preset.VideoCodec == VideoCodec.H265_Nvenc)
                 b.Append("-c:v hevc_nvenc -preset p4 -rc vbr ");
@@ -141,7 +158,7 @@ public class FFmpegWrapper
             else if (task.Preset.VideoCodec == VideoCodec.Gif)
                 b.Append("-c:v gif ");
 
-            if (task.Preset.VideoCodec != VideoCodec.Gif)
+            if (task.Preset.VideoCodec != VideoCodec.Gif && task.Preset.VideoCodec != VideoCodec.XdcamHd422)
             {
                 int targetBitrate = task.Preset.TargetVideoBitrateKbps;
                 if (task.Preset.UseWebPreLogic)
@@ -166,8 +183,18 @@ public class FFmpegWrapper
             {
                 if (task.Preset.AudioCodec == AudioCodec.Aac)
                     b.Append($"-c:a aac -b:a {task.Preset.AudioBitrateKbps}k ");
-                else
+                else if (task.Preset.AudioCodec == AudioCodec.Opus)
                     b.Append($"-c:a libopus -b:a {task.Preset.AudioBitrateKbps}k ");
+                else if (task.Preset.AudioCodec == AudioCodec.Pcm24)
+                    b.Append("-c:a pcm_s24le -ar 48000 ");
+                    
+                if (task.Preset.NormalizeAudio)
+                {
+                    if (task.Preset.NormalizationTarget == AudioNormalizationTarget.Web)
+                        b.Append("-af \"loudnorm=I=-14:LRA=11:TP=-1.0\" ");
+                    else
+                        b.Append("-af \"loudnorm=I=-23:LRA=18:TP=-1.0\" ");
+                }
             }
             else
             {
@@ -181,6 +208,10 @@ public class FFmpegWrapper
                 b.Append("-f webm ");
             else if (task.Preset.Container == ContainerFormat.Gif)
                 b.Append("-f gif ");
+            else if (task.Preset.IsImagePreset)
+                b.Append("-f image2 ");
+            else if (task.Preset.Container == ContainerFormat.MXF)
+                b.Append("-f mxf ");
             else
                 b.Append("-f mp4 ");
         }
@@ -196,6 +227,18 @@ public class FFmpegWrapper
             sb.Append($"-filter_complex \"{complexFilter}\" ");
             sb.Append("-an "); // GIF has no audio
             AppendVideoOptions(sb);
+            AppendContainerOption(sb);
+            sb.Append($"\"{task.TargetFilePath}.part\"");
+        }
+        else if (task.Preset.IsImagePreset)
+        {
+            sb.Append("-frames:v 1 ");
+            AppendVideoOptions(sb);
+
+            if (!string.IsNullOrEmpty(filterGraph))
+                sb.Append($"-vf \"{filterGraph}\" ");
+
+            sb.Append("-an ");
             AppendContainerOption(sb);
             sb.Append($"\"{task.TargetFilePath}.part\"");
         }
@@ -264,19 +307,46 @@ public class FFmpegWrapper
         else if (logicalHeight == logicalWidth) aspectRatio = AspectRatioCategory.Square;
 
         // 1. Scale
-        if (logicalWidth > 0 && logicalHeight > 0)
+        if (logicalWidth > 0 && logicalHeight > 0 && !task.Preset.KeepOriginalResolution)
         {
-            if (aspectRatio == AspectRatioCategory.Landscape && logicalWidth > task.Preset.MaxLongSideSize)
+            if (task.Preset.IsImagePreset)
             {
-                filters.Add($"scale='min({task.Preset.MaxLongSideSize},iw)':-2");
+                if (task.Preset.ImageResizeMode == ResizeMode.MaxLongSide && task.Preset.ImageResizeValue > 0)
+                {
+                    if (aspectRatio == AspectRatioCategory.Landscape && logicalWidth > task.Preset.ImageResizeValue)
+                        filters.Add($"scale='min({task.Preset.ImageResizeValue},iw)':-2");
+                    else if (aspectRatio == AspectRatioCategory.Portrait && logicalHeight > task.Preset.ImageResizeValue)
+                        filters.Add($"scale=-2:'min({task.Preset.ImageResizeValue},ih)'");
+                    else if (aspectRatio == AspectRatioCategory.Square && logicalWidth > task.Preset.ImageResizeValue)
+                        filters.Add($"scale='min({task.Preset.ImageResizeValue},iw)':-2");
+                }
+                else if (task.Preset.ImageResizeMode == ResizeMode.ExactWidth && task.Preset.ImageResizeValue > 0)
+                {
+                    filters.Add($"scale={task.Preset.ImageResizeValue}:-2");
+                }
+                else if (task.Preset.ImageResizeMode == ResizeMode.ExactHeight && task.Preset.ImageResizeValue > 0)
+                {
+                    filters.Add($"scale=-2:{task.Preset.ImageResizeValue}");
+                }
+                else if (task.Preset.ImageResizeMode == ResizeMode.Percentage && task.Preset.ImageResizeValue > 0)
+                {
+                    filters.Add($"scale=iw*{task.Preset.ImageResizeValue}/100:-2");
+                }
             }
-            else if (aspectRatio == AspectRatioCategory.Portrait && logicalHeight > task.Preset.MaxLongSideSize)
+            else
             {
-                filters.Add($"scale=-2:'min({task.Preset.MaxLongSideSize},ih)'");
-            }
-            else if (aspectRatio == AspectRatioCategory.Square && logicalWidth > task.Preset.MaxLongSideSize)
-            {
-                filters.Add($"scale='min({task.Preset.MaxLongSideSize},iw)':-2");
+                if (aspectRatio == AspectRatioCategory.Landscape && logicalWidth > task.Preset.MaxLongSideSize)
+                {
+                    filters.Add($"scale='min({task.Preset.MaxLongSideSize},iw)':-2");
+                }
+                else if (aspectRatio == AspectRatioCategory.Portrait && logicalHeight > task.Preset.MaxLongSideSize)
+                {
+                    filters.Add($"scale=-2:'min({task.Preset.MaxLongSideSize},ih)'");
+                }
+                else if (aspectRatio == AspectRatioCategory.Square && logicalWidth > task.Preset.MaxLongSideSize)
+                {
+                    filters.Add($"scale='min({task.Preset.MaxLongSideSize},iw)':-2");
+                }
             }
         }
 
@@ -327,7 +397,11 @@ public class FFmpegWrapper
         // 4. Format (Pixel Format)
         if (!task.Preset.ExtractAlphaMask)
         {
-            if (task.Preset.Container == ContainerFormat.WebM)
+            if (task.Preset.IsImagePreset)
+            {
+                // no format forcing for images to allow natural formats (RGB, RGBA)
+            }
+            else if (task.Preset.Container == ContainerFormat.WebM)
             {
                 // Preserve alpha if present for WebM (VP8/VP9)
                 filters.Add("format=yuva420p|yuv420p");

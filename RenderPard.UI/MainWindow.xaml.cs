@@ -15,6 +15,13 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        
+        if (App.Settings.WindowWidth > 0 && App.Settings.WindowHeight > 0)
+        {
+            this.Width = App.Settings.WindowWidth;
+            this.Height = App.Settings.WindowHeight;
+        }
+
         _viewModel = new QueueViewModel();
         DataContext = _viewModel;
         
@@ -24,7 +31,7 @@ public partial class MainWindow : Window
     private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
         // GitHub Updater check. 
-        _ = GitHubUpdater.CheckForUpdatesAsync("daarnix-anim", "RenderPard", "1.0.0");
+        _ = GitHubUpdater.CheckForUpdatesAsync("daarnix-anim", "RenderPard", "1.3.1");
     }
 
     private void Window_StateChanged(object sender, EventArgs e)
@@ -43,6 +50,13 @@ public partial class MainWindow : Window
 
     private void Window_Closing(object sender, CancelEventArgs e)
     {
+        if (this.WindowState == WindowState.Normal)
+        {
+            App.Settings.WindowWidth = this.ActualWidth;
+            App.Settings.WindowHeight = this.ActualHeight;
+            AppSettingsManager.SaveSettings(App.Settings);
+        }
+
         if (App.Settings.MinimizeToTrayOnClose && this.WindowState != WindowState.Minimized)
         {
             e.Cancel = true;

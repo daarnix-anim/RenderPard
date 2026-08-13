@@ -43,8 +43,14 @@ public partial class App : Application
 
         base.OnStartup(e);
 
+        // Manually create the window because we removed StartupUri
+        var mainWindow = new MainWindow();
+        this.MainWindow = mainWindow;
+
         // Process own args
         ProcessArgs(e.Args, isSecondInstance: false);
+
+        mainWindow.Show();
     }
 
     private void StartListeningForArgs()
@@ -93,6 +99,7 @@ public partial class App : Application
     {
         string presetName = null;
         string file = null;
+        bool openApp = false;
 
         for (int i = 0; i < args.Length; i++)
         {
@@ -106,6 +113,22 @@ public partial class App : Application
                 file = args[i + 1];
                 i++;
             }
+            else if (args[i] == "--open")
+            {
+                openApp = true;
+            }
+        }
+
+        if (openApp || file == null)
+        {
+            if (isSecondInstance && MainWindow is MainWindow window)
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    window.WindowState = WindowState.Normal;
+                    window.Activate();
+                });
+            }
         }
 
         if (file != null)
@@ -115,13 +138,16 @@ public partial class App : Application
             
             if (preset != null && MainWindow is MainWindow window)
             {
-                // Assuming MainWindow has a ViewModel we can interact with
-                // For now, let's just create a generic event or call a method
                 window.EnqueueFile(file, preset);
+                window.StartQueue();
                 
                 if (isSecondInstance)
                 {
-                    window.StartQueue();
+                    Dispatcher.Invoke(() =>
+                    {
+                        window.WindowState = WindowState.Normal;
+                        window.Activate();
+                    });
                 }
             }
         }

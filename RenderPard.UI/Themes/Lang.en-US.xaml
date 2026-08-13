@@ -63,4 +63,12 @@
     <system:String x:Key="TabTimecode">Timecode</system:String>
     <system:String x:Key="EnableTimecode">Enable Timecode</system:String>
     
+    <!-- Image Tab/Settings -->
+    <system:String x:Key="ImageSettings">Image Settings</system:String>
+    <system:String x:Key="ImageQuality">Quality (1-100):</system:String>
+    <system:String x:Key="ImageResizeMode">Resize Mode:</system:String>
+    <system:String x:Key="ImageResizeValue">Resize Value:</system:String>
+    <system:String x:Key="SaveToOriginalFolder">Save to Original Folder (no subfolder)</system:String>
+    <system:String x:Key="FilenamePattern">Filename Pattern ({original}, {preset}):</system:String>
+    
 </ResourceDictionary>

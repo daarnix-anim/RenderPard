@@ -10,7 +10,14 @@ public enum AudioMode
 public enum AudioCodec
 {
     Aac,
-    Opus
+    Opus,
+    Pcm24
+}
+
+public enum AudioNormalizationTarget
+{
+    Web,
+    Broadcast
 }
 
 public enum VideoCodec
@@ -21,14 +28,28 @@ public enum VideoCodec
     H265,
     Vp8,
     Vp9,
-    Gif
+    Gif,
+    XdcamHd422
 }
 
 public enum ContainerFormat
 {
     Mp4,
     WebM,
-    Gif
+    Gif,
+    Jpeg,
+    Png,
+    Webp,
+    MXF
+}
+
+public enum ResizeMode
+{
+    Original,
+    MaxLongSide,
+    ExactWidth,
+    ExactHeight,
+    Percentage
 }
 
 public enum Position9
@@ -43,4 +64,11 @@ public enum AspectRatioCategory
     Landscape, // Width > Height
     Portrait,  // Height > Width
     Square     // Width == Height
+}
+
+public enum NamingMode
+{
+    Suffix,
+    Prefix,
+    NoChange
 }

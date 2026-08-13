@@ -43,23 +43,53 @@
             </Grid>
         </Border>
 
-        <Grid Grid.Row="1" Margin="20">
+        <Grid Grid.Row="1" Margin="10">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
             
-            <Grid Grid.Row="0" Margin="0,0,0,10">
+            <Grid Grid.Row="0" Margin="0,0,0,6">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Grid.Column="0" Text="{DynamicResource AppTitle}" FontSize="20" FontWeight="Bold" Foreground="{StaticResource AppTextBrush}" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="0" Text="{DynamicResource AppTitle}" FontSize="16" FontWeight="Bold" Foreground="{StaticResource AppTextBrush}" VerticalAlignment="Center"/>
                 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
                     
-                    <Button Command="{Binding ToggleMenuCommand}" Margin="0,0,10,0" Height="30" Padding="15,0" Background="Transparent" Foreground="{StaticResource AppTextBrush}" BorderThickness="1" BorderBrush="{StaticResource AppBorderBrush}" Cursor="Hand">
+                    <ToggleButton IsChecked="{Binding CreateSubfolderForFiles}" Margin="0,0,10,0" Width="24" Height="24" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource AppBorderBrush}" Cursor="Hand">
+                        <ToggleButton.Style>
+                            <Style TargetType="ToggleButton">
+                                <Setter Property="ToolTip" Value="Ролики кладутся рядом с оригиналами" />
+                                <Setter Property="Foreground" Value="{StaticResource AppTextSecondaryBrush}" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="{TemplateBinding Background}" BorderThickness="{TemplateBinding BorderThickness}" BorderBrush="{TemplateBinding BorderBrush}" CornerRadius="4">
+                                                <Path Data="M10,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V8C22,6.89 21.1,6 20,6H12L10,4Z" 
+                                                      Fill="{TemplateBinding Foreground}" Stretch="Uniform" Width="16" Height="16"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#1AFFFFFF"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                                <Style.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter Property="ToolTip" Value="Создание папки активно - рядом с роликами будет создаваться папка с названием пресета, и все ролики будут внутри" />
+                                        <Setter Property="Foreground" Value="{StaticResource AppLinkBrush}" />
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ToggleButton.Style>
+                    </ToggleButton>
+
+                    <Button Command="{Binding ToggleMenuCommand}" Margin="0,0,8,0" Height="22" Padding="8,0" Background="Transparent" Foreground="{StaticResource AppTextBrush}" BorderThickness="1" BorderBrush="{StaticResource AppBorderBrush}" Cursor="Hand">
                         <Button.Style>
                             <Style TargetType="Button">
                                 <Setter Property="Content" Value="Добавить" />
@@ -82,14 +112,14 @@
                                     <DataTrigger Binding="{Binding IsMenuRegistered}" Value="True">
                                         <Setter Property="Content" Value="Удалить" />
                                         <Setter Property="ToolTip" Value="Удалить пункт из контекстного меню" />
-                                        <Setter Property="Foreground" Value="#e74c3c" />
+                                        <Setter Property="Foreground" Value="{StaticResource AppLinkBrush}" />
                                     </DataTrigger>
                                 </Style.Triggers>
                             </Style>
                         </Button.Style>
                     </Button>
-                    <Button Command="{Binding OpenSettingsCommand}" ToolTip="{DynamicResource MenuSettings}" Width="30" Height="30" Background="Transparent" BorderThickness="0" Cursor="Hand">
-                        <TextBlock Text="⋮" Foreground="{StaticResource AppTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="18" FontWeight="Bold" Margin="0,-4,0,0"/>
+                    <Button Command="{Binding OpenSettingsCommand}" ToolTip="{DynamicResource MenuSettings}" Width="24" Height="24" Background="Transparent" BorderThickness="0" Cursor="Hand">
+                        <TextBlock Text="⋮" Foreground="{StaticResource AppTextBrush}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="16" FontWeight="Bold" Margin="0,-2,0,0"/>
                     </Button>
                 </StackPanel>
             </Grid>
@@ -103,11 +133,11 @@
                     <Style TargetType="DataGridColumnHeader">
                         <Setter Property="Background" Value="{StaticResource AppBackgroundBrush}"/>
                         <Setter Property="Foreground" Value="{StaticResource AppTextSecondaryBrush}"/>
-                        <Setter Property="Padding" Value="10,8"/>
+                        <Setter Property="Padding" Value="6,4"/>
                         <Setter Property="FontWeight" Value="SemiBold"/>
                     </Style>
                     <Style TargetType="DataGridCell">
-                        <Setter Property="Padding" Value="10,5"/>
+                        <Setter Property="Padding" Value="6,2"/>
                         <Setter Property="Template">
                             <Setter.Value>
                                 <ControlTemplate TargetType="DataGridCell">
@@ -127,7 +157,7 @@
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <Grid Margin="0,2">
-                                    <ProgressBar Minimum="0" Maximum="1" Value="{Binding Progress, Mode=OneWay}" Height="15" Background="{StaticResource AppBackgroundBrush}" Foreground="{StaticResource AppLinkBrush}" BorderThickness="0"/>
+                                    <ProgressBar Minimum="0" Maximum="1" Value="{Binding Progress, Mode=OneWay}" Height="10" Background="{StaticResource AppBackgroundBrush}" Foreground="{StaticResource AppLinkBrush}" BorderThickness="0"/>
                                     <TextBlock Text="{Binding Progress, StringFormat={}{0:P1}}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="10" Foreground="#111111" FontWeight="Bold"/>
                                 </Grid>
                             </DataTemplate>
@@ -146,14 +176,14 @@
                 </DataGrid.Columns>
             </DataGrid>
             
-            <Grid Grid.Row="2" Margin="0,15,0,0">
+            <Grid Grid.Row="2" Margin="0,6,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
 
                 <!-- Queue Controls -->
                 <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Command="{Binding ToggleQueueCommand}" Width="40" Height="30" Margin="0,0,10,0" ToolTip="Play / Pause" Background="Transparent" Foreground="{StaticResource AppTextBrush}" BorderThickness="0" Cursor="Hand">
+                    <Button Command="{Binding ToggleQueueCommand}" Width="30" Height="24" Margin="0,0,6,0" ToolTip="Play / Pause" Background="Transparent" Foreground="{StaticResource AppTextBrush}" BorderThickness="0" Cursor="Hand">
                         <Viewbox Width="14" Height="14" Stretch="Uniform">
                             <Canvas Width="24" Height="24">
                                 <Path Fill="{StaticResource AppTextBrush}">
@@ -171,8 +201,8 @@
                             </Canvas>
                         </Viewbox>
                     </Button>
-                    <Button Content="{DynamicResource ClearCompleted}" Command="{Binding ClearAllCommand}" Width="150" Height="30" Margin="0,0,10,0" HorizontalContentAlignment="Center"/>
-                    <Button Content="Cancel All" Command="{Binding CancelAllCommand}" Width="100" Height="30" HorizontalContentAlignment="Center"/>
+                    <Button Content="{DynamicResource ClearCompleted}" Command="{Binding ClearAllCommand}" Width="120" Height="24" Margin="0,0,6,0" HorizontalContentAlignment="Center"/>
+                    <Button Content="Cancel All" Command="{Binding CancelAllCommand}" Width="100" Height="24" HorizontalContentAlignment="Center"/>
                 </StackPanel>
             </Grid>
 

@@ -63,4 +63,12 @@
     <system:String x:Key="TabTimecode">Таймкод</system:String>
     <system:String x:Key="EnableTimecode">Включить таймкод</system:String>
 
+    <!-- Image Tab/Settings -->
+    <system:String x:Key="ImageSettings">Настройки Изображения</system:String>
+    <system:String x:Key="ImageQuality">Качество (1-100):</system:String>
+    <system:String x:Key="ImageResizeMode">Режим изменения размера:</system:String>
+    <system:String x:Key="ImageResizeValue">Значение:</system:String>
+    <system:String x:Key="SaveToOriginalFolder">Сохранять в исходную папку (без подпапки)</system:String>
+    <system:String x:Key="FilenamePattern">Шаблон имени ({original}, {preset}):</system:String>
+
 </ResourceDictionary>

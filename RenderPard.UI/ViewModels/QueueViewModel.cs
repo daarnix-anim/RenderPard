@@ -38,6 +38,23 @@ public partial class QueueViewModel : ObservableObject
     [ObservableProperty]
     private bool _isMenuRegistered;
 
+    private static OverwriteResult? _currentBatchOverwriteResult = null;
+    private static DateTime _lastBatchTime = DateTime.MinValue;
+
+    public bool CreateSubfolderForFiles
+    {
+        get => App.Settings.CreateSubfolderForFiles;
+        set
+        {
+            if (App.Settings.CreateSubfolderForFiles != value)
+            {
+                App.Settings.CreateSubfolderForFiles = value;
+                AppSettingsManager.SaveSettings(App.Settings);
+                OnPropertyChanged();
+            }
+        }
+    }
+
     public QueueViewModel()
     {
         _ffmpeg = new FFmpegWrapper(); // Assumes ffmpeg is in PATH or current dir
@@ -93,34 +110,142 @@ public partial class QueueViewModel : ObservableObject
     {
         if (!File.Exists(filePath)) return;
 
-        string targetDir = Path.Combine(Path.GetDirectoryName(filePath)!, preset.Name);
-        if (!Directory.Exists(targetDir))
+        string ext = Path.GetExtension(filePath).ToLower();
+        if (ext == ".ai" || ext == ".pdf")
         {
-            Directory.CreateDirectory(targetDir);
+            Task.Run(() =>
+            {
+                try
+                {
+                    var tempImages = PdfExtractor.ExtractPages(filePath);
+                    for (int i = 0; i < tempImages.Count; i++)
+                    {
+                        var pageImg = tempImages[i];
+                        string pageOriginalName = $"{Path.GetFileNameWithoutExtension(filePath)}_Page{i + 1}";
+                        EnqueueSingleFile(pageImg, filePath, preset, pageOriginalName, true);
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    System.Windows.MessageBox.Show($"Failed to extract pages from {Path.GetFileName(filePath)}:\n{ex.Message}");
+                }
+            });
         }
-
-        string originalName = Path.GetFileNameWithoutExtension(filePath);
-        string extension = preset.Container == ContainerFormat.WebM ? ".webm" : 
-                           preset.Container == ContainerFormat.Gif ? ".gif" : ".mp4";
-        string safePresetName = string.Join("_", preset.Name.Split(Path.GetInvalidFileNameChars())).ToLower();
-        string targetFile = Path.Combine(targetDir, $"{originalName}_{safePresetName}{extension}");
-
-        // Handle duplication (e.g., _01)
-        int counter = 1;
-        while (File.Exists(targetFile))
+        else
         {
-            targetFile = Path.Combine(targetDir, $"{originalName}_{safePresetName}_{counter:D2}{extension}");
-            counter++;
+            EnqueueSingleFile(filePath, filePath, preset, Path.GetFileNameWithoutExtension(filePath), false);
         }
+    }
 
-        var task = new TranscodeTask
+    private void EnqueueSingleFile(string sourceFile, string originalFileForDir, Preset preset, string originalName, bool isTempSource)
+    {
+        System.Windows.Application.Current.Dispatcher.Invoke(() => 
         {
-            SourceFilePath = filePath,
-            TargetFilePath = targetFile,
-            Preset = preset
-        };
+            // Reset batch overwrite state if it's been more than 2 seconds since the last file was added
+            if ((DateTime.Now - _lastBatchTime).TotalSeconds > 2)
+            {
+                _currentBatchOverwriteResult = null;
+            }
+            _lastBatchTime = DateTime.Now;
 
-        Tasks.Add(task);
+            string targetDir = App.Settings.CreateSubfolderForFiles 
+                ? Path.Combine(Path.GetDirectoryName(originalFileForDir)!, preset.Name)
+                : Path.GetDirectoryName(originalFileForDir)!;
+            if (!Directory.Exists(targetDir))
+            {
+                Directory.CreateDirectory(targetDir);
+            }
+
+            string extension = preset.Container switch
+            {
+                ContainerFormat.WebM => ".webm",
+                ContainerFormat.Gif => ".gif",
+                ContainerFormat.Jpeg => ".jpg",
+                ContainerFormat.Png => ".png",
+                ContainerFormat.Webp => ".webp",
+                _ => ".mp4"
+            };
+
+            string safePresetName = string.Join("_", preset.Name.Split(Path.GetInvalidFileNameChars())).ToLower();
+            
+            string baseFileName = originalName;
+            switch (preset.NamingLogic)
+            {
+                case NamingMode.Suffix:
+                    baseFileName = $"{originalName}_{safePresetName}";
+                    break;
+                case NamingMode.Prefix:
+                    baseFileName = $"{safePresetName}_{originalName}";
+                    break;
+                case NamingMode.NoChange:
+                    baseFileName = originalName;
+                    break;
+            }
+            
+            string targetFile = Path.Combine(targetDir, $"{baseFileName}{extension}");
+
+            int counter = 1;
+            
+            string GetNumberedName(int c) => preset.NumberingLogic == Core.Models.NamingMode.Prefix ? $"{c:D2}_{baseFileName}" : $"{baseFileName}_{c:D2}";
+            
+            if (preset.NumberingLogic != Core.Models.NamingMode.NoChange)
+            {
+                // Numbering always enforced
+                while (File.Exists(Path.Combine(targetDir, $"{GetNumberedName(counter)}{extension}")))
+                {
+                    counter++;
+                }
+                targetFile = Path.Combine(targetDir, $"{GetNumberedName(counter)}{extension}");
+            }
+            else
+            {
+                if (File.Exists(targetFile))
+                {
+                    if (targetFile.Equals(originalFileForDir, StringComparison.OrdinalIgnoreCase))
+                    {
+                        System.Windows.MessageBox.Show($"Файл {Path.GetFileName(targetFile)} совпадает с исходником! Невозможно перезаписать исходный файл. Пожалуйста, включите создание подпапок или измените логику названия.", "Критическая ошибка", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
+                        return; // Abort
+                    }
+
+                    if (!App.Settings.CreateSubfolderForFiles)
+                    {
+                        if (_currentBatchOverwriteResult == OverwriteResult.NoToAll) return;
+
+                        if (_currentBatchOverwriteResult != OverwriteResult.YesToAll)
+                        {
+                            var dialog = new OverwriteDialog($"Файл '{Path.GetFileName(targetFile)}' уже существует в папке. Перезаписать?");
+                            dialog.ShowDialog();
+                            _currentBatchOverwriteResult = dialog.Result;
+
+                            if (_currentBatchOverwriteResult == OverwriteResult.No || _currentBatchOverwriteResult == OverwriteResult.NoToAll)
+                            {
+                                return;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // Auto-increment to avoid collision
+                        while (File.Exists(targetFile))
+                        {
+                            targetFile = Path.Combine(targetDir, $"{GetNumberedName(counter)}{extension}");
+                            counter++;
+                        }
+                    }
+                }
+            }
+
+            var task = new TranscodeTask
+            {
+                SourceFilePath = sourceFile,
+                TargetFilePath = targetFile,
+                Preset = preset,
+                OriginalFileName = originalName + Path.GetExtension(originalFileForDir),
+                IsTempSource = isTempSource
+            };
+
+            Tasks.Add(task);
+        });
     }
 
     private void StartQueueProcessor()
@@ -162,6 +287,11 @@ public partial class QueueViewModel : ObservableObject
                     if (nextTask.Status != TranscodeTaskStatus.Failed)
                     {
                         await _ffmpeg.RunEncodeAsync(nextTask, _globalCts.Token);
+                    }
+
+                    if (nextTask.IsTempSource && File.Exists(nextTask.SourceFilePath))
+                    {
+                        try { File.Delete(nextTask.SourceFilePath); } catch { }
                     }
                 }
                 else

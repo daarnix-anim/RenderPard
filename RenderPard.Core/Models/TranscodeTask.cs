@@ -18,7 +18,11 @@ public partial class TranscodeTask : ObservableObject
     [ObservableProperty]
     private string _sourceFilePath = string.Empty;
     
-    public string FileName => Path.GetFileName(SourceFilePath);
+    public string FileName => string.IsNullOrEmpty(OriginalFileName) ? Path.GetFileName(SourceFilePath) : OriginalFileName;
+
+    public string OriginalFileName { get; set; } = string.Empty;
+    
+    public bool IsTempSource { get; set; } = false;
 
     [ObservableProperty]
     private string _targetFilePath = string.Empty;
