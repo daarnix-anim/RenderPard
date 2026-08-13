@@ -47,6 +47,13 @@ public partial class App : Application
         var mainWindow = new MainWindow();
         this.MainWindow = mainWindow;
 
+        // Auto-register context menu to ensure it's always up-to-date
+        try
+        {
+            RenderPard.Core.ContextMenuManager.Register(PresetManager.LoadPresets());
+        }
+        catch { }
+
         // Process own args
         ProcessArgs(e.Args, isSecondInstance: false);
 
