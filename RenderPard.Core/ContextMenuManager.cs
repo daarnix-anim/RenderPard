@@ -18,6 +18,21 @@ public static class ContextMenuManager
     private static readonly string[] SupportedExtensions = VideoExtensions.Concat(AudioExtensions).Concat(ImageExtensions).Distinct().ToArray();
     private const string MenuName = "RenderPard";
 
+    [System.Runtime.InteropServices.DllImport("shell32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
+    public static extern void SHChangeNotify(int wEventId, int uFlags, IntPtr dwItem1, IntPtr dwItem2);
+
+    private const int SHCNE_ASSOCCHANGED = 0x08000000;
+    private const int SHCNF_IDLIST = 0x0000;
+
+    public static void NotifyShell()
+    {
+        try
+        {
+            SHChangeNotify(SHCNE_ASSOCCHANGED, SHCNF_IDLIST, IntPtr.Zero, IntPtr.Zero);
+        }
+        catch { }
+    }
+
     public static void Register(List<Preset> presets)
     {
         string exePath = Process.GetCurrentProcess().MainModule?.FileName ?? "";
@@ -27,6 +42,17 @@ public static class ContextMenuManager
         {
             RegisterForExtension(ext, presets, exePath);
         }
+
+        NotifyShell();
+    }
+
+    public static void RefreshIfRegistered(List<Preset>? presets = null)
+    {
+        if (IsRegistered())
+        {
+            var pList = presets ?? new PresetManager().LoadPresets();
+            Register(pList);
+        }
     }
 
     public static void Unregister()
@@ -35,6 +61,8 @@ public static class ContextMenuManager
         {
             UnregisterForExtension(ext);
         }
+
+        NotifyShell();
     }
 
     public static bool IsRegistered()

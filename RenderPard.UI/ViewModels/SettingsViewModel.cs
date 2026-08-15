@@ -287,6 +287,8 @@ public partial class SettingsViewModel : ObservableObject
             var temp = SelectedPreset;
             SelectedPreset = null!;
             SelectedPreset = temp;
+
+            AutoRefreshContextMenu();
         }
     }
 
@@ -309,7 +311,22 @@ public partial class SettingsViewModel : ObservableObject
             var temp = SelectedPreset;
             SelectedPreset = null!;
             SelectedPreset = temp;
+
+            AutoRefreshContextMenu();
         }
+    }
+
+    private void AutoRefreshContextMenu()
+    {
+        try
+        {
+            if (ContextMenuManager.IsRegistered())
+            {
+                App.PresetManager.SavePresets(Presets.ToList());
+                ContextMenuManager.Register(Presets.ToList());
+            }
+        }
+        catch { }
     }
 
     [RelayCommand]
@@ -410,6 +427,7 @@ public partial class SettingsViewModel : ObservableObject
             Presets.Remove(SelectedPreset);
             FilteredPresetsView.Refresh();
             SelectedPreset = FilteredPresetsView.Cast<Preset>().FirstOrDefault();
+            AutoRefreshContextMenu();
         }
     }
 
@@ -438,8 +456,8 @@ public partial class SettingsViewModel : ObservableObject
         string currentDir = System.AppDomain.CurrentDomain.BaseDirectory;
         IconGenerator.EnsureIconsExist(Presets.Select(p => p.CustomIcon), currentDir);
 
-        // Auto-register context menu to reflect changes
-        ContextMenuManager.Register(Presets.ToList());
+        // Auto-register and refresh context menu
+        ContextMenuManager.RefreshIfRegistered(Presets.ToList());
         window?.Close();
     }
 
