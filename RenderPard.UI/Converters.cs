@@ -1,10 +1,26 @@
-using System.Windows;
+﻿using System.Windows;
 using System;
 using System.Globalization;
 using System.Windows.Data;
 
 namespace RenderPard.UI
 {
+    public class EnumToLocalizedStringConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value == null) return string.Empty;
+            var key = $"Enum_{value.GetType().Name}_{value}";
+            var localized = System.Windows.Application.Current.TryFindResource(key) as string;
+            return localized ?? value.ToString();
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            return Binding.DoNothing;
+        }
+    }
+
     public class IsNotNullConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -245,59 +261,7 @@ namespace RenderPard.UI
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 
-    public class NamingModeConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is Core.Models.NamingMode mode)
-            {
-                return mode switch
-                {
-                    Core.Models.NamingMode.Suffix => "Суффикс (Название пресета)",
-                    Core.Models.NamingMode.Prefix => "Префикс (Название пресета)",
-                    Core.Models.NamingMode.NoChange => "Не менять",
-                    _ => mode.ToString()
-                };
-            }
-            return value;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
-    }
-
-    public class NumberingModeConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is Core.Models.NamingMode mode)
-            {
-                return mode switch
-                {
-                    Core.Models.NamingMode.Suffix => "В суффиксе (_01)",
-                    Core.Models.NamingMode.Prefix => "В префиксе (01_)",
-                    Core.Models.NamingMode.NoChange => "Выкл",
-                    _ => mode.ToString()
-                };
-            }
-            return value;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
-    }
-
-    public class InverseBooleanToBooleanConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is bool b) return !b;
-            return true;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-        {
-            if (value is bool b) return !b;
-            return true;
-        }
-    }
+    
 }
+
 

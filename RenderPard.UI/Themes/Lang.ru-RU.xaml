@@ -5,25 +5,47 @@
     <!-- MainWindow -->
     <system:String x:Key="AppTitle">RenderPard (Очередь)</system:String>
     <system:String x:Key="MenuSettings">Настройки</system:String>
-    <system:String x:Key="DropFilesHere">Перетащите видео файлы сюда...</system:String>
+    <system:String x:Key="DropFilesHere">Перетащите медиа файлы сюда...</system:String>
     <system:String x:Key="RegisterMenu">Добавить в контекстное меню</system:String>
     <system:String x:Key="RemoveMenu">Убрать из меню</system:String>
+    <system:String x:Key="RegisterMenuShort">Добавить</system:String>
+    <system:String x:Key="RemoveMenuShort">Удалить</system:String>
+    <system:String x:Key="RegisterMenuTooltip">Добавить пункт в контекстное меню Windows</system:String>
+    <system:String x:Key="RemoveMenuTooltip">Удалить пункт из контекстного меню Windows</system:String>
     <system:String x:Key="ClearCompleted">Очистить список</system:String>
+    <system:String x:Key="CancelAll">Отменить все</system:String>
     <system:String x:Key="DownloadFfmpeg">Скачать FFmpeg</system:String>
     <system:String x:Key="DownloadingFfmpeg">Загрузка FFmpeg...</system:String>
+    <system:String x:Key="FfmpegMissingTitle">FFmpeg не найден</system:String>
+    <system:String x:Key="FfmpegMissingDesc">Для конвертации медиафайлов приложению требуется FFmpeg.&#x0a;Скачать его автоматически из официального источника?</system:String>
+    <system:String x:Key="AlwaysOnTopNormal">Обычный режим окна</system:String>
+    <system:String x:Key="AlwaysOnTopActive">Поверх всех окон</system:String>
+    <system:String x:Key="SubfolderDisabled">Файлы сохраняются рядом с оригиналами</system:String>
+    <system:String x:Key="SubfolderEnabled">Создание подпапки активно: файлы сохраняются в папку с названием пресета</system:String>
+    <system:String x:Key="PlayPauseTooltip">Старт / Пауза</system:String>
+    <system:String x:Key="RemoveTaskTooltip">Удалить задачу</system:String>
+    <system:String x:Key="RestoreMenu">Развернуть</system:String>
+    <system:String x:Key="ExitMenu">Выход</system:String>
     
     <!-- DataGrid Columns -->
     <system:String x:Key="ColFile">Файл</system:String>
     <system:String x:Key="ColPreset">Пресет</system:String>
     <system:String x:Key="ColStatus">Статус</system:String>
+    <system:String x:Key="ColProgress">Прогресс</system:String>
+    <system:String x:Key="ColError">Ошибка</system:String>
     <system:String x:Key="ColAction">Действие</system:String>
 
     <!-- Settings Window -->
     <system:String x:Key="SettingsTitle">Настройки RenderPard</system:String>
+    <system:String x:Key="GlobalSettingsTitle">Общие настройки</system:String>
     <system:String x:Key="PresetsHeader">Пресеты</system:String>
     <system:String x:Key="AddPreset">Добавить</system:String>
     <system:String x:Key="RemovePreset">Удалить</system:String>
-    <system:String x:Key="SaveClose">Сохранить и закрыть</system:String>
+    <system:String x:Key="SaveClose">Сохранить и применить</system:String>
+    <system:String x:Key="BtnCancel">Отмена</system:String>
+    <system:String x:Key="BtnOk">ОК</system:String>
+    <system:String x:Key="BtnBrowseFile">Из файла...</system:String>
+    <system:String x:Key="IconPickerTitle">Выбор иконки</system:String>
 
     <!-- General Tab -->
     <system:String x:Key="TabGeneral">Основные настройки</system:String>
@@ -32,17 +54,23 @@
     <system:String x:Key="LanguageLabel">Язык (Language):</system:String>
     <system:String x:Key="LanguageWarning">Некоторые изменения вступят в силу после перезапуска.</system:String>
 
-    <!-- Video Tab -->
+    <!-- Video Tab & Settings -->
     <system:String x:Key="TabVideo">Видео</system:String>
     <system:String x:Key="ContainerFormat">Формат (Контейнер):</system:String>
     <system:String x:Key="VideoCodec">Видео кодек:</system:String>
     <system:String x:Key="TargetBitrate">Целевой битрейт (kbps):</system:String>
     <system:String x:Key="MaxLongSide">Макс. размер длинной стороны:</system:String>
+    <system:String x:Key="MaxLongSidePx">Длинная сторона, px</system:String>
+    <system:String x:Key="KeepOriginalResolution">Оставить разрешение исходника</system:String>
     <system:String x:Key="AutoCalcBitrate">Авто-расчет битрейта для целевого размера (МБ):</system:String>
     <system:String x:Key="ExtractAlphaMask">Разбивать альфа-канал на видео и маску (_mask.mp4)</system:String>
     <system:String x:Key="PresetName">Название:</system:String>
     <system:String x:Key="ShowInMenu">Показывать в контекстном меню Windows</system:String>
     <system:String x:Key="GifFps">Частота кадров (FPS):</system:String>
+    <system:String x:Key="IncludeAudio">Включить аудио</system:String>
+    <system:String x:Key="CopyAudio">Оставить оригинальную аудиодорожку</system:String>
+    <system:String x:Key="NumberingLabel">Нумерация:</system:String>
+    <system:String x:Key="NumberingTooltip">Добавляет порядковый номер к имени файла (например, _1, _2)</system:String>
 
     <!-- Audio Tab -->
     <system:String x:Key="TabAudio">Аудио</system:String>
@@ -71,4 +99,53 @@
     <system:String x:Key="SaveToOriginalFolder">Сохранять в исходную папку (без подпапки)</system:String>
     <system:String x:Key="FilenamePattern">Шаблон имени ({original}, {preset}):</system:String>
 
+    <!-- Enums and Tabs -->
+    <system:String x:Key="PresetsTabVideo">Видео</system:String>
+    <system:String x:Key="PresetsTabPhoto">Фото</system:String>
+    
+    <system:String x:Key="Enum_NamingMode_Suffix">Суффикс (Название пресета)</system:String>
+    <system:String x:Key="Enum_NamingMode_Prefix">Префикс (Название пресета)</system:String>
+    <system:String x:Key="Enum_NamingMode_NoChange">Не менять</system:String>
+    
+    <system:String x:Key="Enum_ContainerFormat_Mp4">MP4</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Mov">MOV</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Mkv">MKV</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Webm">WebM</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Gif">GIF</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Jpeg">JPEG</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Jpg">JPG</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Png">PNG</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Webp">WebP</system:String>
+    <system:String x:Key="Enum_ContainerFormat_MXF">MXF</system:String>
+    
+    <system:String x:Key="Enum_VideoCodec_H264">H.264</system:String>
+    <system:String x:Key="Enum_VideoCodec_H264_Nvenc">H.264 (NVENC)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Hevc">H.265 (HEVC)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Hevc_Nvenc">H.265 (NVENC)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Vp9">VP9</system:String>
+    <system:String x:Key="Enum_VideoCodec_ProRes">Apple ProRes</system:String>
+    <system:String x:Key="Enum_VideoCodec_XdcamHd422">XDCAM HD422</system:String>
+    
+    <system:String x:Key="Enum_AudioMode_Copy">Копировать</system:String>
+    <system:String x:Key="Enum_AudioMode_Encode">Перекодировать</system:String>
+    <system:String x:Key="Enum_AudioMode_None">Без аудио</system:String>
+
+    <system:String x:Key="Enum_AudioCodec_Aac">AAC</system:String>
+    <system:String x:Key="Enum_AudioCodec_Mp3">MP3</system:String>
+    <system:String x:Key="Enum_AudioCodec_Opus">Opus</system:String>
+    <system:String x:Key="Enum_AudioCodec_Pcm">PCM</system:String>
+
+    <system:String x:Key="Enum_ResizeMode_Original">Оригинал</system:String>
+    <system:String x:Key="Enum_ResizeMode_MaxLongSide">По длинной стороне</system:String>
+    <system:String x:Key="Enum_ResizeMode_Manual">Вручную</system:String>
+    
+    <system:String x:Key="Enum_Position9_TopLeft">Сверху Слева</system:String>
+    <system:String x:Key="Enum_Position9_TopCenter">Сверху по Центру</system:String>
+    <system:String x:Key="Enum_Position9_TopRight">Сверху Справа</system:String>
+    <system:String x:Key="Enum_Position9_CenterLeft">Слева по Центру</system:String>
+    <system:String x:Key="Enum_Position9_Center">По Центру</system:String>
+    <system:String x:Key="Enum_Position9_CenterRight">Справа по Центру</system:String>
+    <system:String x:Key="Enum_Position9_BottomLeft">Снизу Слева</system:String>
+    <system:String x:Key="Enum_Position9_BottomCenter">Снизу по Центру</system:String>
+    <system:String x:Key="Enum_Position9_BottomRight">Снизу Справа</system:String>
 </ResourceDictionary>

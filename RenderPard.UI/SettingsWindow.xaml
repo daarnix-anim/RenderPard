@@ -8,7 +8,7 @@
         xmlns:models="clr-namespace:RenderPard.Core.Models;assembly=RenderPard.Core"
         xmlns:sys="clr-namespace:System;assembly=mscorlib"
         mc:Ignorable="d"
-        Title="RenderPard Settings" Height="600" Width="850"
+        Title="{DynamicResource SettingsTitle}" Height="620" Width="880"
         WindowStartupLocation="CenterOwner"
         Name="SettingsWin"
         Style="{StaticResource AnipardWindowStyle}">
@@ -24,9 +24,9 @@
         <local:GifVisibilityConverter x:Key="GifVisibilityConverter"/>
         <local:IconNameToImageSourceConverter x:Key="IconNameToImageSourceConverter"/>
         <local:ImageSettingsVisibilityConverter x:Key="ImageSettingsVisibilityConverter"/>
-        <local:NamingModeConverter x:Key="NamingModeConverter"/>
-        <local:NumberingModeConverter x:Key="NumberingModeConverter"/>
-        <local:InverseBooleanToBooleanConverter x:Key="InverseBooleanToBooleanConverter"/>
+        <local:EnumToLocalizedStringConverter x:Key="EnumToLocalizedStringConverter"/>
+        <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
     </Window.Resources>
     
     <Grid>
@@ -38,7 +38,7 @@
         <!-- Custom Title Bar Area -->
         <Border Grid.Row="0" Background="{StaticResource AppBackgroundSecondaryBrush}" CornerRadius="0">
             <Grid>
-                <TextBlock Text="RenderPard Settings" VerticalAlignment="Center" Margin="15,0,0,0" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource AppTextSecondaryBrush}"/>
+                <TextBlock Text="{DynamicResource SettingsTitle}" VerticalAlignment="Center" Margin="15,0,0,0" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource AppTextSecondaryBrush}"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" WindowChrome.IsHitTestVisibleInChrome="True">
                     <Button Content="—" Click="Minimize_Click" Width="40" Background="Transparent" BorderThickness="0" Foreground="{StaticResource AppTextSecondaryBrush}" FontSize="12" Focusable="False"/>
                     <Button Content="✕" Click="Close_Click" Width="40" Background="Transparent" BorderThickness="0" Foreground="{StaticResource AppTextSecondaryBrush}" FontSize="12" Focusable="False"/>
@@ -48,8 +48,8 @@
 
         <Grid Grid.Row="1" Margin="10">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="250"/>
-                <ColumnDefinition Width="20"/>
+                <ColumnDefinition Width="290"/>
+                <ColumnDefinition Width="15"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
             
@@ -60,199 +60,178 @@
             </Grid.RowDefinitions>
 
             <!-- Left pane: Preset list -->
-            <Border Grid.Column="0" Grid.Row="0" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" Padding="10" CornerRadius="8" Background="{StaticResource AppBackgroundSecondaryBrush}">
+            <Border Grid.Column="0" Grid.Row="0" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" Padding="12" CornerRadius="8" Background="{StaticResource AppBackgroundSecondaryBrush}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="6"/>
-                        <RowDefinition Height="*"/>
-                        <RowDefinition Height="6"/>
-                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="Auto"/> <!-- Tabs -->
+                        <RowDefinition Height="10"/>
+                        <RowDefinition Height="*"/>    <!-- ListBox -->
+                        <RowDefinition Height="12"/>
+                        <RowDefinition Height="Auto"/> <!-- Bottom Buttons -->
                     </Grid.RowDefinitions>
+                    
                     <TextBlock Grid.Row="0" Text="{DynamicResource PresetsHeader}" FontWeight="Bold" FontSize="18" Foreground="{StaticResource AppTextBrush}"/>
                     
-                    <Grid Grid.Row="2">
+                    <!-- Tabs (Video / Photo) -->
+                    <Border Grid.Row="2" Background="#16181D" CornerRadius="6" Padding="3" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <RadioButton Grid.Column="0" Content="{DynamicResource PresetsTabVideo}" IsChecked="{Binding IsVideoTabSelected}" Margin="0,0,2,0">
+                                <RadioButton.Style>
+                                    <Style TargetType="RadioButton">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Foreground" Value="{StaticResource AppTextSecondaryBrush}"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="RadioButton">
+                                                    <Border x:Name="tabBorder" Background="{TemplateBinding Background}" CornerRadius="4" Padding="0,6">
+                                                        <TextBlock Text="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="13" FontWeight="Medium" Foreground="{TemplateBinding Foreground}"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="tabBorder" Property="Background" Value="#22252E"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource AppTextBrush}"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="tabBorder" Property="Background" Value="{StaticResource AppBackgroundSecondaryBrush}"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource AppLinkBrush}"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </RadioButton.Style>
+                            </RadioButton>
+                            
+                            <RadioButton Grid.Column="1" Content="{DynamicResource PresetsTabPhoto}" IsChecked="{Binding IsVideoTabSelected, Converter={StaticResource InverseBooleanConverter}}" Margin="2,0,0,0">
+                                <RadioButton.Style>
+                                    <Style TargetType="RadioButton">
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="Foreground" Value="{StaticResource AppTextSecondaryBrush}"/>
+                                        <Setter Property="Cursor" Value="Hand"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="RadioButton">
+                                                    <Border x:Name="tabBorder" Background="{TemplateBinding Background}" CornerRadius="4" Padding="0,6">
+                                                        <TextBlock Text="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="13" FontWeight="Medium" Foreground="{TemplateBinding Foreground}"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="tabBorder" Property="Background" Value="#22252E"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource AppTextBrush}"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsChecked" Value="True">
+                                                            <Setter TargetName="tabBorder" Property="Background" Value="{StaticResource AppBackgroundSecondaryBrush}"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource AppLinkBrush}"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </RadioButton.Style>
+                            </RadioButton>
+                        </Grid>
+                    </Border>
+
+                    <!-- Preset List -->
+                    <ListBox Grid.Row="4" ItemsSource="{Binding FilteredPresetsView}" SelectedItem="{Binding SelectedPreset}" 
+                             Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="Padding" Value="4,3"/>
+                                <Setter Property="Margin" Value="0,0,0,4"/>
+                                <Setter Property="Background" Value="Transparent"/>
+                                <Setter Property="Foreground" Value="{StaticResource AppTextSecondaryBrush}"/>
+                                <Setter Property="Cursor" Value="Hand"/>
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border x:Name="ItemBorder" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}" BorderThickness="1" BorderBrush="Transparent">
+                                                <ContentPresenter VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                    <Setter TargetName="ItemBorder" Property="Background" Value="#2C303A"/>
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="ItemBorder" Property="Background" Value="#322A5C"/>
+                                                    <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{StaticResource AppLinkBrush}"/>
+                                                    <Setter Property="Foreground" Value="White"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="2,1">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <!-- Icon (Left) -->
+                                    <Border Grid.Column="0" Background="#1AFFFFFF" CornerRadius="4" Width="24" Height="24" Margin="0,0,8,0" VerticalAlignment="Center">
+                                        <Image Source="{Binding CustomIcon, Converter={StaticResource IconNameToImageSourceConverter}}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Border>
+                                    
+                                    <!-- Preset Name (Center, fills space) -->
+                                    <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="13"/>
+                                    
+                                    <!-- Context Menu Checkbox (Right) -->
+                                    <CheckBox Grid.Column="2" IsChecked="{Binding ShowInContextMenu}" ToolTip="{DynamicResource ShowInMenu}" Margin="8,0,2,0" VerticalAlignment="Center"/>
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+
+                    <!-- Bottom Actions (Add & Delete) -->
+                    <Grid Grid.Row="6">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="10"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        
-                        <!-- Left Column: Video Presets -->
-                        <Grid Grid.Column="0">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="10"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            
-                            <!-- Add Video Preset Button -->
-                            <Button Grid.Row="0" Command="{Binding AddVideoPresetCommand}" Height="35" ToolTip="{DynamicResource AddPreset}" Padding="0">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Viewbox Width="12" Height="12" Stretch="Uniform" Margin="0,0,5,0">
-                                        <Canvas Width="24" Height="24">
-                                            <Path Data="M18,4l2,4h-3l-2-4h-2l2,4h-3l-2-4H8l2,4H7L5,4H4c-1.1,0-1.99,0.9-1.99,2L2,18c0,1.1,0.9,2,2,2h16c1.1,0,2-0.9,2-2V4H18z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                                        </Canvas>
-                                    </Viewbox>
-                                    <TextBlock Text="Add Video" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                            
-                            <ListBox Grid.Row="2" ItemsSource="{Binding VideoPresets}" SelectedItem="{Binding SelectedPreset}" 
-                                     Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                                <ListBox.ItemContainerStyle>
-                                    <Style TargetType="ListBoxItem">
-                                        <Setter Property="Padding" Value="5,3"/>
-                                        <Setter Property="Margin" Value="0,0,0,2"/>
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Foreground" Value="{StaticResource AppTextSecondaryBrush}"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="ListBoxItem">
-                                                    <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
-                                                        <Grid>
-                                                            <Border x:Name="SelectBorder" Background="#22ffffff" CornerRadius="4" Opacity="0" IsHitTestVisible="False"/>
-                                                            <ContentPresenter VerticalAlignment="Center"/>
-                                                        </Grid>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Foreground" Value="White"/>
-                                                            <Setter TargetName="Border" Property="Background" Value="#08ffffff"/>
-                                                        </Trigger>
-                                                        <Trigger Property="IsSelected" Value="True">
-                                                            <Trigger.EnterActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation Storyboard.TargetName="SelectBorder" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </Trigger.EnterActions>
-                                                            <Trigger.ExitActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation Storyboard.TargetName="SelectBorder" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </Trigger.ExitActions>
-                                                            <Setter Property="Foreground" Value="White"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </ListBox.ItemContainerStyle>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Image Grid.Column="0" Source="{Binding CustomIcon, Converter={StaticResource IconNameToImageSourceConverter}}" Width="16" Height="16" Margin="0,0,8,0" Stretch="Uniform"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                            <CheckBox Grid.Column="2" IsChecked="{Binding ShowInContextMenu}" ToolTip="{DynamicResource ShowInMenu}" Margin="10,0,0,0"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </Grid>
-                        
-                        <!-- Right Column: Photo Presets -->
-                        <Grid Grid.Column="2">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="10"/>
-                                <RowDefinition Height="*"/>
-                            </Grid.RowDefinitions>
-                            
-                            <!-- Add Photo Preset Button -->
-                            <Button Grid.Row="0" Command="{Binding AddImagePresetCommand}" Height="35" ToolTip="{DynamicResource AddPreset}" Padding="0">
-                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                    <Viewbox Width="12" Height="12" Stretch="Uniform" Margin="0,0,5,0">
-                                        <Canvas Width="24" Height="24">
-                                            <Path Data="M21,19V5c0-1.1-0.9-2-2-2H5C3.9,3,3,3.9,3,5v14c0,1.1,0.9,2,2,2h14C20.1,21,21,20.1,21,19z M8.5,13.5l2.5,3.01L14.5,12l4.5,6H5L8.5,13.5z" Fill="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"/>
-                                        </Canvas>
-                                    </Viewbox>
-                                    <TextBlock Text="Add Photo" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
-                            
-                            <ListBox Grid.Row="2" ItemsSource="{Binding ImagePresets}" SelectedItem="{Binding SelectedPreset}" 
-                                     Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                                <ListBox.ItemContainerStyle>
-                                    <Style TargetType="ListBoxItem">
-                                        <Setter Property="Padding" Value="5,3"/>
-                                        <Setter Property="Margin" Value="0,0,0,2"/>
-                                        <Setter Property="Background" Value="Transparent"/>
-                                        <Setter Property="Foreground" Value="{StaticResource AppTextSecondaryBrush}"/>
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="ListBoxItem">
-                                                    <Border x:Name="Border" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
-                                                        <Grid>
-                                                            <Border x:Name="SelectBorder" Background="#22ffffff" CornerRadius="4" Opacity="0" IsHitTestVisible="False"/>
-                                                            <ContentPresenter VerticalAlignment="Center"/>
-                                                        </Grid>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Foreground" Value="White"/>
-                                                            <Setter TargetName="Border" Property="Background" Value="#08ffffff"/>
-                                                        </Trigger>
-                                                        <Trigger Property="IsSelected" Value="True">
-                                                            <Trigger.EnterActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation Storyboard.TargetName="SelectBorder" Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.2"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </Trigger.EnterActions>
-                                                            <Trigger.ExitActions>
-                                                                <BeginStoryboard>
-                                                                    <Storyboard>
-                                                                        <DoubleAnimation Storyboard.TargetName="SelectBorder" Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/>
-                                                                    </Storyboard>
-                                                                </BeginStoryboard>
-                                                            </Trigger.ExitActions>
-                                                            <Setter Property="Foreground" Value="White"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </ListBox.ItemContainerStyle>
-                                <ListBox.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid>
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto"/>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <Image Grid.Column="0" Source="{Binding CustomIcon, Converter={StaticResource IconNameToImageSourceConverter}}" Width="16" Height="16" Margin="0,0,8,0" Stretch="Uniform"/>
-                                            <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"/>
-                                            <CheckBox Grid.Column="2" IsChecked="{Binding ShowInContextMenu}" ToolTip="{DynamicResource ShowInMenu}" Margin="10,0,0,0"/>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ListBox.ItemTemplate>
-                            </ListBox>
-                        </Grid>
+                        <Button Grid.Column="0" Command="{Binding AddPresetCommand}" Background="{StaticResource AppLinkBrush}" Foreground="White" BorderThickness="0" Height="30" Cursor="Hand">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="➕" Margin="0,0,5,0" VerticalAlignment="Center" FontSize="11"/>
+                                <TextBlock Text="{DynamicResource AddPreset}" VerticalAlignment="Center" FontWeight="Medium"/>
+                            </StackPanel>
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="6"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
+                        <Button Grid.Column="2" Command="{Binding DeletePresetCommand}" Background="Transparent" Foreground="#FF4757" BorderBrush="#4DFF4757" BorderThickness="1" Height="30" Cursor="Hand">
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                <TextBlock Text="🗑️" Margin="0,0,5,0" VerticalAlignment="Center" FontSize="11"/>
+                                <TextBlock Text="{DynamicResource RemovePreset}" VerticalAlignment="Center" FontWeight="Medium"/>
+                            </StackPanel>
+                            <Button.Resources>
+                                <Style TargetType="Border">
+                                    <Setter Property="CornerRadius" Value="6"/>
+                                </Style>
+                            </Button.Resources>
+                        </Button>
                     </Grid>
-                    
-                    <!-- Delete Preset Button (Moved to bottom) -->
-                    <StackPanel Grid.Row="4" HorizontalAlignment="Left" Margin="0,15,0,0">
-                        <Button Content="Delete Selected Preset" Command="{Binding DeletePresetCommand}" Height="26" FontSize="11" 
-                                Foreground="{StaticResource AppTextSecondaryBrush}" BorderThickness="0" Background="Transparent" Padding="10,0"/>
-                    </StackPanel>
                 </Grid>
             </Border>
 
             <!-- Right pane: Preset properties -->
-            <Border Grid.Column="2" Grid.Row="0" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" Padding="10" CornerRadius="8" Background="{StaticResource AppBackgroundSecondaryBrush}" IsEnabled="{Binding SelectedPreset, Converter={StaticResource IsNotNullConverter}}">
+            <Border Grid.Column="2" Grid.Row="0" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" Padding="12" CornerRadius="8" Background="{StaticResource AppBackgroundSecondaryBrush}" IsEnabled="{Binding SelectedPreset, Converter={StaticResource IsNotNullConverter}}">
                 <TabControl DataContext="{Binding SelectedPreset}">
                     <TabControl.Resources>
                         <Style TargetType="TextBlock">
@@ -274,6 +253,7 @@
                             <Setter Property="ToolTipService.InitialShowDelay" Value="500"/>
                         </Style>
                     </TabControl.Resources>
+                    
                     <!-- GENERAL & VIDEO (COMBINED) TAB -->
                     <TabItem Header="{DynamicResource TabGeneral}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
@@ -324,31 +304,31 @@
                                     <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Name, UpdateSourceTrigger=PropertyChanged}"/>
                                     
                                     <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal">
-                                        <ComboBox Width="110" SelectedItem="{Binding NamingLogic}">
+                                        <ComboBox Width="130" SelectedItem="{Binding NamingLogic}">
                                             <ComboBox.ItemsSource>
                                                 <Binding Source="{local:EnumBindingSource {x:Type models:NamingMode}}" />
                                             </ComboBox.ItemsSource>
                                             <ComboBox.ItemTemplate>
                                                 <DataTemplate>
-                                                    <TextBlock Text="{Binding Converter={StaticResource NamingModeConverter}}"/>
+                                                    <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedStringConverter}}"/>
                                                 </DataTemplate>
                                             </ComboBox.ItemTemplate>
                                         </ComboBox>
                                         
-                                        <TextBlock Text="Нумерация:" Margin="15,0,4,0" Foreground="{StaticResource AppTextSecondaryBrush}"/>
-                                        <ComboBox Width="110" SelectedItem="{Binding NumberingLogic}" ToolTip="Добавляет порядковый номер к имени файла (например, _1, _2)">
+                                        <TextBlock Text="{DynamicResource NumberingLabel}" Margin="15,0,4,0" Foreground="{StaticResource AppTextSecondaryBrush}"/>
+                                        <ComboBox Width="130" SelectedItem="{Binding NumberingLogic}" ToolTip="{DynamicResource NumberingTooltip}">
                                             <ComboBox.ItemsSource>
                                                 <Binding Source="{local:EnumBindingSource {x:Type models:NamingMode}}" />
                                             </ComboBox.ItemsSource>
                                             <ComboBox.ItemTemplate>
                                                 <DataTemplate>
-                                                    <TextBlock Text="{Binding Converter={StaticResource NumberingModeConverter}}"/>
+                                                    <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedStringConverter}}"/>
                                                 </DataTemplate>
                                             </ComboBox.ItemTemplate>
                                         </ComboBox>
                                         
                                         <Button Command="{Binding DataContext.PickIconCommand, RelativeSource={RelativeSource AncestorType=Window}}" 
-                                                Width="24" Height="24" Margin="15,0,0,0" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource AppBorderBrush}" Cursor="Hand" Padding="2" ToolTip="Выбор иконки">
+                                                Width="24" Height="24" Margin="15,0,0,0" Background="Transparent" BorderThickness="1" BorderBrush="{StaticResource AppBorderBrush}" Cursor="Hand" Padding="2" ToolTip="{DynamicResource IconPickerTitle}">
                                             <Image Source="{Binding CustomIcon, Converter={StaticResource IconNameToImageSourceConverter}}" Stretch="Uniform" />
                                         </Button>
                                     </StackPanel>
@@ -356,34 +336,46 @@
 
                                 <!-- Container Format -->
                                 <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource ContainerFormat}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}"/>
-                                <ComboBox Grid.Row="2" Grid.Column="1" SelectedItem="{Binding Container}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:ContainerFormat}}}"/>
+                                <ComboBox Grid.Row="2" Grid.Column="1" SelectedItem="{Binding Container}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:ContainerFormat}}}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedStringConverter}}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
 
-                                <!-- Video Codec (Hidden if GIF) -->
+                                <!-- Video Codec (Hidden if GIF or Image) -->
                                 <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource VideoCodec}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding Container, Converter={StaticResource VideoSettingsVisibilityConverter}}"/>
-                                <ComboBox Grid.Row="4" Grid.Column="1" SelectedItem="{Binding VideoCodec}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:VideoCodec}}}" Visibility="{Binding Container, Converter={StaticResource VideoSettingsVisibilityConverter}}"/>
+                                <ComboBox Grid.Row="4" Grid.Column="1" SelectedItem="{Binding VideoCodec}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:VideoCodec}}}" Visibility="{Binding Container, Converter={StaticResource VideoSettingsVisibilityConverter}}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedStringConverter}}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
 
-                                <!-- Target Bitrate (Hidden if GIF) -->
+                                <!-- Target Bitrate (Hidden if GIF or Image) -->
                                 <TextBlock Grid.Row="6" Grid.Column="0" Text="{DynamicResource TargetBitrate}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding Container, Converter={StaticResource VideoSettingsVisibilityConverter}}"/>
                                 <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding TargetVideoBitrateKbps, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding Container, Converter={StaticResource VideoSettingsVisibilityConverter}}"/>
 
                                 <!-- Max Long Side -->
-                                <TextBlock Grid.Row="8" Grid.Column="0" Text="Длинная сторона, px" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding Converter={StaticResource MaxLongSideVisibilityConverter}}"/>
+                                <TextBlock Grid.Row="8" Grid.Column="0" Text="{DynamicResource MaxLongSidePx}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding Converter={StaticResource MaxLongSideVisibilityConverter}}"/>
                                 <StackPanel Grid.Row="8" Grid.Column="1" Orientation="Horizontal" Visibility="{Binding Converter={StaticResource MaxLongSideVisibilityConverter}}">
-                                    <TextBox Text="{Binding MaxLongSideSize, UpdateSourceTrigger=PropertyChanged}" Width="100" IsEnabled="{Binding KeepOriginalResolution, Converter={StaticResource InverseBooleanToBooleanConverter}}"/>
-                                    <CheckBox IsChecked="{Binding KeepOriginalResolution}" Margin="15,0,0,0" Foreground="{StaticResource AppTextBrush}" VerticalAlignment="Center" ToolTip="Оставить разрешение исходника"/>
+                                    <TextBox Text="{Binding MaxLongSideSize, UpdateSourceTrigger=PropertyChanged}" Width="100" IsEnabled="{Binding KeepOriginalResolution, Converter={StaticResource InverseBooleanConverter}}"/>
+                                    <CheckBox IsChecked="{Binding KeepOriginalResolution}" Margin="15,0,0,0" Foreground="{StaticResource AppTextBrush}" VerticalAlignment="Center" ToolTip="{DynamicResource KeepOriginalResolution}"/>
                                 </StackPanel>
 
-                                <!-- Auto Calc Bitrate (Hidden if GIF) -->
+                                <!-- Auto Calc Bitrate & Audio Options -->
                                 <StackPanel Grid.Row="10" Grid.ColumnSpan="2" Visibility="{Binding Container, Converter={StaticResource VideoSettingsVisibilityConverter}}">
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                        <CheckBox Content="Включить аудио" IsChecked="{Binding IncludeAudio}" Foreground="{StaticResource AppTextBrush}" ToolTip="Вшить или перекодировать аудиодорожку в финальное видео"/>
-                                        <CheckBox Content="Оставить оригинальную аудиодорожку" IsChecked="{Binding CopyAudio}" Margin="15,0,0,0" Foreground="{StaticResource AppTextBrush}" IsEnabled="{Binding IncludeAudio}" ToolTip="Копировать аудиодорожку без изменений для сохранения оригинального качества"/>
+                                        <CheckBox Content="{DynamicResource IncludeAudio}" IsChecked="{Binding IncludeAudio}" Foreground="{StaticResource AppTextBrush}"/>
+                                        <CheckBox Content="{DynamicResource CopyAudio}" IsChecked="{Binding CopyAudio}" Margin="15,0,0,0" Foreground="{StaticResource AppTextBrush}" IsEnabled="{Binding IncludeAudio}"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                        <CheckBox Content="{DynamicResource AutoCalcBitrate}" IsChecked="{Binding UseWebPreLogic}" Foreground="{StaticResource AppTextBrush}" VerticalAlignment="Center" ToolTip="Автоматически рассчитать битрейт для достижения заданного целевого размера файла (МБ)"/>
+                                        <CheckBox Content="{DynamicResource AutoCalcBitrate}" IsChecked="{Binding UseWebPreLogic}" Foreground="{StaticResource AppTextBrush}" VerticalAlignment="Center"/>
                                         <TextBox Text="{Binding MaxSizeMb, UpdateSourceTrigger=PropertyChanged}" Width="60" Margin="10,0,0,0" IsEnabled="{Binding UseWebPreLogic}"/>
                                     </StackPanel>
-                                    <CheckBox Content="{DynamicResource ExtractAlphaMask}" IsChecked="{Binding ExtractAlphaMask}" Foreground="{StaticResource AppTextBrush}" ToolTip="Сохранить альфа-канал отдельным черно-белым видеофайлом-маской (_mask.mp4)"/>
+                                    <CheckBox Content="{DynamicResource ExtractAlphaMask}" IsChecked="{Binding ExtractAlphaMask}" Foreground="{StaticResource AppTextBrush}"/>
                                 </StackPanel>
 
                                 <!-- GIF FPS (Visible only if GIF) -->
@@ -406,9 +398,15 @@
 
                                 <!-- IMAGE RESIZE MODE -->
                                 <TextBlock Grid.Row="18" Grid.Column="0" Text="{DynamicResource ImageResizeMode}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}"/>
-                                <ComboBox Grid.Row="18" Grid.Column="1" SelectedItem="{Binding ImageResizeMode}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:ResizeMode}}}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}"/>
+                                <ComboBox Grid.Row="18" Grid.Column="1" SelectedItem="{Binding ImageResizeMode}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:ResizeMode}}}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedStringConverter}}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
 
-                                <!-- IMAGE RESIZE VALUE -->
+                                <!-- IMAGE RESIZE VALUE (Disabled when Original) -->
                                 <TextBlock Grid.Row="20" Grid.Column="0" Text="{DynamicResource ImageResizeValue}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}"/>
                                 <TextBox Grid.Row="20" Grid.Column="1" Text="{Binding ImageResizeValue, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}">
                                     <TextBox.Style>
@@ -429,7 +427,7 @@
                     <TabItem Header="{DynamicResource TabWatermark}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="0,15,0,0">
-                                <CheckBox Content="{DynamicResource EnableWatermark}" IsChecked="{Binding HasWatermark}" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,20" ToolTip="Наложить водяной знак (логотип) на видео"/>
+                                <CheckBox Content="{DynamicResource EnableWatermark}" IsChecked="{Binding HasWatermark}" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,20"/>
                                 
                                 <Grid DataContext="{Binding Watermark}" IsEnabled="{Binding DataContext.HasWatermark, RelativeSource={RelativeSource AncestorType=StackPanel}}">
                                     <Grid.ColumnDefinitions>
@@ -458,7 +456,13 @@
                                     <TextBox Grid.Row="4" Grid.Column="1" Text="{Binding Color, UpdateSourceTrigger=PropertyChanged}"/>
 
                                     <TextBlock Grid.Row="6" Grid.Column="0" Text="{DynamicResource WmPosition}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}"/>
-                                    <ComboBox Grid.Row="6" Grid.Column="1" SelectedItem="{Binding Position}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:Position9}}}"/>
+                                    <ComboBox Grid.Row="6" Grid.Column="1" SelectedItem="{Binding Position}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:Position9}}}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedStringConverter}}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
 
                                     <TextBlock Grid.Row="8" Grid.Column="0" Text="{DynamicResource WmOpacity}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}"/>
                                     <Grid Grid.Row="8" Grid.Column="1">
@@ -478,7 +482,7 @@
                     <TabItem Header="{DynamicResource TabTimecode}">
                         <ScrollViewer VerticalScrollBarVisibility="Auto">
                             <StackPanel Margin="0,15,0,0">
-                                <CheckBox Content="{DynamicResource EnableTimecode}" IsChecked="{Binding HasTimecode}" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,20" ToolTip="Наложить таймкод (счетчик времени) на видео"/>
+                                <CheckBox Content="{DynamicResource EnableTimecode}" IsChecked="{Binding HasTimecode}" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,20"/>
                                 
                                 <Grid DataContext="{Binding TimecodeStyles[0]}" IsEnabled="{Binding DataContext.HasTimecode, RelativeSource={RelativeSource AncestorType=StackPanel}}">
                                     <Grid.ColumnDefinitions>
@@ -502,7 +506,13 @@
                                     <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding Color, UpdateSourceTrigger=PropertyChanged}"/>
 
                                     <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource WmPosition}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}"/>
-                                    <ComboBox Grid.Row="4" Grid.Column="1" SelectedItem="{Binding Position}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:Position9}}}"/>
+                                    <ComboBox Grid.Row="4" Grid.Column="1" SelectedItem="{Binding Position}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:Position9}}}">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedStringConverter}}"/>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
 
                                     <TextBlock Grid.Row="6" Grid.Column="0" Text="{DynamicResource WmOpacity}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}"/>
                                     <Grid Grid.Row="6" Grid.Column="1">
@@ -527,7 +537,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 
-                <Button Grid.Column="0" Command="{Binding OpenGlobalSettingsCommand}" ToolTip="Общие настройки" Width="30" Height="30" Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="20,0,0,0" HorizontalAlignment="Left" Padding="0">
+                <Button Grid.Column="0" Command="{Binding OpenGlobalSettingsCommand}" ToolTip="{DynamicResource GlobalSettingsTitle}" Width="30" Height="30" Background="Transparent" BorderThickness="0" Cursor="Hand" Margin="10,0,0,0" HorizontalAlignment="Left" Padding="0">
                     <Viewbox Width="20" Height="20" Stretch="Uniform">
                         <Canvas Width="24" Height="24">
                             <Path Data="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.98C19.47,12.66 19.5,12.34 19.5,12C19.5,11.66 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.65 15.48,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.52,5.32 7.96,5.65 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.66 4.5,12C4.5,12.34 4.53,12.66 4.57,12.98L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.04 4.95,18.95L7.44,17.95C7.96,18.35 8.52,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.48,18.68 16.04,18.35 16.56,17.95L19.05,18.95C19.27,19.04 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.98Z" Fill="{StaticResource AppTextBrush}"/>
@@ -536,12 +546,10 @@
                 </Button>
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
-                    <Button Content="Cancel" Command="{Binding CancelCommand}" CommandParameter="{Binding ElementName=SettingsWin}" Width="100" Height="26" Margin="0,0,10,0"/>
-                    <Button Content="Save &amp; Apply" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=SettingsWin}" Width="120" Height="26" FontWeight="Bold"/>
+                    <Button Content="{DynamicResource BtnCancel}" Command="{Binding CancelCommand}" CommandParameter="{Binding ElementName=SettingsWin}" Width="100" Height="26" Margin="0,0,10,0"/>
+                    <Button Content="{DynamicResource SaveClose}" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=SettingsWin}" Width="150" Height="26" FontWeight="Bold"/>
                 </StackPanel>
             </Grid>
         </Grid>
     </Grid>
 </Window>
-
-

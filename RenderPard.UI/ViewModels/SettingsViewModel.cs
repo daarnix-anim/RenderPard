@@ -21,6 +21,22 @@ public partial class SettingsViewModel : ObservableObject
     private bool _minimizeToTrayOnClose;
     private string _language;
         
+    private bool _isVideoTabSelected = true;
+    public bool IsVideoTabSelected
+    {
+        get => _isVideoTabSelected;
+        set
+        {
+            if (SetProperty(ref _isVideoTabSelected, value))
+            {
+                FilteredPresetsView.Refresh();
+                SelectedPreset = FilteredPresetsView.Cast<Preset>().FirstOrDefault();
+            }
+        }
+    }
+
+    public System.ComponentModel.ICollectionView FilteredPresetsView { get; }
+
     public ObservableCollection<Preset> Presets { get; }
     public System.Collections.Generic.IEnumerable<Preset> VideoPresets => Presets.Where(p => !p.IsImagePreset);
     public System.Collections.Generic.IEnumerable<Preset> ImagePresets => Presets.Where(p => p.IsImagePreset);
@@ -101,6 +117,15 @@ public partial class SettingsViewModel : ObservableObject
 
         var loadedPresets = App.PresetManager.LoadPresets();
         Presets = new ObservableCollection<Preset>(loadedPresets);
+        FilteredPresetsView = System.Windows.Data.CollectionViewSource.GetDefaultView(Presets);
+        FilteredPresetsView.Filter = item => 
+        {
+            if (item is Preset p)
+            {
+                return IsVideoTabSelected ? !p.IsImagePreset : p.IsImagePreset;
+            }
+            return false;
+        };
         Presets.CollectionChanged += (s, e) => 
         {
             OnPropertyChanged(nameof(VideoPresets));
@@ -144,7 +169,7 @@ public partial class SettingsViewModel : ObservableObject
 
         if (Presets.Any())
         {
-            SelectedPreset = Presets.First();
+            SelectedPreset = FilteredPresetsView.Cast<Preset>().FirstOrDefault() ?? Presets.First();
         }
     }
 
@@ -205,6 +230,42 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void AddPreset()
+    {
+        if (IsVideoTabSelected)
+        {
+            var newPreset = new Preset
+            {
+                Name = "New Video Preset",
+                ShowInContextMenu = true,
+                Container = ContainerFormat.Mp4,
+                VideoCodec = VideoCodec.H264_Nvenc,
+                TargetVideoBitrateKbps = 2000,
+                AudioMode = AudioMode.Encode,
+                AudioCodec = AudioCodec.Aac,
+                AudioBitrateKbps = 128
+            };
+            Presets.Add(newPreset);
+            FilteredPresetsView.Refresh();
+            SelectedPreset = newPreset;
+        }
+        else
+        {
+            var newPreset = new Preset
+            {
+                Name = "New Image Preset",
+                ShowInContextMenu = true,
+                Container = ContainerFormat.Jpeg,
+                ImageQuality = 80,
+                FilenamePattern = "{original}_{preset}"
+            };
+            Presets.Add(newPreset);
+            FilteredPresetsView.Refresh();
+            SelectedPreset = newPreset;
+        }
+    }
+
+    [RelayCommand]
     private void AddVideoPreset()
     {
         var newPreset = new Preset
@@ -219,6 +280,7 @@ public partial class SettingsViewModel : ObservableObject
             AudioBitrateKbps = 128
         };
         Presets.Add(newPreset);
+        FilteredPresetsView.Refresh();
         SelectedPreset = newPreset;
     }
 
@@ -234,6 +296,7 @@ public partial class SettingsViewModel : ObservableObject
             FilenamePattern = "{original}_{preset}"
         };
         Presets.Add(newPreset);
+        FilteredPresetsView.Refresh();
         SelectedPreset = newPreset;
     }
 
@@ -243,7 +306,8 @@ public partial class SettingsViewModel : ObservableObject
         if (SelectedPreset != null)
         {
             Presets.Remove(SelectedPreset);
-            SelectedPreset = Presets.FirstOrDefault();
+            FilteredPresetsView.Refresh();
+            SelectedPreset = FilteredPresetsView.Cast<Preset>().FirstOrDefault();
         }
     }
 

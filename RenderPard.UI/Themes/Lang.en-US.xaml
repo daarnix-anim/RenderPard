@@ -5,25 +5,47 @@
     <!-- MainWindow -->
     <system:String x:Key="AppTitle">RenderPard Queue</system:String>
     <system:String x:Key="MenuSettings">Settings</system:String>
-    <system:String x:Key="DropFilesHere">Drop video files here...</system:String>
+    <system:String x:Key="DropFilesHere">Drop media files here...</system:String>
     <system:String x:Key="RegisterMenu">Register Context Menu</system:String>
     <system:String x:Key="RemoveMenu">Remove Menu</system:String>
+    <system:String x:Key="RegisterMenuShort">Add</system:String>
+    <system:String x:Key="RemoveMenuShort">Remove</system:String>
+    <system:String x:Key="RegisterMenuTooltip">Add entry to Windows context menu</system:String>
+    <system:String x:Key="RemoveMenuTooltip">Remove entry from Windows context menu</system:String>
     <system:String x:Key="ClearCompleted">Clear Completed/Pending</system:String>
+    <system:String x:Key="CancelAll">Cancel All</system:String>
     <system:String x:Key="DownloadFfmpeg">Download FFmpeg</system:String>
     <system:String x:Key="DownloadingFfmpeg">Downloading FFmpeg...</system:String>
+    <system:String x:Key="FfmpegMissingTitle">FFmpeg is Missing</system:String>
+    <system:String x:Key="FfmpegMissingDesc">RenderPard requires FFmpeg to transcode media files.&#x0a;Would you like to download it now from the official source?</system:String>
+    <system:String x:Key="AlwaysOnTopNormal">Normal Window Mode</system:String>
+    <system:String x:Key="AlwaysOnTopActive">Always On Top</system:String>
+    <system:String x:Key="SubfolderDisabled">Files saved next to originals</system:String>
+    <system:String x:Key="SubfolderEnabled">Subfolder creation active: files saved into preset named folder</system:String>
+    <system:String x:Key="PlayPauseTooltip">Play / Pause</system:String>
+    <system:String x:Key="RemoveTaskTooltip">Remove Task</system:String>
+    <system:String x:Key="RestoreMenu">Restore</system:String>
+    <system:String x:Key="ExitMenu">Exit</system:String>
     
     <!-- DataGrid Columns -->
     <system:String x:Key="ColFile">File</system:String>
     <system:String x:Key="ColPreset">Preset</system:String>
     <system:String x:Key="ColStatus">Status</system:String>
+    <system:String x:Key="ColProgress">Progress</system:String>
+    <system:String x:Key="ColError">Error</system:String>
     <system:String x:Key="ColAction">Action</system:String>
 
     <!-- Settings Window -->
     <system:String x:Key="SettingsTitle">RenderPard Settings</system:String>
+    <system:String x:Key="GlobalSettingsTitle">Global Settings</system:String>
     <system:String x:Key="PresetsHeader">Presets</system:String>
-    <system:String x:Key="AddPreset">Add Preset</system:String>
+    <system:String x:Key="AddPreset">Add</system:String>
     <system:String x:Key="RemovePreset">Remove</system:String>
-    <system:String x:Key="SaveClose">Save &amp; Close</system:String>
+    <system:String x:Key="SaveClose">Save &amp; Apply</system:String>
+    <system:String x:Key="BtnCancel">Cancel</system:String>
+    <system:String x:Key="BtnOk">OK</system:String>
+    <system:String x:Key="BtnBrowseFile">From file...</system:String>
+    <system:String x:Key="IconPickerTitle">Select Icon</system:String>
 
     <!-- General Tab -->
     <system:String x:Key="TabGeneral">Basic Settings</system:String>
@@ -32,17 +54,23 @@
     <system:String x:Key="LanguageLabel">Language (Язык):</system:String>
     <system:String x:Key="LanguageWarning">Some changes will take effect after restart.</system:String>
 
-    <!-- Video Tab -->
+    <!-- Video Tab & Settings -->
     <system:String x:Key="TabVideo">Video</system:String>
     <system:String x:Key="ContainerFormat">Format (Container):</system:String>
     <system:String x:Key="VideoCodec">Video Codec:</system:String>
     <system:String x:Key="TargetBitrate">Target Bitrate (kbps):</system:String>
     <system:String x:Key="MaxLongSide">Max Long Side Size:</system:String>
+    <system:String x:Key="MaxLongSidePx">Long Side, px</system:String>
+    <system:String x:Key="KeepOriginalResolution">Keep original resolution</system:String>
     <system:String x:Key="AutoCalcBitrate">Auto-calc bitrate for target size (MB):</system:String>
     <system:String x:Key="ExtractAlphaMask">Extract alpha channel to video + mask (_mask.mp4)</system:String>
     <system:String x:Key="PresetName">Name:</system:String>
     <system:String x:Key="ShowInMenu">Show in Windows context menu</system:String>
     <system:String x:Key="GifFps">Framerate (FPS):</system:String>
+    <system:String x:Key="IncludeAudio">Include Audio</system:String>
+    <system:String x:Key="CopyAudio">Keep original audio track</system:String>
+    <system:String x:Key="NumberingLabel">Numbering:</system:String>
+    <system:String x:Key="NumberingTooltip">Adds sequential number to filename (e.g., _1, _2)</system:String>
 
     <!-- Audio Tab -->
     <system:String x:Key="TabAudio">Audio</system:String>
@@ -71,4 +99,53 @@
     <system:String x:Key="SaveToOriginalFolder">Save to Original Folder (no subfolder)</system:String>
     <system:String x:Key="FilenamePattern">Filename Pattern ({original}, {preset}):</system:String>
     
+    <!-- Enums and Tabs -->
+    <system:String x:Key="PresetsTabVideo">Video</system:String>
+    <system:String x:Key="PresetsTabPhoto">Photo</system:String>
+    
+    <system:String x:Key="Enum_NamingMode_Suffix">Suffix (Preset Name)</system:String>
+    <system:String x:Key="Enum_NamingMode_Prefix">Prefix (Preset Name)</system:String>
+    <system:String x:Key="Enum_NamingMode_NoChange">No Change</system:String>
+    
+    <system:String x:Key="Enum_ContainerFormat_Mp4">MP4</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Mov">MOV</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Mkv">MKV</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Webm">WebM</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Gif">GIF</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Jpeg">JPEG</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Jpg">JPG</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Png">PNG</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Webp">WebP</system:String>
+    <system:String x:Key="Enum_ContainerFormat_MXF">MXF</system:String>
+    
+    <system:String x:Key="Enum_VideoCodec_H264">H.264</system:String>
+    <system:String x:Key="Enum_VideoCodec_H264_Nvenc">H.264 (NVENC)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Hevc">H.265 (HEVC)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Hevc_Nvenc">H.265 (NVENC)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Vp9">VP9</system:String>
+    <system:String x:Key="Enum_VideoCodec_ProRes">Apple ProRes</system:String>
+    <system:String x:Key="Enum_VideoCodec_XdcamHd422">XDCAM HD422</system:String>
+
+    <system:String x:Key="Enum_AudioMode_Copy">Copy</system:String>
+    <system:String x:Key="Enum_AudioMode_Encode">Encode</system:String>
+    <system:String x:Key="Enum_AudioMode_None">No Audio</system:String>
+
+    <system:String x:Key="Enum_AudioCodec_Aac">AAC</system:String>
+    <system:String x:Key="Enum_AudioCodec_Mp3">MP3</system:String>
+    <system:String x:Key="Enum_AudioCodec_Opus">Opus</system:String>
+    <system:String x:Key="Enum_AudioCodec_Pcm">PCM</system:String>
+    
+    <system:String x:Key="Enum_ResizeMode_Original">Original</system:String>
+    <system:String x:Key="Enum_ResizeMode_MaxLongSide">Max Long Side</system:String>
+    <system:String x:Key="Enum_ResizeMode_Manual">Manual</system:String>
+    
+    <system:String x:Key="Enum_Position9_TopLeft">Top Left</system:String>
+    <system:String x:Key="Enum_Position9_TopCenter">Top Center</system:String>
+    <system:String x:Key="Enum_Position9_TopRight">Top Right</system:String>
+    <system:String x:Key="Enum_Position9_CenterLeft">Center Left</system:String>
+    <system:String x:Key="Enum_Position9_Center">Center</system:String>
+    <system:String x:Key="Enum_Position9_CenterRight">Center Right</system:String>
+    <system:String x:Key="Enum_Position9_BottomLeft">Bottom Left</system:String>
+    <system:String x:Key="Enum_Position9_BottomCenter">Bottom Center</system:String>
+    <system:String x:Key="Enum_Position9_BottomRight">Bottom Right</system:String>
 </ResourceDictionary>

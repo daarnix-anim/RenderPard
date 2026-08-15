@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:RenderPard.UI"
         xmlns:viewModels="clr-namespace:RenderPard.UI.ViewModels"
         mc:Ignorable="d"
-        Title="Global Settings" Height="250" Width="400"
+        Title="{DynamicResource GlobalSettingsTitle}" Height="250" Width="400"
         WindowStartupLocation="CenterOwner"
         Style="{StaticResource AnipardWindowStyle}">
 
@@ -23,7 +23,7 @@
         <!-- Title Bar -->
         <Border Grid.Row="0" Background="{StaticResource AppBackgroundSecondaryBrush}" CornerRadius="0">
             <Grid>
-                <TextBlock Text="Global Settings" VerticalAlignment="Center" Margin="15,0,0,0" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource AppTextSecondaryBrush}"/>
+                <TextBlock Text="{DynamicResource GlobalSettingsTitle}" VerticalAlignment="Center" Margin="15,0,0,0" FontWeight="SemiBold" FontSize="12" Foreground="{StaticResource AppTextSecondaryBrush}"/>
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" WindowChrome.IsHitTestVisibleInChrome="True">
                     <Button Content="✕" Click="Close_Click" Width="40" Background="Transparent" BorderThickness="0" Foreground="{StaticResource AppTextSecondaryBrush}" FontSize="12" Focusable="False"/>
                 </StackPanel>
