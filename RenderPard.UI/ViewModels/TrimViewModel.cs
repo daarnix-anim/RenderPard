@@ -194,6 +194,66 @@ public partial class TrimViewModel : ObservableObject
         }
     }
 
+    partial void OnInPointSecondsChanged(double? value)
+    {
+        OnPropertyChanged(nameof(InPointText));
+        OnPropertyChanged(nameof(SelectedDurationText));
+        OnPropertyChanged(nameof(InPointFraction));
+        OnPropertyChanged(nameof(SelectedDurationFraction));
+
+        if (SelectedSegment != null && value.HasValue)
+        {
+            SelectedSegment.StartSeconds = value.Value;
+        }
+    }
+
+    partial void OnOutPointSecondsChanged(double? value)
+    {
+        OnPropertyChanged(nameof(OutPointText));
+        OnPropertyChanged(nameof(SelectedDurationText));
+        OnPropertyChanged(nameof(OutPointFraction));
+        OnPropertyChanged(nameof(SelectedDurationFraction));
+
+        if (SelectedSegment != null && value.HasValue)
+        {
+            SelectedSegment.EndSeconds = value.Value;
+        }
+    }
+
+    partial void OnMergeSegmentsOnExportChanged(bool value)
+    {
+        OnPropertyChanged(nameof(RenderButtonText));
+        OnPropertyChanged(nameof(QueueButtonText));
+    }
+
+    public string RenderButtonText
+    {
+        get
+        {
+            if (Segments.Count >= 2)
+            {
+                return MergeSegmentsOnExport
+                    ? $"Рендер (Склеить {Segments.Count} фр.)"
+                    : $"Рендер ({Segments.Count} отд. файла)";
+            }
+            return "Рендер";
+        }
+    }
+
+    public string QueueButtonText
+    {
+        get
+        {
+            if (Segments.Count >= 2)
+            {
+                return MergeSegmentsOnExport
+                    ? $"В очередь (Склеить {Segments.Count})"
+                    : $"В очередь ({Segments.Count} файла)";
+            }
+            return "В очередь";
+        }
+    }
+
     partial void OnCropModeChanged(CropAspectRatioMode value)
     {
         OnPropertyChanged(nameof(IsCropActive));
@@ -206,12 +266,40 @@ public partial class TrimViewModel : ObservableObject
 
         ApplyCropAspectRatio(value);
         RequestCropOverlayUpdate?.Invoke();
+
+        if (SelectedSegment != null)
+        {
+            SelectedSegment.IsCropped = value != CropAspectRatioMode.None;
+            SelectedSegment.CropX = CropX;
+            SelectedSegment.CropY = CropY;
+            SelectedSegment.CropWidth = CropWidth;
+            SelectedSegment.CropHeight = CropHeight;
+        }
     }
 
-    partial void OnCropXChanged(int value) => OnPropertyChanged(nameof(CropInfoText));
-    partial void OnCropYChanged(int value) => OnPropertyChanged(nameof(CropInfoText));
-    partial void OnCropWidthChanged(int value) => OnPropertyChanged(nameof(CropInfoText));
-    partial void OnCropHeightChanged(int value) => OnPropertyChanged(nameof(CropInfoText));
+    partial void OnCropXChanged(int value)
+    {
+        OnPropertyChanged(nameof(CropInfoText));
+        if (SelectedSegment != null) SelectedSegment.CropX = value;
+    }
+
+    partial void OnCropYChanged(int value)
+    {
+        OnPropertyChanged(nameof(CropInfoText));
+        if (SelectedSegment != null) SelectedSegment.CropY = value;
+    }
+
+    partial void OnCropWidthChanged(int value)
+    {
+        OnPropertyChanged(nameof(CropInfoText));
+        if (SelectedSegment != null) SelectedSegment.CropWidth = value;
+    }
+
+    partial void OnCropHeightChanged(int value)
+    {
+        OnPropertyChanged(nameof(CropInfoText));
+        if (SelectedSegment != null) SelectedSegment.CropHeight = value;
+    }
 
     [RelayCommand]
     public void SetCropMode(CropAspectRatioMode mode)
@@ -400,21 +488,6 @@ public partial class TrimViewModel : ObservableObject
     [RelayCommand]
     public void ResetZoom() => SetZoom(1.0);
 
-    partial void OnInPointSecondsChanged(double? value)
-    {
-        OnPropertyChanged(nameof(InPointText));
-        OnPropertyChanged(nameof(SelectedDurationText));
-        OnPropertyChanged(nameof(InPointFraction));
-        OnPropertyChanged(nameof(SelectedDurationFraction));
-    }
-
-    partial void OnOutPointSecondsChanged(double? value)
-    {
-        OnPropertyChanged(nameof(OutPointText));
-        OnPropertyChanged(nameof(SelectedDurationText));
-        OnPropertyChanged(nameof(OutPointFraction));
-        OnPropertyChanged(nameof(SelectedDurationFraction));
-    }
 
     partial void OnTotalDurationSecondsChanged(double value)
     {
@@ -545,33 +618,82 @@ public partial class TrimViewModel : ObservableObject
         double end = OutPointSeconds ?? (TotalDurationSeconds > 0 ? TotalDurationSeconds : start + 5.0);
         if (end <= start) end = Math.Min(TotalDurationSeconds, start + 1.0);
 
-        var seg = new TrimSegment
+        if (Segments.Count == 0)
         {
-            Name = $"Фрагмент {Segments.Count + 1}",
-            StartSeconds = start,
-            EndSeconds = end,
-            IsCropped = IsCropActive && CropWidth > 0 && CropHeight > 0,
-            CropX = CropX,
-            CropY = CropY,
-            CropWidth = CropWidth,
-            CropHeight = CropHeight
-        };
-        Segments.Add(seg);
-        HasSegments = Segments.Count > 0;
-        SelectedSegment = seg;
+            // First time clicking "+":
+            // 1. Add Segment 1
+            var seg1 = new TrimSegment
+            {
+                Name = "Фрагмент 1",
+                StartSeconds = start,
+                EndSeconds = end,
+                IsCropped = IsCropActive && CropWidth > 0 && CropHeight > 0,
+                CropX = CropX,
+                CropY = CropY,
+                CropWidth = CropWidth,
+                CropHeight = CropHeight,
+                IsSelected = false
+            };
+            Segments.Add(seg1);
 
-        // Auto-shift for next segment: position right after current segment with identical duration
-        double segDuration = Math.Max(0.5, end - start);
-        double totDur = TotalDurationSeconds;
+            // 2. Automatically spawn candidate Segment 2 right next to it with identical duration
+            double segDuration = Math.Max(0.5, end - start);
+            double totDur = TotalDurationSeconds;
+            double nextStart = end < totDur ? end : Math.Max(0, totDur - segDuration);
+            double nextEnd = Math.Min(totDur, nextStart + segDuration);
 
-        if (totDur > 0 && end < totDur)
-        {
-            double newIn = end;
-            double newOut = Math.Min(totDur, newIn + segDuration);
-            InPointSeconds = newIn;
-            OutPointSeconds = newOut;
-            SeekTo(newIn);
+            var seg2 = new TrimSegment
+            {
+                Name = "Фрагмент 2",
+                StartSeconds = nextStart,
+                EndSeconds = nextEnd,
+                IsCropped = seg1.IsCropped,
+                CropX = seg1.CropX,
+                CropY = seg1.CropY,
+                CropWidth = seg1.CropWidth,
+                CropHeight = seg1.CropHeight,
+                IsSelected = true
+            };
+            Segments.Add(seg2);
+            SelectedSegment = seg2;
+
+            InPointSeconds = nextStart;
+            OutPointSeconds = nextEnd;
+            SeekTo(nextStart);
         }
+        else
+        {
+            // Already have segments in list
+            if (SelectedSegment != null) SelectedSegment.IsSelected = false;
+
+            double segDuration = Math.Max(0.5, end - start);
+            double totDur = TotalDurationSeconds;
+            double nextStart = end < totDur ? end : Math.Max(0, totDur - segDuration);
+            double nextEnd = Math.Min(totDur, nextStart + segDuration);
+
+            var nextSeg = new TrimSegment
+            {
+                Name = $"Фрагмент {Segments.Count + 1}",
+                StartSeconds = nextStart,
+                EndSeconds = nextEnd,
+                IsCropped = IsCropActive && CropWidth > 0 && CropHeight > 0,
+                CropX = CropX,
+                CropY = CropY,
+                CropWidth = CropWidth,
+                CropHeight = CropHeight,
+                IsSelected = true
+            };
+            Segments.Add(nextSeg);
+            SelectedSegment = nextSeg;
+
+            InPointSeconds = nextStart;
+            OutPointSeconds = nextEnd;
+            SeekTo(nextStart);
+        }
+
+        HasSegments = Segments.Count > 0;
+        OnPropertyChanged(nameof(RenderButtonText));
+        OnPropertyChanged(nameof(QueueButtonText));
     }
 
     [RelayCommand]
@@ -580,25 +702,53 @@ public partial class TrimViewModel : ObservableObject
         if (seg != null && Segments.Contains(seg))
         {
             Segments.Remove(seg);
+            for (int i = 0; i < Segments.Count; i++)
+            {
+                Segments[i].Name = $"Фрагмент {i + 1}";
+            }
+
             HasSegments = Segments.Count > 0;
             if (SelectedSegment == seg)
-                SelectedSegment = Segments.LastOrDefault();
+            {
+                var nextSel = Segments.LastOrDefault();
+                if (nextSel != null)
+                {
+                    SelectSegment(nextSel);
+                }
+                else
+                {
+                    SelectedSegment = null;
+                }
+            }
+
+            OnPropertyChanged(nameof(RenderButtonText));
+            OnPropertyChanged(nameof(QueueButtonText));
         }
     }
 
     [RelayCommand]
     public void ClearSegments()
     {
+        foreach (var s in Segments) s.IsSelected = false;
         Segments.Clear();
         HasSegments = false;
         SelectedSegment = null;
+        InPointSeconds = 0;
+        OutPointSeconds = TotalDurationSeconds;
+        SeekTo(0);
+
+        OnPropertyChanged(nameof(RenderButtonText));
+        OnPropertyChanged(nameof(QueueButtonText));
     }
 
     [RelayCommand]
     public void SelectSegment(TrimSegment seg)
     {
         if (seg == null) return;
+        foreach (var s in Segments) s.IsSelected = false;
+        seg.IsSelected = true;
         SelectedSegment = seg;
+
         InPointSeconds = seg.StartSeconds;
         OutPointSeconds = seg.EndSeconds;
         SeekTo(seg.StartSeconds);
@@ -639,7 +789,7 @@ public partial class TrimViewModel : ObservableObject
     {
         CreatedTasks.Clear();
 
-        if (Segments.Count > 1)
+        if (Segments.Count >= 2)
         {
             if (MergeSegmentsOnExport)
             {
@@ -659,12 +809,17 @@ public partial class TrimViewModel : ObservableObject
                 }
             }
         }
+        else if (Segments.Count == 1)
+        {
+            var seg = Segments[0];
+            var task = CreateSingleTask(seg.StartSeconds, seg.EndSeconds, isMerged: false, partIndex: null, seg: seg);
+            CreatedTasks.Add(task);
+        }
         else
         {
-            double? s = Segments.Count == 1 ? Segments[0].StartSeconds : InPointSeconds;
-            double? e = Segments.Count == 1 ? Segments[0].EndSeconds : OutPointSeconds;
-            TrimSegment? singleSeg = Segments.Count == 1 ? Segments[0] : null;
-            var task = CreateSingleTask(s, e, isMerged: false, seg: singleSeg);
+            double s = InPointSeconds ?? 0;
+            double e = OutPointSeconds ?? TotalDurationSeconds;
+            var task = CreateSingleTask(s, e, isMerged: false);
             CreatedTasks.Add(task);
         }
 

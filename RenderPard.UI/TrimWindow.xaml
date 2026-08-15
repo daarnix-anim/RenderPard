@@ -455,7 +455,19 @@
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="#1C2028" CornerRadius="3" BorderBrush="#333945" BorderThickness="1" Margin="0,0,6,0" Padding="6,2">
+                                        <Border CornerRadius="3" BorderThickness="1.5" Margin="0,0,6,0" Padding="6,2">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="#1C2028"/>
+                                                    <Setter Property="BorderBrush" Value="#333945"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                            <Setter Property="Background" Value="#252A35"/>
+                                                            <Setter Property="BorderBrush" Value="#00C8FF"/>
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
                                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                                 <!-- Click on Name/Time to Select -->
                                                 <Button Command="{Binding DataContext.SelectSegmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
@@ -541,8 +553,8 @@
 
                 <!-- Right: Action Buttons -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Button Command="{Binding AddToQueueCommand}" Content="{DynamicResource TrimAddToQueue}" Height="34" Padding="14,0" Margin="0,0,8,0" FontWeight="SemiBold"/>
-                    <Button Command="{Binding RenderNowCommand}" Content="{DynamicResource TrimExportNow}" Height="34" Padding="16,0" Background="{StaticResource AppLinkBrush}" Foreground="White" BorderThickness="0" FontWeight="Bold"/>
+                    <Button Command="{Binding AddToQueueCommand}" Content="{Binding QueueButtonText}" Height="34" Padding="14,0" Margin="0,0,8,0" FontWeight="SemiBold"/>
+                    <Button Command="{Binding RenderNowCommand}" Content="{Binding RenderButtonText}" Height="34" Padding="16,0" Background="{StaticResource AppLinkBrush}" Foreground="White" BorderThickness="0" FontWeight="Bold"/>
                 </StackPanel>
             </Grid>
         </Border>

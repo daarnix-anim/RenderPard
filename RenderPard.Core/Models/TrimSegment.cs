@@ -24,6 +24,9 @@ public partial class TrimSegment : ObservableObject
 
     // Crop settings for this specific segment
     [ObservableProperty]
+    private bool _isSelected;
+
+    [ObservableProperty]
     private bool _isCropped;
 
     [ObservableProperty]
