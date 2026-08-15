@@ -127,11 +127,21 @@
     <system:String x:Key="Enum_ContainerFormat_Flac">FLAC</system:String>
     <system:String x:Key="Enum_ContainerFormat_Aac">AAC (M4A)</system:String>
     
-    <system:String x:Key="Enum_VideoCodec_H264">H.264</system:String>
-    <system:String x:Key="Enum_VideoCodec_H264_Nvenc">H.264 (NVENC)</system:String>
-    <system:String x:Key="Enum_VideoCodec_Hevc">H.265 (HEVC)</system:String>
-    <system:String x:Key="Enum_VideoCodec_Hevc_Nvenc">H.265 (NVENC)</system:String>
+    <system:String x:Key="Enum_VideoCodec_H264">H.264 (CPU)</system:String>
+    <system:String x:Key="Enum_VideoCodec_H264_Nvenc">H.264 (NVIDIA NVENC)</system:String>
+    <system:String x:Key="Enum_VideoCodec_H265_Nvenc">H.265 (NVIDIA NVENC)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Av1_Nvenc">AV1 (NVIDIA NVENC)</system:String>
+    <system:String x:Key="Enum_VideoCodec_H264_Qsv">H.264 (Intel QuickSync)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Hevc_Qsv">H.265 (Intel QuickSync)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Av1_Qsv">AV1 (Intel QuickSync)</system:String>
+    <system:String x:Key="Enum_VideoCodec_H264_Amf">H.264 (AMD AMF)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Hevc_Amf">H.265 (AMD AMF)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Av1_Amf">AV1 (AMD AMF)</system:String>
+    <system:String x:Key="Enum_VideoCodec_H265">H.265 / HEVC (CPU)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Av1">AV1 (SVT-AV1 CPU)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Vp8">VP8</system:String>
     <system:String x:Key="Enum_VideoCodec_Vp9">VP9</system:String>
+    <system:String x:Key="Enum_VideoCodec_Gif">GIF</system:String>
     <system:String x:Key="Enum_VideoCodec_ProRes">Apple ProRes</system:String>
     <system:String x:Key="Enum_VideoCodec_XdcamHd422">XDCAM HD422</system:String>
     
@@ -148,9 +158,9 @@
 
     <system:String x:Key="Enum_AudioSampleRate_Original">Оригинал (Авто)</system:String>
     <system:String x:Key="Enum_AudioSampleRate_Hz48000">48 kHz (Стандарт видео)</system:String>
-    <system:String x:Key="Enum_AudioSampleRate_Hz44100">44.1 kHz (Музыка)</system:String>
+    <system:String x:Key="Enum_AudioSampleRate_Hz44100">44.1 kHz (Стандарт аудио)</system:String>
 
-    <system:String x:Key="Enum_AudioChannels_Original">Оригинал (Авто)</system:String>
+    <system:String x:Key="Enum_AudioChannels_Original">Оригинал</system:String>
     <system:String x:Key="Enum_AudioChannels_Stereo">Стерео (2.0)</system:String>
     <system:String x:Key="Enum_AudioChannels_Mono">Моно (1.0)</system:String>
 
@@ -183,7 +193,14 @@
     <system:String x:Key="TrimExportNow">⚡ Рендер сейчас</system:String>
     <system:String x:Key="TrimCutButton">✂ Обрезать</system:String>
     <system:String x:Key="TrimQuickButton">✂ Быстрая обрезка</system:String>
-    <system:String x:Key="TrimHotkeysHelp">Space: Пауза | I / [ : Точка входа | O / ] : Точка выхода | ←/→ : 1 кадр | Shift+←/→ : 1 сек | Кроп: перетаскивайте рамку на плеере</system:String>
+    <system:String x:Key="TrimHotkeysHelp">Space: Пауза | I / [ : Точка входа | O / ] : Точка выхода | M : Добавить фрагмент | ←/→ : 1 кадр | Shift+←/→ : 1 сек</system:String>
+
+    <!-- Multi-Segment Trimming -->
+    <system:String x:Key="TrimSegmentsTitle">Фрагменты (Мульти-клип):</system:String>
+    <system:String x:Key="TrimAddSegment">+ Добавить фрагмент [M]</system:String>
+    <system:String x:Key="TrimMergeSegments">Объединить все фрагменты в 1 файл</system:String>
+    <system:String x:Key="TrimSeparateSegments">Экспортировать отдельными файлами</system:String>
+    <system:String x:Key="TrimClearSegments">Очистить все</system:String>
 
     <!-- Crop & Framing -->
     <system:String x:Key="CropTitle">Кадрирование (Кроп):</system:String>

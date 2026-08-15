@@ -503,9 +503,12 @@ public partial class QueueViewModel : ObservableObject
             Owner = System.Windows.Application.Current.MainWindow
         };
 
-        if (trimWindow.ShowDialog() == true && trimWindow.CreatedTask != null)
+        if (trimWindow.ShowDialog() == true && trimWindow.CreatedTasks.Count > 0)
         {
-            Tasks.Add(trimWindow.CreatedTask);
+            foreach (var t in trimWindow.CreatedTasks)
+            {
+                Tasks.Add(t);
+            }
             if (trimWindow.StartImmediately && !IsQueueActive)
             {
                 IsQueueActive = true;
@@ -523,14 +526,26 @@ public partial class QueueViewModel : ObservableObject
             Owner = System.Windows.Application.Current.MainWindow
         };
 
-        if (trimWindow.ShowDialog() == true && trimWindow.CreatedTask != null)
+        if (trimWindow.ShowDialog() == true && trimWindow.CreatedTasks.Count > 0)
         {
-            task.TrimStartSeconds = trimWindow.CreatedTask.TrimStartSeconds;
-            task.TrimEndSeconds = trimWindow.CreatedTask.TrimEndSeconds;
-            task.Preset = trimWindow.CreatedTask.Preset;
-            task.IsLosslessCopy = trimWindow.CreatedTask.IsLosslessCopy;
-            task.TargetFilePath = trimWindow.CreatedTask.TargetFilePath;
+            var first = trimWindow.CreatedTasks[0];
+            task.TrimStartSeconds = first.TrimStartSeconds;
+            task.TrimEndSeconds = first.TrimEndSeconds;
+            task.Preset = first.Preset;
+            task.IsLosslessCopy = first.IsLosslessCopy;
+            task.TargetFilePath = first.TargetFilePath;
+            task.Segments = first.Segments;
+            task.IsCropped = first.IsCropped;
+            task.CropX = first.CropX;
+            task.CropY = first.CropY;
+            task.CropWidth = first.CropWidth;
+            task.CropHeight = first.CropHeight;
             task.Status = TranscodeTaskStatus.Pending;
+
+            for (int i = 1; i < trimWindow.CreatedTasks.Count; i++)
+            {
+                Tasks.Add(trimWindow.CreatedTasks[i]);
+            }
 
             if (trimWindow.StartImmediately && !IsQueueActive)
             {

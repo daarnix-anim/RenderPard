@@ -57,12 +57,25 @@ public partial class TranscodeTask : ObservableObject
     [ObservableProperty]
     private bool _isLosslessCopy;
 
-    public bool IsTrimmed => TrimStartSeconds.HasValue || TrimEndSeconds.HasValue;
+    public System.Collections.Generic.List<TrimSegment>? Segments { get; set; }
+
+    public bool IsMultiSegmentMerge => Segments != null && Segments.Count > 1;
+
+    public bool IsTrimmed => IsMultiSegmentMerge || TrimStartSeconds.HasValue || TrimEndSeconds.HasValue;
 
     public double EffectiveDurationSeconds
     {
         get
         {
+            if (IsMultiSegmentMerge && Segments != null)
+            {
+                double total = 0;
+                foreach (var seg in Segments)
+                {
+                    total += seg.DurationSeconds;
+                }
+                return Math.Max(0.1, total);
+            }
             if (IsTrimmed)
             {
                 double start = TrimStartSeconds ?? 0;
@@ -77,6 +90,10 @@ public partial class TranscodeTask : ObservableObject
     {
         get
         {
+            if (IsMultiSegmentMerge && Segments != null)
+            {
+                return $"[{Segments.Count} фрагм. : {EffectiveDurationSeconds:F1}с]";
+            }
             if (!IsTrimmed) return string.Empty;
             string startStr = TrimStartSeconds.HasValue ? System.TimeSpan.FromSeconds(TrimStartSeconds.Value).ToString(@"mm\:ss\.f") : "00:00.0";
             string endStr = TrimEndSeconds.HasValue ? System.TimeSpan.FromSeconds(TrimEndSeconds.Value).ToString(@"mm\:ss\.f") : (DurationSeconds > 0 ? System.TimeSpan.FromSeconds(DurationSeconds).ToString(@"mm\:ss\.f") : "Конец");

@@ -22,11 +22,18 @@ public class FFmpegWrapper
         _ffprobePath = ffprobePath;
     }
 
-    public async Task<bool> IsNvencAvailableAsync()
+    public class GpuCapabilities
     {
+        public bool HasNvenc { get; set; }
+        public bool HasQsv { get; set; }
+        public bool HasAmf { get; set; }
+    }
+
+    public async Task<GpuCapabilities> DetectGpuCapabilitiesAsync()
+    {
+        var caps = new GpuCapabilities();
         try
         {
-            var tcs = new TaskCompletionSource<bool>();
             using var process = new Process();
             process.StartInfo.FileName = _ffmpegPath;
             process.StartInfo.Arguments = "-encoders";
@@ -38,12 +45,21 @@ public class FFmpegWrapper
             string output = await process.StandardOutput.ReadToEndAsync();
             await process.WaitForExitAsync();
 
-            return output.Contains("h264_nvenc") || output.Contains("hevc_nvenc");
+            caps.HasNvenc = output.Contains("h264_nvenc", StringComparison.OrdinalIgnoreCase) || output.Contains("hevc_nvenc", StringComparison.OrdinalIgnoreCase);
+            caps.HasQsv = output.Contains("h264_qsv", StringComparison.OrdinalIgnoreCase) || output.Contains("hevc_qsv", StringComparison.OrdinalIgnoreCase);
+            caps.HasAmf = output.Contains("h264_amf", StringComparison.OrdinalIgnoreCase) || output.Contains("hevc_amf", StringComparison.OrdinalIgnoreCase);
         }
-        catch
+        catch (Exception ex)
         {
-            return false;
+            Debug.WriteLine($"Failed to detect GPU encoders: {ex.Message}");
         }
+        return caps;
+    }
+
+    public async Task<bool> IsNvencAvailableAsync()
+    {
+        var caps = await DetectGpuCapabilitiesAsync();
+        return caps.HasNvenc;
     }
 
     public async Task ProbeTaskAsync(TranscodeTask task)
@@ -117,7 +133,72 @@ public class FFmpegWrapper
         sb.Append("-y "); // overwrite
         sb.Append("-progress pipe:2 "); // Progress formatting
 
-        if (task.IsTrimmed)
+        if (task.IsMultiSegmentMerge && task.Segments != null && task.Segments.Count > 1)
+        {
+            var filterSb = new StringBuilder();
+            int segCount = task.Segments.Count;
+            bool hasAudio = task.HasAudio && task.Preset.AudioMode != AudioMode.None;
+
+            for (int i = 0; i < segCount; i++)
+            {
+                var seg = task.Segments[i];
+                string startStr = seg.StartSeconds.ToString("0.###", CultureInfo.InvariantCulture);
+                string endStr = seg.EndSeconds.ToString("0.###", CultureInfo.InvariantCulture);
+
+                string vPrep = "";
+                if (seg.IsCropped && seg.CropWidth > 0 && seg.CropHeight > 0)
+                {
+                    vPrep = $"crop={seg.CropWidth}:{seg.CropHeight}:{seg.CropX}:{seg.CropY},";
+                }
+                else if (task.IsCropped && task.CropWidth > 0 && task.CropHeight > 0)
+                {
+                    vPrep = $"crop={task.CropWidth}:{task.CropHeight}:{task.CropX}:{task.CropY},";
+                }
+
+                filterSb.Append($"[0:v]{vPrep}trim=start={startStr}:end={endStr},setpts=PTS-STARTPTS[v{i}];");
+                if (hasAudio)
+                {
+                    filterSb.Append($"[0:a]atrim=start={startStr}:end={endStr},asetpts=PTS-STARTPTS[a{i}];");
+                }
+            }
+
+            for (int i = 0; i < segCount; i++)
+            {
+                filterSb.Append($"[v{i}]");
+                if (hasAudio)
+                {
+                    filterSb.Append($"[a{i}]");
+                }
+            }
+
+            if (hasAudio)
+            {
+                filterSb.Append($"concat=n={segCount}:v=1:a=1[outv][outa]");
+            }
+            else
+            {
+                filterSb.Append($"concat=n={segCount}:v=1:a=0[outv]");
+            }
+
+            sb.Append($"-filter_complex \"{filterSb}\" ");
+            sb.Append("-map \"[outv]\" ");
+            if (hasAudio)
+            {
+                sb.Append("-map \"[outa]\" ");
+                AppendAudioOptions(sb);
+            }
+            else
+            {
+                sb.Append("-an ");
+            }
+
+            AppendVideoOptions(sb);
+            AppendContainerOption(sb);
+            sb.Append($"\"{task.TargetFilePath}.part\"");
+            return sb.ToString();
+        }
+
+        if (!task.IsMultiSegmentMerge && task.IsTrimmed)
         {
             if (task.TrimStartSeconds.HasValue && task.TrimStartSeconds.Value > 0)
             {
@@ -172,6 +253,22 @@ public class FFmpegWrapper
                 b.Append("-c:v h264_nvenc -preset p4 -rc vbr ");
             else if (task.Preset.VideoCodec == VideoCodec.H265_Nvenc)
                 b.Append("-c:v hevc_nvenc -preset p4 -rc vbr ");
+            else if (task.Preset.VideoCodec == VideoCodec.Av1_Nvenc)
+                b.Append("-c:v av1_nvenc -preset p4 ");
+            else if (task.Preset.VideoCodec == VideoCodec.H264_Qsv)
+                b.Append("-c:v h264_qsv -preset medium ");
+            else if (task.Preset.VideoCodec == VideoCodec.Hevc_Qsv)
+                b.Append("-c:v hevc_qsv -preset medium ");
+            else if (task.Preset.VideoCodec == VideoCodec.Av1_Qsv)
+                b.Append("-c:v av1_qsv -preset medium ");
+            else if (task.Preset.VideoCodec == VideoCodec.H264_Amf)
+                b.Append("-c:v h264_amf -quality speed ");
+            else if (task.Preset.VideoCodec == VideoCodec.Hevc_Amf)
+                b.Append("-c:v hevc_amf -quality speed ");
+            else if (task.Preset.VideoCodec == VideoCodec.Av1_Amf)
+                b.Append("-c:v av1_amf -quality speed ");
+            else if (task.Preset.VideoCodec == VideoCodec.Av1)
+                b.Append("-c:v libsvtav1 -preset 6 -crf 30 ");
             else if (task.Preset.VideoCodec == VideoCodec.H264)
                 b.Append("-c:v libx264 -preset medium ");
             else if (task.Preset.VideoCodec == VideoCodec.H265)
@@ -189,7 +286,10 @@ public class FFmpegWrapper
                 if (task.Preset.UseWebPreLogic)
                     targetBitrate = WebPreCalculator.CalculateVideoBitrateKbps(task, task.Preset);
 
-                if (task.Preset.VideoCodec == VideoCodec.H264_Nvenc || task.Preset.VideoCodec == VideoCodec.H265_Nvenc || task.Preset.VideoCodec == VideoCodec.H264 || task.Preset.VideoCodec == VideoCodec.H265)
+                if (task.Preset.VideoCodec is VideoCodec.H264_Nvenc or VideoCodec.H265_Nvenc or VideoCodec.Av1_Nvenc
+                    or VideoCodec.H264_Qsv or VideoCodec.Hevc_Qsv or VideoCodec.Av1_Qsv
+                    or VideoCodec.H264_Amf or VideoCodec.Hevc_Amf or VideoCodec.Av1_Amf
+                    or VideoCodec.H264 or VideoCodec.H265 or VideoCodec.Av1)
                 {
                     int maxRate = (int)(targetBitrate * 1.2);
                     int bufSize = targetBitrate * 2;

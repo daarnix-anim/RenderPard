@@ -16,7 +16,8 @@ public partial class TrimWindow : Window
     private bool _isDraggingCropBox;
     private Point _lastCropMousePosition;
 
-    public TranscodeTask? CreatedTask { get; private set; }
+    public TranscodeTask? CreatedTask => _viewModel.CreatedTasks.FirstOrDefault();
+    public System.Collections.Generic.List<TranscodeTask> CreatedTasks => _viewModel.CreatedTasks;
     public bool StartImmediately { get; private set; }
 
     public TrimWindow(string filePath, Preset? initialPreset = null)
@@ -39,6 +40,7 @@ public partial class TrimWindow : Window
         _viewModel.RequestCropOverlayUpdate += UpdateCropVisuals;
 
         _viewModel.PropertyChanged += ViewModel_PropertyChanged;
+        _viewModel.Segments.CollectionChanged += (s, e) => UpdateTimelineVisuals();
 
         Loaded += TrimWindow_Loaded;
         SizeChanged += (s, e) =>
@@ -217,255 +219,69 @@ public partial class TrimWindow : Window
         };
     }
 
-    private void ResizeHandle_S(double dy)
+    private double _dragStartCropX;
+    private double _dragStartCropY;
+    private double _dragStartCropW;
+    private double _dragStartCropH;
+    private double _accumDragX;
+    private double _accumDragY;
+
+    private void CropHandle_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
     {
-        // Anchor: Top edge (Y) is strictly fixed
-        var vRect = GetVideoDisplayRect();
-        double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
-        double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
-        double scale = vRect.Width / sw;
-        if (scale <= 0) return;
-
-        int dVidY = (int)(dy / scale);
-        const int minSize = 64;
-
-        int top = _viewModel.CropY;
-        int left = _viewModel.CropX;
-        int oldH = _viewModel.CropHeight;
-        int oldW = _viewModel.CropWidth;
-
-        double? ratio = GetLockedRatio();
-
-        if (ratio.HasValue)
-        {
-            int maxH = (int)sh - top;
-            int newH = Math.Max(minSize, Math.Min(maxH, oldH + dVidY));
-            int newW = (int)(newH * ratio.Value);
-
-            if (newW > (int)sw)
-            {
-                newW = (int)sw;
-                newH = (int)(newW / ratio.Value);
-            }
-
-            int centerX = left + oldW / 2;
-            int newX = Math.Max(0, Math.Min((int)sw - newW, centerX - newW / 2));
-
-            _viewModel.CropX = newX & ~1;
-            _viewModel.CropY = top & ~1;
-            _viewModel.CropWidth = newW & ~1;
-            _viewModel.CropHeight = newH & ~1;
-        }
-        else
-        {
-            int maxH = (int)sh - top;
-            int newH = Math.Max(minSize, Math.Min(maxH, oldH + dVidY));
-
-            _viewModel.CropY = top & ~1;
-            _viewModel.CropHeight = newH & ~1;
-        }
-
-        UpdateCropVisuals();
-    }
-
-    private void ResizeHandle_N(double dy)
-    {
-        // Anchor: Bottom edge (Y + Height) is strictly fixed
-        var vRect = GetVideoDisplayRect();
-        double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
-        double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
-        double scale = vRect.Width / sw;
-        if (scale <= 0) return;
-
-        int dVidY = (int)(dy / scale);
-        const int minSize = 64;
-
-        int bottom = _viewModel.CropY + _viewModel.CropHeight;
-        int left = _viewModel.CropX;
-        int oldW = _viewModel.CropWidth;
-
-        double? ratio = GetLockedRatio();
-
-        if (ratio.HasValue)
-        {
-            int maxH = bottom;
-            int targetH = _viewModel.CropHeight - dVidY;
-            int newH = Math.Max(minSize, Math.Min(maxH, targetH));
-            int newW = (int)(newH * ratio.Value);
-
-            if (newW > (int)sw)
-            {
-                newW = (int)sw;
-                newH = (int)(newW / ratio.Value);
-            }
-
-            int newY = bottom - newH;
-            int centerX = left + oldW / 2;
-            int newX = Math.Max(0, Math.Min((int)sw - newW, centerX - newW / 2));
-
-            _viewModel.CropX = newX & ~1;
-            _viewModel.CropY = newY & ~1;
-            _viewModel.CropWidth = newW & ~1;
-            _viewModel.CropHeight = newH & ~1;
-        }
-        else
-        {
-            int targetY = _viewModel.CropY + dVidY;
-            int newY = Math.Max(0, Math.Min(bottom - minSize, targetY));
-            int newH = bottom - newY;
-
-            _viewModel.CropY = newY & ~1;
-            _viewModel.CropHeight = newH & ~1;
-        }
-
-        UpdateCropVisuals();
-    }
-
-    private void ResizeHandle_E(double dx)
-    {
-        // Anchor: Left edge (X) is strictly fixed
-        var vRect = GetVideoDisplayRect();
-        double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
-        double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
-        double scale = vRect.Width / sw;
-        if (scale <= 0) return;
-
-        int dVidX = (int)(dx / scale);
-        const int minSize = 64;
-
-        int left = _viewModel.CropX;
-        int top = _viewModel.CropY;
-        int oldH = _viewModel.CropHeight;
-        int oldW = _viewModel.CropWidth;
-
-        double? ratio = GetLockedRatio();
-
-        if (ratio.HasValue)
-        {
-            int maxW = (int)sw - left;
-            int newW = Math.Max(minSize, Math.Min(maxW, oldW + dVidX));
-            int newH = (int)(newW / ratio.Value);
-
-            if (newH > (int)sh)
-            {
-                newH = (int)sh;
-                newW = (int)(newH * ratio.Value);
-            }
-
-            int centerY = top + oldH / 2;
-            int newY = Math.Max(0, Math.Min((int)sh - newH, centerY - newH / 2));
-
-            _viewModel.CropX = left & ~1;
-            _viewModel.CropY = newY & ~1;
-            _viewModel.CropWidth = newW & ~1;
-            _viewModel.CropHeight = newH & ~1;
-        }
-        else
-        {
-            int maxW = (int)sw - left;
-            int newW = Math.Max(minSize, Math.Min(maxW, oldW + dVidX));
-
-            _viewModel.CropX = left & ~1;
-            _viewModel.CropWidth = newW & ~1;
-        }
-
-        UpdateCropVisuals();
-    }
-
-    private void ResizeHandle_W(double dx)
-    {
-        // Anchor: Right edge (X + Width) is strictly fixed
-        var vRect = GetVideoDisplayRect();
-        double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
-        double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
-        double scale = vRect.Width / sw;
-        if (scale <= 0) return;
-
-        int dVidX = (int)(dx / scale);
-        const int minSize = 64;
-
-        int right = _viewModel.CropX + _viewModel.CropWidth;
-        int top = _viewModel.CropY;
-        int oldH = _viewModel.CropHeight;
-
-        double? ratio = GetLockedRatio();
-
-        if (ratio.HasValue)
-        {
-            int maxW = right;
-            int targetW = _viewModel.CropWidth - dVidX;
-            int newW = Math.Max(minSize, Math.Min(maxW, targetW));
-            int newH = (int)(newW / ratio.Value);
-
-            if (newH > (int)sh)
-            {
-                newH = (int)sh;
-                newW = (int)(newH * ratio.Value);
-            }
-
-            int newX = right - newW;
-            int centerY = top + oldH / 2;
-            int newY = Math.Max(0, Math.Min((int)sh - newH, centerY - newH / 2));
-
-            _viewModel.CropX = newX & ~1;
-            _viewModel.CropY = newY & ~1;
-            _viewModel.CropWidth = newW & ~1;
-            _viewModel.CropHeight = newH & ~1;
-        }
-        else
-        {
-            int targetX = _viewModel.CropX + dVidX;
-            int newX = Math.Max(0, Math.Min(right - minSize, targetX));
-            int newW = right - newX;
-
-            _viewModel.CropX = newX & ~1;
-            _viewModel.CropWidth = newW & ~1;
-        }
-
-        UpdateCropVisuals();
+        _dragStartCropX = _viewModel.CropX;
+        _dragStartCropY = _viewModel.CropY;
+        _dragStartCropW = _viewModel.CropWidth;
+        _dragStartCropH = _viewModel.CropHeight;
+        _accumDragX = 0;
+        _accumDragY = 0;
     }
 
     private void ResizeHandle_SE(double dx, double dy)
     {
-        // Anchor: Top-Left (left, top) is strictly fixed
+        // Anchor: Top-Left (anchorX, anchorY) is strictly fixed
         var vRect = GetVideoDisplayRect();
         double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
         double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
         double scale = vRect.Width / sw;
         if (scale <= 0) return;
 
-        int dVidX = (int)(dx / scale);
-        int dVidY = (int)(dy / scale);
-        const int minSize = 64;
+        double dVidX = dx / scale;
+        double dVidY = dy / scale;
+        const double minSize = 64;
 
-        int left = _viewModel.CropX;
-        int top = _viewModel.CropY;
-        int maxW = (int)sw - left;
-        int maxH = (int)sh - top;
+        double anchorX = _dragStartCropX;
+        double anchorY = _dragStartCropY;
 
         double? ratio = GetLockedRatio();
 
         if (ratio.HasValue)
         {
-            int limitW = Math.Min(maxW, (int)(maxH * ratio.Value));
-            int deltaW = Math.Abs(dVidX) >= Math.Abs((int)(dVidY * ratio.Value)) ? dVidX : (int)(dVidY * ratio.Value);
-            int newW = Math.Max(minSize, Math.Min(limitW, _viewModel.CropWidth + deltaW));
-            int newH = (int)(newW / ratio.Value);
+            double maxW = sw - anchorX;
+            double maxH = sh - anchorY;
+            double limitW = Math.Min(maxW, maxH * ratio.Value);
 
-            _viewModel.CropX = left & ~1;
-            _viewModel.CropY = top & ~1;
-            _viewModel.CropWidth = newW & ~1;
-            _viewModel.CropHeight = newH & ~1;
+            double deltaW = Math.Abs(dVidX) >= Math.Abs(dVidY * ratio.Value) ? dVidX : (dVidY * ratio.Value);
+            double targetW = _dragStartCropW + deltaW;
+            double newW = Math.Max(minSize, Math.Min(limitW, targetW));
+            double newH = newW / ratio.Value;
+
+            _viewModel.CropX = (int)Math.Round(anchorX) & ~1;
+            _viewModel.CropY = (int)Math.Round(anchorY) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(newW) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(newH) & ~1;
         }
         else
         {
-            int newW = Math.Max(minSize, Math.Min(maxW, _viewModel.CropWidth + dVidX));
-            int newH = Math.Max(minSize, Math.Min(maxH, _viewModel.CropHeight + dVidY));
+            double targetRight = (_dragStartCropX + _dragStartCropW) + dVidX;
+            double targetBottom = (_dragStartCropY + _dragStartCropH) + dVidY;
 
-            _viewModel.CropX = left & ~1;
-            _viewModel.CropY = top & ~1;
-            _viewModel.CropWidth = newW & ~1;
-            _viewModel.CropHeight = newH & ~1;
+            double newRight = Math.Max(anchorX + minSize, Math.Min(sw, targetRight));
+            double newBottom = Math.Max(anchorY + minSize, Math.Min(sh, targetBottom));
+
+            _viewModel.CropX = (int)Math.Round(anchorX) & ~1;
+            _viewModel.CropY = (int)Math.Round(anchorY) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(newRight - anchorX) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(newBottom - anchorY) & ~1;
         }
 
         UpdateCropVisuals();
@@ -473,47 +289,53 @@ public partial class TrimWindow : Window
 
     private void ResizeHandle_NW(double dx, double dy)
     {
-        // Anchor: Bottom-Right (right, bottom) is strictly fixed
+        // Anchor: Bottom-Right (anchorRight, anchorBottom) is strictly fixed
         var vRect = GetVideoDisplayRect();
         double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
         double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
         double scale = vRect.Width / sw;
         if (scale <= 0) return;
 
-        int dVidX = (int)(dx / scale);
-        int dVidY = (int)(dy / scale);
-        const int minSize = 64;
+        double dVidX = dx / scale;
+        double dVidY = dy / scale;
+        const double minSize = 64;
 
-        int right = _viewModel.CropX + _viewModel.CropWidth;
-        int bottom = _viewModel.CropY + _viewModel.CropHeight;
-        int maxW = right;
-        int maxH = bottom;
+        double anchorRight = _dragStartCropX + _dragStartCropW;
+        double anchorBottom = _dragStartCropY + _dragStartCropH;
 
         double? ratio = GetLockedRatio();
 
         if (ratio.HasValue)
         {
-            int limitW = Math.Min(maxW, (int)(maxH * ratio.Value));
-            int deltaW = Math.Abs(dVidX) >= Math.Abs((int)(dVidY * ratio.Value)) ? -dVidX : -(int)(dVidY * ratio.Value);
-            int newW = Math.Max(minSize, Math.Min(limitW, _viewModel.CropWidth + deltaW));
-            int newH = (int)(newW / ratio.Value);
+            double maxW = anchorRight;
+            double maxH = anchorBottom;
+            double limitW = Math.Min(maxW, maxH * ratio.Value);
 
-            _viewModel.CropX = (right - newW) & ~1;
-            _viewModel.CropY = (bottom - newH) & ~1;
-            _viewModel.CropWidth = newW & ~1;
-            _viewModel.CropHeight = newH & ~1;
+            double deltaW = Math.Abs(dVidX) >= Math.Abs(dVidY * ratio.Value) ? -dVidX : -(dVidY * ratio.Value);
+            double targetW = _dragStartCropW + deltaW;
+            double newW = Math.Max(minSize, Math.Min(limitW, targetW));
+            double newH = newW / ratio.Value;
+
+            double newLeft = anchorRight - newW;
+            double newTop = anchorBottom - newH;
+
+            _viewModel.CropX = (int)Math.Round(newLeft) & ~1;
+            _viewModel.CropY = (int)Math.Round(newTop) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(newW) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(newH) & ~1;
         }
         else
         {
-            int newX = Math.Max(0, Math.Min(right - minSize, _viewModel.CropX + dVidX));
-            int newY = Math.Max(0, Math.Min(bottom - minSize, _viewModel.CropY + dVidY));
-            int newW = right - newX;
-            int newH = bottom - newY;
+            double targetLeft = _dragStartCropX + dVidX;
+            double targetTop = _dragStartCropY + dVidY;
 
-            _viewModel.CropX = newX & ~1;
-            _viewModel.CropY = newY & ~1;
-            _viewModel.CropWidth = newW & ~1;
-            _viewModel.CropHeight = newH & ~1;
+            double newLeft = Math.Max(0, Math.Min(anchorRight - minSize, targetLeft));
+            double newTop = Math.Max(0, Math.Min(anchorBottom - minSize, targetTop));
+
+            _viewModel.CropX = (int)Math.Round(newLeft) & ~1;
+            _viewModel.CropY = (int)Math.Round(newTop) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(anchorRight - newLeft) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(anchorBottom - newTop) & ~1;
         }
 
         UpdateCropVisuals();
@@ -521,46 +343,52 @@ public partial class TrimWindow : Window
 
     private void ResizeHandle_NE(double dx, double dy)
     {
-        // Anchor: Bottom-Left (left, bottom) is strictly fixed
+        // Anchor: Bottom-Left (anchorLeft, anchorBottom) is strictly fixed
         var vRect = GetVideoDisplayRect();
         double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
         double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
         double scale = vRect.Width / sw;
         if (scale <= 0) return;
 
-        int dVidX = (int)(dx / scale);
-        int dVidY = (int)(dy / scale);
-        const int minSize = 64;
+        double dVidX = dx / scale;
+        double dVidY = dy / scale;
+        const double minSize = 64;
 
-        int left = _viewModel.CropX;
-        int bottom = _viewModel.CropY + _viewModel.CropHeight;
-        int maxW = (int)sw - left;
-        int maxH = bottom;
+        double anchorLeft = _dragStartCropX;
+        double anchorBottom = _dragStartCropY + _dragStartCropH;
 
         double? ratio = GetLockedRatio();
 
         if (ratio.HasValue)
         {
-            int limitW = Math.Min(maxW, (int)(maxH * ratio.Value));
-            int deltaW = Math.Abs(dVidX) >= Math.Abs((int)(dVidY * ratio.Value)) ? dVidX : -(int)(dVidY * ratio.Value);
-            int newW = Math.Max(minSize, Math.Min(limitW, _viewModel.CropWidth + deltaW));
-            int newH = (int)(newW / ratio.Value);
+            double maxW = sw - anchorLeft;
+            double maxH = anchorBottom;
+            double limitW = Math.Min(maxW, maxH * ratio.Value);
 
-            _viewModel.CropX = left & ~1;
-            _viewModel.CropY = (bottom - newH) & ~1;
-            _viewModel.CropWidth = newW & ~1;
-            _viewModel.CropHeight = newH & ~1;
+            double deltaW = Math.Abs(dVidX) >= Math.Abs(dVidY * ratio.Value) ? dVidX : -(dVidY * ratio.Value);
+            double targetW = _dragStartCropW + deltaW;
+            double newW = Math.Max(minSize, Math.Min(limitW, targetW));
+            double newH = newW / ratio.Value;
+
+            double newTop = anchorBottom - newH;
+
+            _viewModel.CropX = (int)Math.Round(anchorLeft) & ~1;
+            _viewModel.CropY = (int)Math.Round(newTop) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(newW) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(newH) & ~1;
         }
         else
         {
-            int newW = Math.Max(minSize, Math.Min(maxW, _viewModel.CropWidth + dVidX));
-            int newY = Math.Max(0, Math.Min(bottom - minSize, _viewModel.CropY + dVidY));
-            int newH = bottom - newY;
+            double targetRight = (_dragStartCropX + _dragStartCropW) + dVidX;
+            double targetTop = _dragStartCropY + dVidY;
 
-            _viewModel.CropX = left & ~1;
-            _viewModel.CropY = newY & ~1;
-            _viewModel.CropWidth = newW & ~1;
-            _viewModel.CropHeight = newH & ~1;
+            double newRight = Math.Max(anchorLeft + minSize, Math.Min(sw, targetRight));
+            double newTop = Math.Max(0, Math.Min(anchorBottom - minSize, targetTop));
+
+            _viewModel.CropX = (int)Math.Round(anchorLeft) & ~1;
+            _viewModel.CropY = (int)Math.Round(newTop) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(newRight - anchorLeft) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(anchorBottom - newTop) & ~1;
         }
 
         UpdateCropVisuals();
@@ -568,59 +396,298 @@ public partial class TrimWindow : Window
 
     private void ResizeHandle_SW(double dx, double dy)
     {
-        // Anchor: Top-Right (right, top) is strictly fixed
+        // Anchor: Top-Right (anchorRight, anchorTop) is strictly fixed
         var vRect = GetVideoDisplayRect();
         double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
         double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
         double scale = vRect.Width / sw;
         if (scale <= 0) return;
 
-        int dVidX = (int)(dx / scale);
-        int dVidY = (int)(dy / scale);
-        const int minSize = 64;
+        double dVidX = dx / scale;
+        double dVidY = dy / scale;
+        const double minSize = 64;
 
-        int right = _viewModel.CropX + _viewModel.CropWidth;
-        int top = _viewModel.CropY;
-        int maxW = right;
-        int maxH = (int)sh - top;
+        double anchorRight = _dragStartCropX + _dragStartCropW;
+        double anchorTop = _dragStartCropY;
 
         double? ratio = GetLockedRatio();
 
         if (ratio.HasValue)
         {
-            int limitW = Math.Min(maxW, (int)(maxH * ratio.Value));
-            int deltaW = Math.Abs(dVidX) >= Math.Abs((int)(dVidY * ratio.Value)) ? -dVidX : (int)(dVidY * ratio.Value);
-            int newW = Math.Max(minSize, Math.Min(limitW, _viewModel.CropWidth + deltaW));
-            int newH = (int)(newW / ratio.Value);
+            double maxW = anchorRight;
+            double maxH = sh - anchorTop;
+            double limitW = Math.Min(maxW, maxH * ratio.Value);
 
-            _viewModel.CropX = (right - newW) & ~1;
-            _viewModel.CropY = top & ~1;
-            _viewModel.CropWidth = newW & ~1;
-            _viewModel.CropHeight = newH & ~1;
+            double deltaW = Math.Abs(dVidX) >= Math.Abs(dVidY * ratio.Value) ? -dVidX : (dVidY * ratio.Value);
+            double targetW = _dragStartCropW + deltaW;
+            double newW = Math.Max(minSize, Math.Min(limitW, targetW));
+            double newH = newW / ratio.Value;
+
+            double newLeft = anchorRight - newW;
+
+            _viewModel.CropX = (int)Math.Round(newLeft) & ~1;
+            _viewModel.CropY = (int)Math.Round(anchorTop) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(newW) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(newH) & ~1;
         }
         else
         {
-            int newX = Math.Max(0, Math.Min(right - minSize, _viewModel.CropX + dVidX));
-            int newW = right - newX;
-            int newH = Math.Max(minSize, Math.Min(maxH, _viewModel.CropHeight + dVidY));
+            double targetLeft = _dragStartCropX + dVidX;
+            double targetBottom = (_dragStartCropY + _dragStartCropH) + dVidY;
 
-            _viewModel.CropX = newX & ~1;
-            _viewModel.CropY = top & ~1;
-            _viewModel.CropWidth = newW & ~1;
-            _viewModel.CropHeight = newH & ~1;
+            double newLeft = Math.Max(0, Math.Min(anchorRight - minSize, targetLeft));
+            double newBottom = Math.Max(anchorTop + minSize, Math.Min(sh, targetBottom));
+
+            _viewModel.CropX = (int)Math.Round(newLeft) & ~1;
+            _viewModel.CropY = (int)Math.Round(anchorTop) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(anchorRight - newLeft) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(newBottom - anchorTop) & ~1;
         }
 
         UpdateCropVisuals();
     }
 
-    private void HandleNW_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e) => ResizeHandle_NW(e.HorizontalChange, e.VerticalChange);
-    private void HandleNE_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e) => ResizeHandle_NE(e.HorizontalChange, e.VerticalChange);
-    private void HandleSW_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e) => ResizeHandle_SW(e.HorizontalChange, e.VerticalChange);
-    private void HandleSE_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e) => ResizeHandle_SE(e.HorizontalChange, e.VerticalChange);
-    private void HandleN_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e) => ResizeHandle_N(e.VerticalChange);
-    private void HandleS_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e) => ResizeHandle_S(e.VerticalChange);
-    private void HandleW_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e) => ResizeHandle_W(e.HorizontalChange);
-    private void HandleE_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e) => ResizeHandle_E(e.HorizontalChange);
+    private void ResizeHandle_N(double dy)
+    {
+        // Anchor: Bottom is strictly fixed
+        var vRect = GetVideoDisplayRect();
+        double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
+        double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
+        double scale = vRect.Width / sw;
+        if (scale <= 0) return;
+
+        double dVidY = dy / scale;
+        const double minSize = 64;
+
+        double anchorBottom = _dragStartCropY + _dragStartCropH;
+
+        double? ratio = GetLockedRatio();
+
+        if (ratio.HasValue)
+        {
+            double anchorCenterX = _dragStartCropX + _dragStartCropW / 2.0;
+            double maxH = Math.Min(anchorBottom, sw / ratio.Value);
+
+            double targetH = _dragStartCropH - dVidY;
+            double newH = Math.Max(minSize, Math.Min(maxH, targetH));
+            double newW = newH * ratio.Value;
+
+            double newTop = anchorBottom - newH;
+            double newLeft = Math.Max(0, Math.Min(sw - newW, anchorCenterX - newW / 2.0));
+
+            _viewModel.CropX = (int)Math.Round(newLeft) & ~1;
+            _viewModel.CropY = (int)Math.Round(newTop) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(newW) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(newH) & ~1;
+        }
+        else
+        {
+            double targetTop = _dragStartCropY + dVidY;
+            double newTop = Math.Max(0, Math.Min(anchorBottom - minSize, targetTop));
+            double newHeight = anchorBottom - newTop;
+
+            _viewModel.CropX = (int)Math.Round(_dragStartCropX) & ~1;
+            _viewModel.CropY = (int)Math.Round(newTop) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(_dragStartCropW) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(newHeight) & ~1;
+        }
+
+        UpdateCropVisuals();
+    }
+
+    private void ResizeHandle_S(double dy)
+    {
+        // Anchor: Top is strictly fixed
+        var vRect = GetVideoDisplayRect();
+        double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
+        double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
+        double scale = vRect.Width / sw;
+        if (scale <= 0) return;
+
+        double dVidY = dy / scale;
+        const double minSize = 64;
+
+        double anchorTop = _dragStartCropY;
+
+        double? ratio = GetLockedRatio();
+
+        if (ratio.HasValue)
+        {
+            double anchorCenterX = _dragStartCropX + _dragStartCropW / 2.0;
+            double maxH = Math.Min(sh - anchorTop, sw / ratio.Value);
+
+            double targetH = _dragStartCropH + dVidY;
+            double newH = Math.Max(minSize, Math.Min(maxH, targetH));
+            double newW = newH * ratio.Value;
+
+            double newLeft = Math.Max(0, Math.Min(sw - newW, anchorCenterX - newW / 2.0));
+
+            _viewModel.CropX = (int)Math.Round(newLeft) & ~1;
+            _viewModel.CropY = (int)Math.Round(anchorTop) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(newW) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(newH) & ~1;
+        }
+        else
+        {
+            double targetBottom = (_dragStartCropY + _dragStartCropH) + dVidY;
+            double newBottom = Math.Max(anchorTop + minSize, Math.Min(sh, targetBottom));
+            double newHeight = newBottom - anchorTop;
+
+            _viewModel.CropX = (int)Math.Round(_dragStartCropX) & ~1;
+            _viewModel.CropY = (int)Math.Round(anchorTop) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(_dragStartCropW) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(newHeight) & ~1;
+        }
+
+        UpdateCropVisuals();
+    }
+
+    private void ResizeHandle_W(double dx)
+    {
+        // Anchor: Right is strictly fixed
+        var vRect = GetVideoDisplayRect();
+        double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
+        double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
+        double scale = vRect.Width / sw;
+        if (scale <= 0) return;
+
+        double dVidX = dx / scale;
+        const double minSize = 64;
+
+        double anchorRight = _dragStartCropX + _dragStartCropW;
+
+        double? ratio = GetLockedRatio();
+
+        if (ratio.HasValue)
+        {
+            double anchorCenterY = _dragStartCropY + _dragStartCropH / 2.0;
+            double maxW = Math.Min(anchorRight, sh * ratio.Value);
+
+            double targetW = _dragStartCropW - dVidX;
+            double newW = Math.Max(minSize, Math.Min(maxW, targetW));
+            double newH = newW / ratio.Value;
+
+            double newLeft = anchorRight - newW;
+            double newTop = Math.Max(0, Math.Min(sh - newH, anchorCenterY - newH / 2.0));
+
+            _viewModel.CropX = (int)Math.Round(newLeft) & ~1;
+            _viewModel.CropY = (int)Math.Round(newTop) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(newW) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(newH) & ~1;
+        }
+        else
+        {
+            double targetLeft = _dragStartCropX + dVidX;
+            double newLeft = Math.Max(0, Math.Min(anchorRight - minSize, targetLeft));
+            double newWidth = anchorRight - newLeft;
+
+            _viewModel.CropX = (int)Math.Round(newLeft) & ~1;
+            _viewModel.CropY = (int)Math.Round(_dragStartCropY) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(newWidth) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(_dragStartCropH) & ~1;
+        }
+
+        UpdateCropVisuals();
+    }
+
+    private void ResizeHandle_E(double dx)
+    {
+        // Anchor: Left is strictly fixed
+        var vRect = GetVideoDisplayRect();
+        double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
+        double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
+        double scale = vRect.Width / sw;
+        if (scale <= 0) return;
+
+        double dVidX = dx / scale;
+        const double minSize = 64;
+
+        double anchorLeft = _dragStartCropX;
+
+        double? ratio = GetLockedRatio();
+
+        if (ratio.HasValue)
+        {
+            double anchorCenterY = _dragStartCropY + _dragStartCropH / 2.0;
+            double maxW = Math.Min(sw - anchorLeft, sh * ratio.Value);
+
+            double targetW = _dragStartCropW + dVidX;
+            double newW = Math.Max(minSize, Math.Min(maxW, targetW));
+            double newH = newW / ratio.Value;
+
+            double newTop = Math.Max(0, Math.Min(sh - newH, anchorCenterY - newH / 2.0));
+
+            _viewModel.CropX = (int)Math.Round(anchorLeft) & ~1;
+            _viewModel.CropY = (int)Math.Round(newTop) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(newW) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(newH) & ~1;
+        }
+        else
+        {
+            double targetRight = (_dragStartCropX + _dragStartCropW) + dVidX;
+            double newRight = Math.Max(anchorLeft + minSize, Math.Min(sw, targetRight));
+            double newWidth = newRight - anchorLeft;
+
+            _viewModel.CropX = (int)Math.Round(anchorLeft) & ~1;
+            _viewModel.CropY = (int)Math.Round(_dragStartCropY) & ~1;
+            _viewModel.CropWidth = (int)Math.Round(newWidth) & ~1;
+            _viewModel.CropHeight = (int)Math.Round(_dragStartCropH) & ~1;
+        }
+
+        UpdateCropVisuals();
+    }
+
+    private void HandleNW_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        _accumDragX += e.HorizontalChange;
+        _accumDragY += e.VerticalChange;
+        ResizeHandle_NW(_accumDragX, _accumDragY);
+    }
+
+    private void HandleNE_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        _accumDragX += e.HorizontalChange;
+        _accumDragY += e.VerticalChange;
+        ResizeHandle_NE(_accumDragX, _accumDragY);
+    }
+
+    private void HandleSW_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        _accumDragX += e.HorizontalChange;
+        _accumDragY += e.VerticalChange;
+        ResizeHandle_SW(_accumDragX, _accumDragY);
+    }
+
+    private void HandleSE_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        _accumDragX += e.HorizontalChange;
+        _accumDragY += e.VerticalChange;
+        ResizeHandle_SE(_accumDragX, _accumDragY);
+    }
+
+    private void HandleN_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        _accumDragY += e.VerticalChange;
+        ResizeHandle_N(_accumDragY);
+    }
+
+    private void HandleS_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        _accumDragY += e.VerticalChange;
+        ResizeHandle_S(_accumDragY);
+    }
+
+    private void HandleW_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        _accumDragX += e.HorizontalChange;
+        ResizeHandle_W(_accumDragX);
+    }
+
+    private void HandleE_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        _accumDragX += e.HorizontalChange;
+        ResizeHandle_E(_accumDragX);
+    }
 
     private void PlayerMediaElement_MediaEnded(object sender, RoutedEventArgs e)
     {
@@ -663,7 +730,6 @@ public partial class TrimWindow : Window
 
     private void OnRequestExport(TranscodeTask task, bool startImmediately)
     {
-        CreatedTask = task;
         StartImmediately = startImmediately;
         DialogResult = true;
     }
@@ -741,6 +807,61 @@ public partial class TrimWindow : Window
             double boxW = Math.Max(22, (vpEndFrac - vpStartFrac) * navWidth);
             Canvas.SetLeft(MiniViewportGrid, boxX);
             MiniViewportGrid.Width = Math.Min(navWidth - boxX, boxW);
+        }
+
+        // 3. Multi-Segment Visual Markers on both Mini and Main Timelines
+        MiniSegmentsCanvas.Children.Clear();
+        MainSegmentsCanvas.Children.Clear();
+
+        if (_viewModel.Segments.Count > 0)
+        {
+            foreach (var seg in _viewModel.Segments)
+            {
+                // Mini Navigator Canvas
+                if (navWidth > 0)
+                {
+                    double sInFrac = seg.StartSeconds / totDur;
+                    double sOutFrac = seg.EndSeconds / totDur;
+                    double segX = sInFrac * navWidth;
+                    double segW = Math.Max(3, (sOutFrac - sInFrac) * navWidth);
+
+                    var miniSegBorder = new Border
+                    {
+                        Width = segW,
+                        Height = 8,
+                        Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(160, 0, 200, 255)),
+                        BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 200, 255)),
+                        BorderThickness = new Thickness(1),
+                        CornerRadius = new CornerRadius(2)
+                    };
+                    Canvas.SetLeft(miniSegBorder, segX);
+                    MiniSegmentsCanvas.Children.Add(miniSegBorder);
+                }
+
+                // Main Zoomed Timeline Canvas
+                if (trackWidth > 0 && seg.EndSeconds >= vStart && seg.StartSeconds <= vEnd)
+                {
+                    double mInX = ((seg.StartSeconds - vStart) / vDur) * trackWidth;
+                    double mOutX = ((seg.EndSeconds - vStart) / vDur) * trackWidth;
+                    double mLeft = Math.Max(0, mInX);
+                    double mRight = Math.Min(trackWidth, mOutX);
+
+                    if (mRight > mLeft)
+                    {
+                        var mainSegBorder = new Border
+                        {
+                            Width = mRight - mLeft,
+                            Height = 10,
+                            Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(120, 0, 200, 255)),
+                            BorderBrush = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromRgb(0, 200, 255)),
+                            BorderThickness = new Thickness(1),
+                            CornerRadius = new CornerRadius(2)
+                        };
+                        Canvas.SetLeft(mainSegBorder, mLeft);
+                        MainSegmentsCanvas.Children.Add(mainSegBorder);
+                    }
+                }
+            }
         }
     }
 
@@ -921,6 +1042,12 @@ public partial class TrimWindow : Window
         else if (e.Key == Key.O || e.Key == Key.OemCloseBrackets)
         {
             _viewModel.SetOutPoint();
+            e.Handled = true;
+        }
+        else if (e.Key == Key.M)
+        {
+            _viewModel.AddCurrentSegmentCommand.Execute(null);
+            UpdateTimelineVisuals();
             e.Handled = true;
         }
         else if (e.Key == Key.Left)

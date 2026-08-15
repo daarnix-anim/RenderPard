@@ -127,11 +127,21 @@
     <system:String x:Key="Enum_ContainerFormat_Flac">FLAC</system:String>
     <system:String x:Key="Enum_ContainerFormat_Aac">AAC (M4A)</system:String>
     
-    <system:String x:Key="Enum_VideoCodec_H264">H.264</system:String>
-    <system:String x:Key="Enum_VideoCodec_H264_Nvenc">H.264 (NVENC)</system:String>
-    <system:String x:Key="Enum_VideoCodec_Hevc">H.265 (HEVC)</system:String>
-    <system:String x:Key="Enum_VideoCodec_Hevc_Nvenc">H.265 (NVENC)</system:String>
+    <system:String x:Key="Enum_VideoCodec_H264">H.264 (CPU)</system:String>
+    <system:String x:Key="Enum_VideoCodec_H264_Nvenc">H.264 (NVIDIA NVENC)</system:String>
+    <system:String x:Key="Enum_VideoCodec_H265_Nvenc">H.265 (NVIDIA NVENC)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Av1_Nvenc">AV1 (NVIDIA NVENC)</system:String>
+    <system:String x:Key="Enum_VideoCodec_H264_Qsv">H.264 (Intel QuickSync)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Hevc_Qsv">H.265 (Intel QuickSync)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Av1_Qsv">AV1 (Intel QuickSync)</system:String>
+    <system:String x:Key="Enum_VideoCodec_H264_Amf">H.264 (AMD AMF)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Hevc_Amf">H.265 (AMD AMF)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Av1_Amf">AV1 (AMD AMF)</system:String>
+    <system:String x:Key="Enum_VideoCodec_H265">H.265 / HEVC (CPU)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Av1">AV1 (SVT-AV1 CPU)</system:String>
+    <system:String x:Key="Enum_VideoCodec_Vp8">VP8</system:String>
     <system:String x:Key="Enum_VideoCodec_Vp9">VP9</system:String>
+    <system:String x:Key="Enum_VideoCodec_Gif">GIF</system:String>
     <system:String x:Key="Enum_VideoCodec_ProRes">Apple ProRes</system:String>
     <system:String x:Key="Enum_VideoCodec_XdcamHd422">XDCAM HD422</system:String>
 
@@ -148,9 +158,9 @@
 
     <system:String x:Key="Enum_AudioSampleRate_Original">Original (Auto)</system:String>
     <system:String x:Key="Enum_AudioSampleRate_Hz48000">48 kHz (Video Standard)</system:String>
-    <system:String x:Key="Enum_AudioSampleRate_Hz44100">44.1 kHz (Music)</system:String>
+    <system:String x:Key="Enum_AudioSampleRate_Hz44100">44.1 kHz (Audio Standard)</system:String>
 
-    <system:String x:Key="Enum_AudioChannels_Original">Original (Auto)</system:String>
+    <system:String x:Key="Enum_AudioChannels_Original">Original</system:String>
     <system:String x:Key="Enum_AudioChannels_Stereo">Stereo (2.0)</system:String>
     <system:String x:Key="Enum_AudioChannels_Mono">Mono (1.0)</system:String>
     
@@ -183,7 +193,14 @@
     <system:String x:Key="TrimExportNow">⚡ Render Now</system:String>
     <system:String x:Key="TrimCutButton">✂ Trim</system:String>
     <system:String x:Key="TrimQuickButton">✂ Quick Trim</system:String>
-    <system:String x:Key="TrimHotkeysHelp">Space: Pause | I / [ : In Point | O / ] : Out Point | ←/→ : 1 Frame | Shift+←/→ : 1 Sec | Crop: Drag crop frame on player</system:String>
+    <system:String x:Key="TrimHotkeysHelp">Space: Pause | I / [ : In Point | O / ] : Out Point | M : Add Segment | ←/→ : 1 Frame | Shift+←/→ : 1 Sec</system:String>
+
+    <!-- Multi-Segment Trimming -->
+    <system:String x:Key="TrimSegmentsTitle">Segments (Multi-clip):</system:String>
+    <system:String x:Key="TrimAddSegment">+ Add Segment [M]</system:String>
+    <system:String x:Key="TrimMergeSegments">Merge all segments into 1 file</system:String>
+    <system:String x:Key="TrimSeparateSegments">Export as separate files</system:String>
+    <system:String x:Key="TrimClearSegments">Clear All</system:String>
 
     <!-- Crop & Framing -->
     <system:String x:Key="CropTitle">Framing (Crop):</system:String>

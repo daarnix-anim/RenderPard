@@ -63,6 +63,20 @@ public partial class TrimViewModel : ObservableObject
 
     public string ZoomText => $"{ZoomLevel:0.#}x";
 
+    // Multi-Segment (Multi-clip) properties
+    public ObservableCollection<TrimSegment> Segments { get; } = new();
+
+    [ObservableProperty]
+    private bool _mergeSegmentsOnExport = true;
+
+    [ObservableProperty]
+    private bool _hasSegments;
+
+    [ObservableProperty]
+    private TrimSegment? _selectedSegment;
+
+    public List<TranscodeTask> CreatedTasks { get; } = new();
+
     // Crop / Framing properties
     [ObservableProperty]
     private CropAspectRatioMode _cropMode = CropAspectRatioMode.None;
@@ -525,36 +539,138 @@ public partial class TrimViewModel : ObservableObject
     }
 
     [RelayCommand]
+    public void AddCurrentSegment()
+    {
+        double start = InPointSeconds ?? 0;
+        double end = OutPointSeconds ?? (TotalDurationSeconds > 0 ? TotalDurationSeconds : start + 5.0);
+        if (end <= start) end = Math.Min(TotalDurationSeconds, start + 1.0);
+
+        var seg = new TrimSegment
+        {
+            Name = $"Фрагмент {Segments.Count + 1}",
+            StartSeconds = start,
+            EndSeconds = end,
+            IsCropped = IsCropActive && CropWidth > 0 && CropHeight > 0,
+            CropX = CropX,
+            CropY = CropY,
+            CropWidth = CropWidth,
+            CropHeight = CropHeight
+        };
+        Segments.Add(seg);
+        HasSegments = Segments.Count > 0;
+        SelectedSegment = seg;
+    }
+
+    [RelayCommand]
+    public void RemoveSegment(TrimSegment seg)
+    {
+        if (seg != null && Segments.Contains(seg))
+        {
+            Segments.Remove(seg);
+            HasSegments = Segments.Count > 0;
+            if (SelectedSegment == seg)
+                SelectedSegment = Segments.LastOrDefault();
+        }
+    }
+
+    [RelayCommand]
+    public void ClearSegments()
+    {
+        Segments.Clear();
+        HasSegments = false;
+        SelectedSegment = null;
+    }
+
+    [RelayCommand]
+    public void SelectSegment(TrimSegment seg)
+    {
+        if (seg == null) return;
+        SelectedSegment = seg;
+        InPointSeconds = seg.StartSeconds;
+        OutPointSeconds = seg.EndSeconds;
+        SeekTo(seg.StartSeconds);
+
+        if (seg.IsCropped && seg.CropWidth > 0 && seg.CropHeight > 0)
+        {
+            CropMode = CropAspectRatioMode.Custom;
+            CropX = seg.CropX;
+            CropY = seg.CropY;
+            CropWidth = seg.CropWidth;
+            CropHeight = seg.CropHeight;
+            RequestCropOverlayUpdate?.Invoke();
+        }
+    }
+
+    [RelayCommand]
+    public void PlaySegment(TrimSegment seg)
+    {
+        if (seg == null) return;
+        SelectSegment(seg);
+        IsPlaying = true;
+        RequestPlay?.Invoke();
+    }
+
+    [RelayCommand]
     public void AddToQueue()
     {
-        var task = CreateTranscodeTask();
-        RequestExport?.Invoke(task, false);
-        RequestClose?.Invoke();
+        CreateAndEmitTasks(false);
     }
 
     [RelayCommand]
     public void RenderNow()
     {
-        var task = CreateTranscodeTask();
-        RequestExport?.Invoke(task, true);
+        CreateAndEmitTasks(true);
+    }
+
+    private void CreateAndEmitTasks(bool startImmediately)
+    {
+        CreatedTasks.Clear();
+
+        if (Segments.Count > 1)
+        {
+            if (MergeSegmentsOnExport)
+            {
+                // Create single merged task
+                var mergedTask = CreateSingleTask(InPointSeconds, OutPointSeconds, isMerged: true);
+                mergedTask.Segments = Segments.ToList();
+                CreatedTasks.Add(mergedTask);
+            }
+            else
+            {
+                // Create separate task for each segment
+                for (int i = 0; i < Segments.Count; i++)
+                {
+                    var seg = Segments[i];
+                    var task = CreateSingleTask(seg.StartSeconds, seg.EndSeconds, isMerged: false, partIndex: i + 1, seg: seg);
+                    CreatedTasks.Add(task);
+                }
+            }
+        }
+        else
+        {
+            double? s = Segments.Count == 1 ? Segments[0].StartSeconds : InPointSeconds;
+            double? e = Segments.Count == 1 ? Segments[0].EndSeconds : OutPointSeconds;
+            TrimSegment? singleSeg = Segments.Count == 1 ? Segments[0] : null;
+            var task = CreateSingleTask(s, e, isMerged: false, seg: singleSeg);
+            CreatedTasks.Add(task);
+        }
+
+        if (CreatedTasks.Count > 0)
+        {
+            RequestExport?.Invoke(CreatedTasks[0], startImmediately);
+        }
         RequestClose?.Invoke();
     }
 
-    private TranscodeTask CreateTranscodeTask()
+    private string GetOutputExtension(Preset preset, bool isLossless)
     {
-        var preset = SelectedPreset ?? AvailablePresets.FirstOrDefault() ?? new Preset { Name = "Default" };
-        
-        string dir = Path.GetDirectoryName(SourceFilePath) ?? "";
-        string fileNameWithoutExt = Path.GetFileNameWithoutExtension(SourceFilePath);
-
-        string ext;
-        if (IsLosslessCopy)
+        if (isLossless)
         {
-            ext = Path.GetExtension(SourceFilePath);
+            return Path.GetExtension(SourceFilePath);
         }
-        else if (preset.IsAudioPreset)
+        if (preset.IsAudioPreset)
         {
-            ext = preset.Container switch
+            return preset.Container switch
             {
                 ContainerFormat.Wav => ".wav",
                 ContainerFormat.Ogg => ".ogg",
@@ -563,36 +679,50 @@ public partial class TrimViewModel : ObservableObject
                 _ => ".mp3"
             };
         }
-        else if (preset.IsImagePreset)
+        if (preset.IsImagePreset)
         {
-            ext = preset.Container switch
+            return preset.Container switch
             {
                 ContainerFormat.Webp => ".webp",
                 ContainerFormat.Png => ".png",
                 _ => ".jpg"
             };
         }
-        else
+        return preset.Container switch
         {
-            ext = preset.Container switch
-            {
-                ContainerFormat.WebM => ".webm",
-                ContainerFormat.Gif => ".gif",
-                ContainerFormat.MXF => ".mxf",
-                _ => ".mp4"
-            };
-        }
+            ContainerFormat.WebM => ".webm",
+            ContainerFormat.Gif => ".gif",
+            ContainerFormat.MXF => ".mxf",
+            _ => ".mp4"
+        };
+    }
 
-        string targetFileName = $"{fileNameWithoutExt}_trim{ext}";
+    private TranscodeTask CreateSingleTask(double? startSec, double? endSec, bool isMerged, int? partIndex = null, TrimSegment? seg = null)
+    {
+        var preset = SelectedPreset ?? AvailablePresets.FirstOrDefault() ?? new Preset { Name = "Default" };
+        
+        string dir = Path.GetDirectoryName(SourceFilePath) ?? "";
+        string fileNameWithoutExt = Path.GetFileNameWithoutExtension(SourceFilePath);
+
+        string ext = GetOutputExtension(preset, IsLosslessCopy && !isMerged);
+
+        string suffix = isMerged ? "_merged" : (partIndex.HasValue ? $"_part{partIndex.Value}" : "_trim");
+        string targetFileName = $"{fileNameWithoutExt}{suffix}{ext}";
         string targetFilePath = Path.Combine(dir, targetFileName);
 
         int counter = 1;
         while (File.Exists(targetFilePath))
         {
-            targetFileName = $"{fileNameWithoutExt}_trim_{counter}{ext}";
+            targetFileName = $"{fileNameWithoutExt}{suffix}_{counter}{ext}";
             targetFilePath = Path.Combine(dir, targetFileName);
             counter++;
         }
+
+        bool isCropped = seg != null ? (seg.IsCropped && seg.CropWidth > 0) : (IsCropActive && CropWidth > 0 && CropHeight > 0);
+        int cX = seg != null ? seg.CropX : CropX;
+        int cY = seg != null ? seg.CropY : CropY;
+        int cW = seg != null ? seg.CropWidth : CropWidth;
+        int cH = seg != null ? seg.CropHeight : CropHeight;
 
         var task = new TranscodeTask
         {
@@ -600,14 +730,14 @@ public partial class TrimViewModel : ObservableObject
             TargetFilePath = targetFilePath,
             Preset = preset,
             DurationSeconds = TotalDurationSeconds,
-            TrimStartSeconds = InPointSeconds,
-            TrimEndSeconds = OutPointSeconds,
-            IsLosslessCopy = IsLosslessCopy && !IsCropActive,
-            IsCropped = IsCropActive && CropWidth > 0 && CropHeight > 0,
-            CropX = CropX,
-            CropY = CropY,
-            CropWidth = CropWidth,
-            CropHeight = CropHeight,
+            TrimStartSeconds = startSec,
+            TrimEndSeconds = endSec,
+            IsLosslessCopy = IsLosslessCopy && !isMerged && !isCropped,
+            IsCropped = isCropped,
+            CropX = cX,
+            CropY = cY,
+            CropWidth = cW,
+            CropHeight = cH,
             Status = TranscodeTaskStatus.Pending
         };
 

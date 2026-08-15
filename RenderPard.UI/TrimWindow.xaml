@@ -228,15 +228,15 @@
                         </Border>
 
                         <!-- 8 Resize Thumbs (Corners & Edges) -->
-                        <Thumb x:Name="HandleNW" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-6,-6,0,0" Style="{StaticResource CropCornerHandleStyle}" Cursor="SizeNWSE" DragDelta="HandleNW_DragDelta"/>
-                        <Thumb x:Name="HandleNE" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-6,-6,0" Style="{StaticResource CropCornerHandleStyle}" Cursor="SizeNESW" DragDelta="HandleNE_DragDelta"/>
-                        <Thumb x:Name="HandleSW" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-6,0,0,-6" Style="{StaticResource CropCornerHandleStyle}" Cursor="SizeNESW" DragDelta="HandleSW_DragDelta"/>
-                        <Thumb x:Name="HandleSE" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-6,-6" Style="{StaticResource CropCornerHandleStyle}" Cursor="SizeNWSE" DragDelta="HandleSE_DragDelta"/>
+                        <Thumb x:Name="HandleNW" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-6,-6,0,0" Style="{StaticResource CropCornerHandleStyle}" Cursor="SizeNWSE" DragStarted="CropHandle_DragStarted" DragDelta="HandleNW_DragDelta"/>
+                        <Thumb x:Name="HandleNE" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-6,-6,0" Style="{StaticResource CropCornerHandleStyle}" Cursor="SizeNESW" DragStarted="CropHandle_DragStarted" DragDelta="HandleNE_DragDelta"/>
+                        <Thumb x:Name="HandleSW" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-6,0,0,-6" Style="{StaticResource CropCornerHandleStyle}" Cursor="SizeNESW" DragStarted="CropHandle_DragStarted" DragDelta="HandleSW_DragDelta"/>
+                        <Thumb x:Name="HandleSE" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-6,-6" Style="{StaticResource CropCornerHandleStyle}" Cursor="SizeNWSE" DragStarted="CropHandle_DragStarted" DragDelta="HandleSE_DragDelta"/>
 
-                        <Thumb x:Name="HandleN" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-3,0,0" Style="{StaticResource CropEdgeHHandleStyle}" Cursor="SizeNS" DragDelta="HandleN_DragDelta"/>
-                        <Thumb x:Name="HandleS" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,-3" Style="{StaticResource CropEdgeHHandleStyle}" Cursor="SizeNS" DragDelta="HandleS_DragDelta"/>
-                        <Thumb x:Name="HandleW" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="-3,0,0,0" Style="{StaticResource CropEdgeVHandleStyle}" Cursor="SizeWE" DragDelta="HandleW_DragDelta"/>
-                        <Thumb x:Name="HandleE" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,-3,0" Style="{StaticResource CropEdgeVHandleStyle}" Cursor="SizeWE" DragDelta="HandleE_DragDelta"/>
+                        <Thumb x:Name="HandleN" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-3,0,0" Style="{StaticResource CropEdgeHHandleStyle}" Cursor="SizeNS" DragStarted="CropHandle_DragStarted" DragDelta="HandleN_DragDelta"/>
+                        <Thumb x:Name="HandleS" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,-3" Style="{StaticResource CropEdgeHHandleStyle}" Cursor="SizeNS" DragStarted="CropHandle_DragStarted" DragDelta="HandleS_DragDelta"/>
+                        <Thumb x:Name="HandleW" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="-3,0,0,0" Style="{StaticResource CropEdgeVHandleStyle}" Cursor="SizeWE" DragStarted="CropHandle_DragStarted" DragDelta="HandleW_DragDelta"/>
+                        <Thumb x:Name="HandleE" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,-3,0" Style="{StaticResource CropEdgeVHandleStyle}" Cursor="SizeWE" DragStarted="CropHandle_DragStarted" DragDelta="HandleE_DragDelta"/>
                     </Grid>
                 </Canvas>
 
@@ -272,6 +272,9 @@
                     <Canvas Height="8" VerticalAlignment="Center" ClipToBounds="True" IsHitTestVisible="False">
                         <Border x:Name="MiniInHighlight" Height="8" Background="#80F39C12" CornerRadius="3"/>
                     </Canvas>
+
+                    <!-- Multi-Segment Markers Canvas on Mini-Bar -->
+                    <Canvas x:Name="MiniSegmentsCanvas" Height="8" VerticalAlignment="Center" ClipToBounds="True" IsHitTestVisible="False"/>
 
                     <!-- Mini Playhead marker -->
                     <Canvas Height="14" VerticalAlignment="Center" IsHitTestVisible="False">
@@ -336,6 +339,9 @@
                         <Border x:Name="TrimHighlightBar" Height="10" Background="#B3F39C12" CornerRadius="3" BorderBrush="#F39C12" BorderThickness="1"/>
                     </Canvas>
 
+                    <!-- Multi-Segment Markers Canvas on Zoomed Timeline -->
+                    <Canvas x:Name="MainSegmentsCanvas" Height="10" VerticalAlignment="Center" ClipToBounds="True" IsHitTestVisible="False"/>
+
                     <!-- In-Point Bracket Visual -->
                     <Canvas Height="24" VerticalAlignment="Center" IsHitTestVisible="False" ClipToBounds="True">
                         <Border x:Name="InBracketMarker" Width="8" Height="20" Background="#f39c12" CornerRadius="2,0,0,2" BorderBrush="#FFFFFF" BorderThickness="1,1,0,1">
@@ -369,11 +375,12 @@
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Left: In/Out Buttons -->
+                    <!-- Left: In/Out & Add Segment Buttons -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal">
-                        <Button Command="{Binding SetInPointCommand}" Content="{DynamicResource TrimBtnIn}" Width="75" Height="26" Margin="0,0,5,0" FontWeight="SemiBold" ToolTip="Установить точку входа [I]"/>
-                        <Button Command="{Binding SetOutPointCommand}" Content="{DynamicResource TrimBtnOut}" Width="75" Height="26" Margin="0,0,5,0" FontWeight="SemiBold" ToolTip="Установить точку выхода [O]"/>
-                        <Button Command="{Binding ResetTrimCommand}" Content="{DynamicResource TrimReset}" Width="70" Height="26" Margin="0,0,5,0" Background="Transparent" Foreground="{StaticResource AppTextSecondaryBrush}"/>
+                        <Button Command="{Binding SetInPointCommand}" Content="{DynamicResource TrimBtnIn}" Width="70" Height="26" Margin="0,0,4,0" FontWeight="SemiBold" ToolTip="Установить точку входа [I]"/>
+                        <Button Command="{Binding SetOutPointCommand}" Content="{DynamicResource TrimBtnOut}" Width="70" Height="26" Margin="0,0,4,0" FontWeight="SemiBold" ToolTip="Установить точку выхода [O]"/>
+                        <Button Command="{Binding AddCurrentSegmentCommand}" Content="{DynamicResource TrimAddSegment}" Height="26" Margin="0,0,4,0" Padding="8,0" Background="#1E222A" BorderBrush="{StaticResource AppLinkBrush}" Foreground="{StaticResource AppLinkBrush}" FontWeight="SemiBold" ToolTip="Добавить текущий диапазон In/Out в список фрагментов (Горячая клавиша M)"/>
+                        <Button Command="{Binding ResetTrimCommand}" Content="{DynamicResource TrimReset}" Width="65" Height="26" Margin="0,0,4,0" Background="Transparent" Foreground="{StaticResource AppTextSecondaryBrush}"/>
                     </StackPanel>
 
                     <!-- Center: Playback Transport Buttons -->
@@ -405,6 +412,71 @@
                         <TextBlock Text="{Binding TotalDurationText}" Foreground="{StaticResource AppTextSecondaryBrush}" FontFamily="Consolas, Courier New" FontSize="12"/>
                     </StackPanel>
                 </Grid>
+
+                <!-- Multi-Segment Panel (Shown when segments exist) -->
+                <Border Visibility="{Binding HasSegments, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Background="#121418" CornerRadius="4" BorderBrush="#282D36" BorderThickness="1" Margin="0,6,0,0" Padding="8,5">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Left: Title & Count -->
+                        <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,0,10,0">
+                            <TextBlock Text="📑" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center"/>
+                            <TextBlock Text="{DynamicResource TrimSegmentsTitle}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource AppLinkBrush}" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <!-- Center: Horizontal Scrollable List of Segment Cards -->
+                        <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                            <ItemsControl ItemsSource="{Binding Segments}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#1C2028" CornerRadius="3" BorderBrush="#333945" BorderThickness="1" Margin="0,0,6,0" Padding="6,2">
+                                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                                <!-- Click on Name/Time to Select -->
+                                                <Button Command="{Binding DataContext.SelectSegmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"
+                                                        Background="Transparent" BorderThickness="0" Padding="0" Cursor="Hand" ToolTip="Выбрать и показать фрагмент">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <TextBlock Text="{Binding Name}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource AppTextBrush}"/>
+                                                        <TextBlock Text=" (" FontSize="11" Foreground="{StaticResource AppTextSecondaryBrush}"/>
+                                                        <TextBlock Text="{Binding FormattedRange}" FontSize="10.5" Foreground="{StaticResource AppLinkBrush}" FontFamily="Consolas"/>
+                                                        <TextBlock Text=")" FontSize="11" Foreground="{StaticResource AppTextSecondaryBrush}"/>
+                                                    </StackPanel>
+                                                </Button>
+
+                                                <!-- Play Button -->
+                                                <Button Command="{Binding DataContext.PlaySegmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="▶" Width="18" Height="18" Margin="4,0,2,0" Background="Transparent" BorderThickness="0" Foreground="#00C8FF" FontSize="9" ToolTip="Воспроизвести фрагмент"/>
+
+                                                <!-- Delete Button -->
+                                                <Button Command="{Binding DataContext.RemoveSegmentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}"
+                                                        Content="✕" Width="16" Height="18" Background="Transparent" BorderThickness="0" Foreground="{StaticResource AppTextSecondaryBrush}" FontSize="9" ToolTip="Удалить фрагмент"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </ScrollViewer>
+
+                        <!-- Right: Multi-Segment Merge/Separate Radio Toggles & Clear -->
+                        <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="8,0,0,0">
+                            <RadioButton Content="{DynamicResource TrimMergeSegments}" IsChecked="{Binding MergeSegmentsOnExport}" GroupName="SegmentExportMode" FontSize="10.5" Foreground="{StaticResource AppTextBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <RadioButton Content="{DynamicResource TrimSeparateSegments}" IsChecked="{Binding MergeSegmentsOnExport, Converter={StaticResource InverseBooleanConverter}}" GroupName="SegmentExportMode" FontSize="10.5" Foreground="{StaticResource AppTextSecondaryBrush}" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                            <Button Command="{Binding ClearSegmentsCommand}" Content="{DynamicResource TrimClearSegments}" Height="20" Padding="5,0" Background="Transparent" BorderThickness="0" Foreground="#E74C3C" FontSize="10" ToolTip="Очистить все фрагменты"/>
+                        </StackPanel>
+                    </Grid>
+                </Border>
             </StackPanel>
         </Border>
 
