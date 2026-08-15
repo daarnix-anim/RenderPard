@@ -1,7 +1,7 @@
 [Setup]
 ; App Information
 AppName=RenderPard
-AppVersion=1.5.5
+AppVersion=1.5.6
 AppPublisher=RenderPard
 AppPublisherURL=https://anipard.ru
 AppSupportURL=https://anipard.ru
@@ -18,7 +18,7 @@ CloseApplications=force
 
 ; Output settings
 OutputDir=Output
-OutputBaseFilename=RenderPard_Setup_v1.5.5
+OutputBaseFilename=RenderPard_Setup_v1.5.6
 
 ; Compression
 Compression=lzma2/ultra64

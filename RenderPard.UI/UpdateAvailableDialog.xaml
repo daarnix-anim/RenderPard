@@ -52,13 +52,13 @@
 
                     <!-- Release Name & Subtitle -->
                     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock x:Name="ReleaseTitleText" Text="RenderPard v1.5.5" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AppTextBrush}"/>
+                        <TextBlock x:Name="ReleaseTitleText" Text="RenderPard v1.5.6" FontSize="15" FontWeight="Bold" Foreground="{StaticResource AppTextBrush}"/>
                         <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
                             <TextBlock Text="Установлено: " FontSize="11" Foreground="{StaticResource AppTextSecondaryBrush}"/>
-                            <TextBlock x:Name="CurrentVersionText" Text="v1.5.0" FontSize="11" Foreground="{StaticResource AppTextSecondaryBrush}" FontWeight="SemiBold"/>
+                            <TextBlock x:Name="CurrentVersionText" Text="v1.5.5" FontSize="11" Foreground="{StaticResource AppTextSecondaryBrush}" FontWeight="SemiBold"/>
                             <TextBlock Text="  ➔  " FontSize="11" Foreground="{StaticResource AppLinkBrush}"/>
                             <TextBlock Text="Новая версия: " FontSize="11" Foreground="{StaticResource AppTextSecondaryBrush}"/>
-                            <TextBlock x:Name="NewVersionText" Text="v1.5.5" FontSize="11" Foreground="{StaticResource AppLinkBrush}" FontWeight="Bold"/>
+                            <TextBlock x:Name="NewVersionText" Text="v1.5.6" FontSize="11" Foreground="{StaticResource AppLinkBrush}" FontWeight="Bold"/>
                         </StackPanel>
                     </StackPanel>
 
