@@ -54,6 +54,24 @@ public partial class App : Application
         }
         catch { }
 
+        // Automatically update context menu icons when user switches between Windows Light/Dark theme
+        try
+        {
+            Microsoft.Win32.SystemEvents.UserPreferenceChanged += (sender, args) =>
+            {
+                if (args.Category == Microsoft.Win32.UserPreferenceCategory.General || 
+                    args.Category == Microsoft.Win32.UserPreferenceCategory.Color)
+                {
+                    try
+                    {
+                        RenderPard.Core.ContextMenuManager.Register(PresetManager.LoadPresets());
+                    }
+                    catch { }
+                }
+            };
+        }
+        catch { }
+
         // Process own args
         ProcessArgs(e.Args, isSecondInstance: false);
 

@@ -96,24 +96,122 @@ public static class ContextMenuManager
             try { Registry.CurrentUser.DeleteSubKeyTree($@"Software\Classes\SystemFileAssociations\{ext}\shell\{MenuName}_Image", false); } catch { }
     }
 
+    public static bool IsWindowsLightTheme()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(@"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize");
+            if (key != null)
+            {
+                // SystemUsesLightTheme determines the context menu and taskbar background color in Windows 10/11
+                var sysVal = key.GetValue("SystemUsesLightTheme");
+                if (sysVal is int sysInt)
+                    return sysInt == 1;
+
+                var appVal = key.GetValue("AppsUseLightTheme");
+                if (appVal is int appInt)
+                    return appInt == 1;
+            }
+        }
+        catch { }
+        return false;
+    }
+
+    public static string ResolveThemeIconPath(string rawIconName, string iconsDir, string customIconsDir, bool isLightTheme)
+    {
+        if (string.IsNullOrWhiteSpace(rawIconName)) return string.Empty;
+
+        // If it's already an absolute path
+        if (Path.IsPathRooted(rawIconName) && File.Exists(rawIconName))
+        {
+            string dir = Path.GetDirectoryName(rawIconName) ?? "";
+            string fname = Path.GetFileNameWithoutExtension(rawIconName);
+            string ext = Path.GetExtension(rawIconName);
+
+            if (isLightTheme)
+            {
+                string darkPath = Path.Combine(dir, fname + "_dark" + ext);
+                if (File.Exists(darkPath)) return darkPath;
+            }
+            else
+            {
+                if (fname.EndsWith("_dark", StringComparison.OrdinalIgnoreCase))
+                {
+                    string lightPath = Path.Combine(dir, fname.Substring(0, fname.Length - 5) + ext);
+                    if (File.Exists(lightPath)) return lightPath;
+                }
+            }
+            return rawIconName;
+        }
+
+        // Clean icon key (e.g. "telegram" or "telegram_dark" or "fmt_mp3.ico")
+        string cleanName = rawIconName.EndsWith(".ico", StringComparison.OrdinalIgnoreCase)
+            ? rawIconName.Substring(0, rawIconName.Length - 4)
+            : rawIconName;
+
+        string targetName = cleanName;
+        if (isLightTheme)
+        {
+            if (!cleanName.EndsWith("_dark", StringComparison.OrdinalIgnoreCase))
+            {
+                targetName = cleanName + "_dark";
+            }
+        }
+        else
+        {
+            if (cleanName.EndsWith("_dark", StringComparison.OrdinalIgnoreCase))
+            {
+                targetName = cleanName.Substring(0, cleanName.Length - 5);
+            }
+        }
+
+        // Search priority:
+        // 1. Target theme in customIconsDir (.ico)
+        string p1 = Path.Combine(customIconsDir, targetName + ".ico");
+        if (File.Exists(p1)) return p1;
+
+        // 2. Target theme in iconsDir (.ico)
+        string p2 = Path.Combine(iconsDir, targetName + ".ico");
+        if (File.Exists(p2)) return p2;
+
+        // 3. Fallback to cleanName in customIconsDir (.ico)
+        string p3 = Path.Combine(customIconsDir, cleanName + ".ico");
+        if (File.Exists(p3)) return p3;
+
+        // 4. Fallback to cleanName in iconsDir (.ico)
+        string p4 = Path.Combine(iconsDir, cleanName + ".ico");
+        if (File.Exists(p4)) return p4;
+
+        // 5. Direct file in customIconsDir (e.g. custom name or extension)
+        string p5 = Path.Combine(customIconsDir, rawIconName);
+        if (File.Exists(p5)) return p5;
+
+        return string.Empty;
+    }
+
     private static void RegisterSubMenu(string ext, string keyName, string displayTitle, List<Preset> presets, string exePath)
     {
         try
         {
+            bool isLightTheme = IsWindowsLightTheme();
+            string exeDir = Path.GetDirectoryName(exePath) ?? "";
+            string iconsDir = Path.Combine(exeDir, "Icons");
+            string customIconsDir = Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                "RenderPard", "CustomIcons");
+
+            string rootIcon = ResolveThemeIconPath("renderpard", iconsDir, customIconsDir, isLightTheme);
+            string settingsIcon = ResolveThemeIconPath("settings", iconsDir, customIconsDir, isLightTheme);
+            string cutIcon = ResolveThemeIconPath("cut", iconsDir, customIconsDir, isLightTheme);
+
             string basePath = $@"Software\Classes\SystemFileAssociations\{ext}\shell\{keyName}";
 
             using (RegistryKey baseKey = Registry.CurrentUser.CreateSubKey(basePath))
             {
                 if (baseKey == null) return;
 
-                string exeDir = Path.GetDirectoryName(exePath) ?? "";
-                string iconsDir = Path.Combine(exeDir, "Icons");
-                string renderpardIcon = Path.Combine(iconsDir, "renderpard.ico");
-                string settingsIcon = Path.Combine(iconsDir, "settings.ico");
-                string cutIcon = Path.Combine(iconsDir, "cut.ico");
-
                 baseKey.SetValue("MUIVerb", displayTitle);
-                baseKey.SetValue("Icon", File.Exists(renderpardIcon) ? $"\"{renderpardIcon}\"" : $"\"{exePath}\"");
+                baseKey.SetValue("Icon", !string.IsNullOrEmpty(rootIcon) && File.Exists(rootIcon) ? $"\"{rootIcon}\"" : $"\"{exePath}\"");
                 
                 baseKey.SetValue("SubCommands", "");
                 try { baseKey.DeleteValue("ExtendedSubCommandsKey"); } catch { }
@@ -128,18 +226,13 @@ public static class ContextMenuManager
             {
                 if (shellKey == null) return;
 
-                string exeDir = Path.GetDirectoryName(exePath) ?? "";
-                string iconsDir = Path.Combine(exeDir, "Icons");
-                string settingsIcon = Path.Combine(iconsDir, "settings.ico");
-                string cutIcon = Path.Combine(iconsDir, "cut.ico");
-
                 // Add "Settings" option at the very top
                 using (RegistryKey settingsKey = shellKey.CreateSubKey("000_Settings"))
                 {
                     if (settingsKey != null)
                     {
                         settingsKey.SetValue("MUIVerb", "Настройки");
-                        settingsKey.SetValue("Icon", File.Exists(settingsIcon) ? $"\"{settingsIcon}\"" : $"\"{exePath}\"");
+                        settingsKey.SetValue("Icon", !string.IsNullOrEmpty(settingsIcon) && File.Exists(settingsIcon) ? $"\"{settingsIcon}\"" : $"\"{exePath}\"");
                         using (RegistryKey commandKey = settingsKey.CreateSubKey("command"))
                         {
                             if (commandKey != null)
@@ -158,7 +251,7 @@ public static class ContextMenuManager
                         if (trimKey != null)
                         {
                             trimKey.SetValue("MUIVerb", "✂ Обрезать (In / Out)...");
-                            trimKey.SetValue("Icon", File.Exists(cutIcon) ? $"\"{cutIcon}\"" : $"\"{exePath}\"");
+                            trimKey.SetValue("Icon", !string.IsNullOrEmpty(cutIcon) && File.Exists(cutIcon) ? $"\"{cutIcon}\"" : $"\"{exePath}\"");
                             using (RegistryKey commandKey = trimKey.CreateSubKey("command"))
                             {
                                 if (commandKey != null)
@@ -184,43 +277,15 @@ public static class ContextMenuManager
 
                         presetKey.SetValue("MUIVerb", preset.Name);
                         
-                        string presetIconPath = string.Empty;
-                        string customIconsDir = Path.Combine(
-                            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                            "RenderPard", "CustomIcons");
-                        
-                        if (!string.IsNullOrEmpty(preset.CustomIcon))
-                        {
-                            string possibleBuiltin = Path.Combine(iconsDir, preset.CustomIcon + ".ico");
-                            string possibleCustom = Path.Combine(customIconsDir, preset.CustomIcon + ".ico");
-                            string possibleCustomDirect = Path.Combine(customIconsDir, preset.CustomIcon);
-
-                            if (Path.IsPathRooted(preset.CustomIcon) && File.Exists(preset.CustomIcon))
-                            {
-                                presetIconPath = preset.CustomIcon;
-                            }
-                            else if (File.Exists(possibleBuiltin))
-                            {
-                                presetIconPath = possibleBuiltin;
-                            }
-                            else if (File.Exists(possibleCustom))
-                            {
-                                presetIconPath = possibleCustom;
-                            }
-                            else if (File.Exists(possibleCustomDirect))
-                            {
-                                presetIconPath = possibleCustomDirect;
-                            }
-                        }
+                        string presetIconPath = ResolveThemeIconPath(preset.CustomIcon, iconsDir, customIconsDir, isLightTheme);
 
                         if (string.IsNullOrEmpty(presetIconPath) || !File.Exists(presetIconPath))
                         {
-                            // Type-specific clean fallback icon
-                            string typeFallback = preset.IsAudioPreset
-                                ? Path.Combine(iconsDir, "audio.ico")
-                                : (preset.IsImagePreset ? Path.Combine(iconsDir, "image.ico") : Path.Combine(iconsDir, "video.ico"));
+                            // Type-specific clean fallback icon with theme awareness
+                            string typeKey = preset.IsAudioPreset ? "audio" : (preset.IsImagePreset ? "image" : "video");
+                            string typeFallback = ResolveThemeIconPath(typeKey, iconsDir, customIconsDir, isLightTheme);
 
-                            if (File.Exists(typeFallback))
+                            if (!string.IsNullOrEmpty(typeFallback) && File.Exists(typeFallback))
                             {
                                 presetIconPath = typeFallback;
                             }
