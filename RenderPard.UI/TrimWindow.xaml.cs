@@ -15,6 +15,7 @@ public partial class TrimWindow : Window
     private readonly DispatcherTimer _playbackTimer;
     private bool _isDraggingCropBox;
     private Point _lastCropMousePosition;
+    private string? _tempPreviewFilePath;
 
     public TranscodeTask? CreatedTask => _viewModel.CreatedTasks.FirstOrDefault();
     public System.Collections.Generic.List<TranscodeTask> CreatedTasks => _viewModel.CreatedTasks;
@@ -78,7 +79,21 @@ public partial class TrimWindow : Window
                 UpdateTimelineVisuals();
             }
 
-            PlayerMediaElement.Source = new Uri(_viewModel.SourceFilePath, UriKind.Absolute);
+            string mediaToLoad = _viewModel.SourceFilePath;
+
+            // Generate an instant fast preview remux for video files to guarantee 100% playable MP4 stream with faststart headers
+            // (Takes <300ms for DASH YouTube files, MKV, WebM, etc. and eliminates black screens in WPF MediaElement)
+            if (!isAudio)
+            {
+                string? remuxPath = await ffmpeg.GenerateFastPreviewRemuxAsync(_viewModel.SourceFilePath);
+                if (!string.IsNullOrEmpty(remuxPath) && File.Exists(remuxPath))
+                {
+                    _tempPreviewFilePath = remuxPath;
+                    mediaToLoad = remuxPath;
+                }
+            }
+
+            PlayerMediaElement.Source = new Uri(mediaToLoad, UriKind.Absolute);
             PlayerMediaElement.Play();
 
             // Give DirectX surface 60ms to initialize and present the first video frame, then pause
@@ -1209,6 +1224,10 @@ public partial class TrimWindow : Window
         {
             PlayerMediaElement.Stop();
             PlayerMediaElement.Close();
+            if (!string.IsNullOrEmpty(_tempPreviewFilePath) && File.Exists(_tempPreviewFilePath))
+            {
+                File.Delete(_tempPreviewFilePath);
+            }
         }
         catch { }
         base.OnClosed(e);

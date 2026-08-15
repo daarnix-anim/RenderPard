@@ -15,11 +15,97 @@ public class FFmpegWrapper
     private readonly string _ffmpegPath;
     private readonly string _ffprobePath;
     
-    // We assume ffmpeg.exe and ffprobe.exe are in the app directory or system PATH.
-    public FFmpegWrapper(string ffmpegPath = "ffmpeg.exe", string ffprobePath = "ffprobe.exe")
+    public static string ResolveFfmpegPath()
     {
-        _ffmpegPath = ffmpegPath;
-        _ffprobePath = ffprobePath;
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        string direct = Path.Combine(baseDir, "ffmpeg.exe");
+        if (File.Exists(direct)) return direct;
+
+        string subDir = Path.Combine(baseDir, "ffmpeg", "ffmpeg.exe");
+        if (File.Exists(subDir)) return subDir;
+
+        string localApp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RenderPard", "ffmpeg", "ffmpeg.exe");
+        if (File.Exists(localApp)) return localApp;
+
+        if (File.Exists(@"C:\Program Files\FFmpeg\ffmpeg.exe")) return @"C:\Program Files\FFmpeg\ffmpeg.exe";
+
+        return "ffmpeg.exe";
+    }
+
+    public static string ResolveFfprobePath()
+    {
+        string baseDir = AppDomain.CurrentDomain.BaseDirectory;
+        string direct = Path.Combine(baseDir, "ffprobe.exe");
+        if (File.Exists(direct)) return direct;
+
+        string subDir = Path.Combine(baseDir, "ffmpeg", "ffprobe.exe");
+        if (File.Exists(subDir)) return subDir;
+
+        string localApp = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "RenderPard", "ffmpeg", "ffprobe.exe");
+        if (File.Exists(localApp)) return localApp;
+
+        if (File.Exists(@"C:\Program Files\FFmpeg\ffprobe.exe")) return @"C:\Program Files\FFmpeg\ffprobe.exe";
+
+        return "ffprobe.exe";
+    }
+
+    public FFmpegWrapper(string? ffmpegPath = null, string? ffprobePath = null)
+    {
+        _ffmpegPath = !string.IsNullOrEmpty(ffmpegPath) ? ffmpegPath : ResolveFfmpegPath();
+        _ffprobePath = !string.IsNullOrEmpty(ffprobePath) ? ffprobePath : ResolveFfprobePath();
+    }
+
+    public async Task<string?> GenerateFastPreviewRemuxAsync(string sourceFilePath, CancellationToken ct = default)
+    {
+        if (string.IsNullOrEmpty(sourceFilePath) || !File.Exists(sourceFilePath)) return null;
+
+        string tempPath = Path.Combine(Path.GetTempPath(), $"renderpard_preview_{Guid.NewGuid():N}.mp4");
+        try
+        {
+            using var process = new Process();
+            process.StartInfo.FileName = _ffmpegPath;
+            process.StartInfo.Arguments = $"-y -i \"{sourceFilePath}\" -c copy -movflags +faststart \"{tempPath}\"";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+            process.Start();
+
+            await process.WaitForExitAsync(ct);
+            if (File.Exists(tempPath) && new FileInfo(tempPath).Length > 1000)
+            {
+                return tempPath;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Fast preview remux failed: {ex.Message}");
+        }
+
+        // If stream-copy failed (e.g. non-H264/AAC in WebM or MKV), generate fast low-res 720p H.264 preview
+        try
+        {
+            using var process = new Process();
+            process.StartInfo.FileName = _ffmpegPath;
+            process.StartInfo.Arguments = $"-y -i \"{sourceFilePath}\" -vf \"scale='min(1280,iw)':-2,format=yuv420p\" -c:v libx264 -preset ultrafast -crf 28 -an -movflags +faststart \"{tempPath}\"";
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.CreateNoWindow = true;
+            process.Start();
+
+            await process.WaitForExitAsync(ct);
+            if (File.Exists(tempPath) && new FileInfo(tempPath).Length > 1000)
+            {
+                return tempPath;
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Ultrafast proxy preview failed: {ex.Message}");
+        }
+
+        if (File.Exists(tempPath))
+        {
+            try { File.Delete(tempPath); } catch { }
+        }
+        return null;
     }
 
     public class GpuCapabilities
