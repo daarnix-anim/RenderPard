@@ -274,11 +274,20 @@ namespace RenderPard.UI
                     catch { }
                 }
 
-                // Check custom icons directory in AppData
+                // In WPF app (Dark Carbon Tech), always prioritize the light/white contrasting icon
+                string lightIconName = iconName;
+                if (lightIconName.EndsWith("_dark", StringComparison.OrdinalIgnoreCase))
+                {
+                    lightIconName = lightIconName.Substring(0, lightIconName.Length - 5);
+                }
+
                 string customIconsDir = System.IO.Path.Combine(
                     System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData),
                     "RenderPard", "CustomIcons");
-                string customIco = System.IO.Path.Combine(customIconsDir, iconName + ".ico");
+                string iconsDir = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Icons");
+
+                // 1. Try light icon in custom icons
+                string customIco = System.IO.Path.Combine(customIconsDir, lightIconName + ".ico");
                 if (System.IO.File.Exists(customIco))
                 {
                     try 
@@ -294,9 +303,8 @@ namespace RenderPard.UI
                     catch { }
                 }
 
-                // Check built-in Icons directory
-                string iconsDir = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Icons");
-                string icoPath = System.IO.Path.Combine(iconsDir, iconName + ".ico");
+                // 2. Try light icon in built-in icons
+                string icoPath = System.IO.Path.Combine(iconsDir, lightIconName + ".ico");
                 if (System.IO.File.Exists(icoPath))
                 {
                     try 
@@ -305,6 +313,40 @@ namespace RenderPard.UI
                         bmp.BeginInit();
                         bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
                         bmp.UriSource = new Uri(icoPath, UriKind.Absolute);
+                        bmp.EndInit();
+                        bmp.Freeze();
+                        return bmp;
+                    } 
+                    catch { }
+                }
+
+                // 3. Try exact iconName in custom icons
+                string exactCustomIco = System.IO.Path.Combine(customIconsDir, iconName + ".ico");
+                if (System.IO.File.Exists(exactCustomIco))
+                {
+                    try 
+                    { 
+                        var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                        bmp.BeginInit();
+                        bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                        bmp.UriSource = new Uri(exactCustomIco, UriKind.Absolute);
+                        bmp.EndInit();
+                        bmp.Freeze();
+                        return bmp;
+                    } 
+                    catch { }
+                }
+
+                // 4. Try exact iconName in built-in icons
+                string exactIcoPath = System.IO.Path.Combine(iconsDir, iconName + ".ico");
+                if (System.IO.File.Exists(exactIcoPath))
+                {
+                    try 
+                    { 
+                        var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                        bmp.BeginInit();
+                        bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                        bmp.UriSource = new Uri(exactIcoPath, UriKind.Absolute);
                         bmp.EndInit();
                         bmp.Freeze();
                         return bmp;
@@ -329,7 +371,7 @@ namespace RenderPard.UI
                     catch { }
                 }
 
-                return RenderPard.UI.IconGenerator.GetIconImageSource(iconName);
+                return RenderPard.UI.IconGenerator.GetIconImageSource(lightIconName);
             }
             return null;
         }

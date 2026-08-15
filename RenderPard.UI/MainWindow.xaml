@@ -237,10 +237,41 @@
             <Grid Grid.Row="2" Margin="0,6,0,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
 
-                <!-- Queue Controls -->
-                <StackPanel Grid.Column="0" Orientation="Horizontal" HorizontalAlignment="Right">
+                <!-- Left: Live GitHub In-App Background Updater (Telegram-style) -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- Downloading state -->
+                    <Border Background="#1C2028" CornerRadius="4" BorderBrush="#333846" BorderThickness="1" Padding="8,4" Margin="0,0,10,0" Visibility="{Binding IsUpdateDownloading, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="⬇" Foreground="{StaticResource AppLinkBrush}" FontWeight="Bold" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                            <StackPanel VerticalAlignment="Center">
+                                <TextBlock Text="{Binding UpdateStatusText}" Foreground="{StaticResource AppTextBrush}" FontSize="10.5" FontWeight="SemiBold"/>
+                                <ProgressBar Minimum="0" Maximum="1" Value="{Binding UpdateDownloadProgress, Mode=OneWay}" Height="3" Width="180" Margin="0,3,0,0" Background="#242833" Foreground="{StaticResource AppLinkBrush}" BorderThickness="0"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Ready to install state -->
+                    <Button Command="{Binding ApplyUpdateAndRestartCommand}" Background="#2ECC71" Foreground="#0E2314" BorderThickness="0" Padding="10,4" Margin="0,0,10,0" FontWeight="Bold" FontSize="11" Cursor="Hand" ToolTip="Нажмите, чтобы закрыть программу и завершить обновление" Visibility="{Binding IsUpdateReady, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Button.Template>
+                            <ControlTemplate TargetType="Button">
+                                <Border Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                            </ControlTemplate>
+                        </Button.Template>
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <TextBlock Text="🔄 " FontSize="11" VerticalAlignment="Center"/>
+                            <TextBlock Text="{Binding UpdateReadyText}" VerticalAlignment="Center"/>
+                            <TextBlock Text=" → Перезапустить" Margin="4,0,0,0" FontWeight="Bold" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+
+                <!-- Right: Queue Controls -->
+                <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Command="{Binding ToggleQueueCommand}" Width="30" Height="24" Margin="0,0,6,0" ToolTip="{DynamicResource PlayPauseTooltip}" Background="Transparent" Foreground="{StaticResource AppTextBrush}" BorderThickness="0" Cursor="Hand">
                         <Viewbox Width="14" Height="14" Stretch="Uniform">
                             <Canvas Width="24" Height="24">

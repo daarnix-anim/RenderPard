@@ -54,6 +54,22 @@ public partial class QueueViewModel : ObservableObject
     [ObservableProperty]
     private bool _isMenuRegistered;
 
+    // Background In-App Update Properties (Telegram-style)
+    [ObservableProperty]
+    private bool _isUpdateDownloading;
+
+    [ObservableProperty]
+    private double _updateDownloadProgress;
+
+    [ObservableProperty]
+    private string _updateStatusText = string.Empty;
+
+    [ObservableProperty]
+    private bool _isUpdateReady;
+
+    [ObservableProperty]
+    private string _updateReadyText = string.Empty;
+
     private static OverwriteResult? _currentBatchOverwriteResult = null;
     private static DateTime _lastBatchTime = DateTime.MinValue;
 
@@ -79,7 +95,51 @@ public partial class QueueViewModel : ObservableObject
         
         IsMenuRegistered = ContextMenuManager.IsRegistered();
         
+        // Subscribe to live GitHub background updater events
+        GitHubUpdater.DownloadProgressChanged += OnUpdateDownloadProgressChanged;
+        GitHubUpdater.UpdateReady += OnUpdateReady;
+        GitHubUpdater.UpdateFailed += OnUpdateFailed;
+
         StartQueueProcessor();
+    }
+
+    private void OnUpdateDownloadProgressChanged(double progress, long bytesRead, long totalBytes)
+    {
+        IsUpdateDownloading = true;
+        IsUpdateReady = false;
+        UpdateDownloadProgress = progress;
+
+        double mbRead = bytesRead / (1024.0 * 1024.0);
+        double mbTotal = totalBytes > 0 ? totalBytes / (1024.0 * 1024.0) : 0;
+
+        string tag = GitHubUpdater.LatestVersionTag ?? "новой версии";
+        if (mbTotal > 0)
+        {
+            UpdateStatusText = $"Загрузка {tag}: {mbRead:0.0} / {mbTotal:0.0} МБ ({progress:P0})";
+        }
+        else
+        {
+            UpdateStatusText = $"Загрузка {tag}: {mbRead:0.0} МБ";
+        }
+    }
+
+    private void OnUpdateReady(string installerPath, string versionTag)
+    {
+        IsUpdateDownloading = false;
+        IsUpdateReady = true;
+        UpdateReadyText = $"Обновление {versionTag} готово к установке";
+    }
+
+    private void OnUpdateFailed(string error)
+    {
+        IsUpdateDownloading = false;
+        IsUpdateReady = false;
+    }
+
+    [RelayCommand]
+    private void ApplyUpdateAndRestart()
+    {
+        GitHubUpdater.ApplyUpdateAndRestart();
     }
 
     private void CheckFfmpeg()

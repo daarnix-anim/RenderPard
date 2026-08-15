@@ -40,6 +40,16 @@ public static class GitHubUpdater
         public GitHubAsset[] Assets { get; set; } = Array.Empty<GitHubAsset>();
     }
 
+    // Live progress and readiness events for UI
+    public static event Action<double, long, long>? DownloadProgressChanged; // progress (0.0 to 1.0), bytesRead, totalBytes
+    public static event Action<string, string>? UpdateReady; // installerPath, versionTag
+    public static event Action<string>? UpdateFailed;
+
+    public static bool IsDownloading { get; private set; }
+    public static bool IsUpdateReady { get; private set; }
+    public static string? ReadyInstallerPath { get; private set; }
+    public static string? LatestVersionTag { get; private set; }
+
     public static async Task CheckForUpdatesAsync(string owner, string repo, string currentVersionString)
     {
         try
@@ -67,6 +77,8 @@ public static class GitHubUpdater
                 {
                     if (latestVersion > currentVersion)
                     {
+                        LatestVersionTag = latestRelease.TagName;
+
                         // Look for .exe installer asset
                         var exeAsset = latestRelease.Assets.FirstOrDefault(a => a.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase));
                         
@@ -75,27 +87,25 @@ public static class GitHubUpdater
                             string updateMessage = $"Доступно обновление: {latestRelease.Name} ({latestRelease.TagName}).\n\n";
                             if (!string.IsNullOrWhiteSpace(latestRelease.Body))
                             {
-                                // Show a truncated version of the body if it's too long
-                                string bodyText = latestRelease.Body.Length > 500 ? latestRelease.Body.Substring(0, 500) + "..." : latestRelease.Body;
+                                string bodyText = latestRelease.Body.Length > 400 ? latestRelease.Body.Substring(0, 400) + "..." : latestRelease.Body;
                                 updateMessage += $"Что нового:\n{bodyText}\n\n";
                             }
                             
                             if (exeAsset != null)
                             {
                                 var result = MessageBox.Show(
-                                    updateMessage + "Скачать и установить его в фоновом режиме прямо сейчас?",
+                                    updateMessage + "Скачать и подготовить обновление в фоновом режиме прямо сейчас?",
                                     "Обновление RenderPard",
                                     MessageBoxButton.YesNo,
                                     MessageBoxImage.Information);
 
                                 if (result == MessageBoxResult.Yes)
                                 {
-                                    _ = DownloadAndInstallUpdateAsync(exeAsset.BrowserDownloadUrl);
+                                    _ = StartDownloadUpdateAsync(exeAsset.BrowserDownloadUrl, latestRelease.TagName);
                                 }
                             }
                             else
                             {
-                                // Fallback if no .exe is attached
                                 var result = MessageBox.Show(
                                     updateMessage + "Перейти на GitHub для скачивания?",
                                     "Обновление RenderPard",
@@ -122,36 +132,91 @@ public static class GitHubUpdater
         }
     }
 
-    private static async Task DownloadAndInstallUpdateAsync(string downloadUrl)
+    public static async Task StartDownloadUpdateAsync(string downloadUrl, string versionTag)
     {
+        if (IsDownloading) return;
+
+        IsDownloading = true;
+        IsUpdateReady = false;
+        LatestVersionTag = versionTag;
+
         try
         {
-            string tempInstallerPath = Path.Combine(Path.GetTempPath(), "RenderPard_Setup_Update.exe");
+            string tempInstallerPath = Path.Combine(Path.GetTempPath(), $"RenderPard_Setup_{versionTag}.exe");
             
             using var client = new HttpClient();
-            // Need a larger timeout for downloading a 150MB+ file
-            client.Timeout = TimeSpan.FromMinutes(10);
-            
-            // We could show a progress window here, but for now we download silently in the background
-            var response = await client.GetAsync(downloadUrl);
+            client.Timeout = TimeSpan.FromMinutes(15);
+
+            using var response = await client.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead);
             response.EnsureSuccessStatusCode();
 
-            using (var fs = new FileStream(tempInstallerPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            long totalBytes = response.Content.Headers.ContentLength ?? -1;
+
+            using var stream = await response.Content.ReadAsStreamAsync();
+            using (var fs = new FileStream(tempInstallerPath, FileMode.Create, FileAccess.Write, FileShare.None, 81920, true))
             {
-                await response.Content.CopyToAsync(fs);
+                byte[] buffer = new byte[81920];
+                long totalRead = 0;
+                int read;
+                DateTime lastProgressTime = DateTime.MinValue;
+
+                while ((read = await stream.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                {
+                    await fs.WriteAsync(buffer, 0, read);
+                    totalRead += read;
+
+                    if ((DateTime.Now - lastProgressTime).TotalMilliseconds > 120 || totalRead == totalBytes)
+                    {
+                        lastProgressTime = DateTime.Now;
+                        double progress = totalBytes > 0 ? (double)totalRead / totalBytes : 0;
+                        Application.Current.Dispatcher.Invoke(() =>
+                        {
+                            DownloadProgressChanged?.Invoke(progress, totalRead, totalBytes);
+                        });
+                    }
+                }
             }
 
-            // Launch the installer silently
+            IsDownloading = false;
+            IsUpdateReady = true;
+            ReadyInstallerPath = tempInstallerPath;
+
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                UpdateReady?.Invoke(tempInstallerPath, versionTag);
+            });
+        }
+        catch (Exception ex)
+        {
+            IsDownloading = false;
+            IsUpdateReady = false;
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                UpdateFailed?.Invoke(ex.Message);
+            });
+        }
+    }
+
+    public static void ApplyUpdateAndRestart(string? installerPath = null)
+    {
+        string path = installerPath ?? ReadyInstallerPath ?? Path.Combine(Path.GetTempPath(), "RenderPard_Setup_Update.exe");
+        if (!File.Exists(path))
+        {
+            MessageBox.Show("Файл установщика не найден. Попробуйте проверить обновления вручную.", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Warning);
+            return;
+        }
+
+        try
+        {
             var processInfo = new ProcessStartInfo
             {
-                FileName = tempInstallerPath,
+                FileName = path,
                 Arguments = "/VERYSILENT /SUPPRESSMSGBOXES /FORCECLOSEAPPLICATIONS",
                 UseShellExecute = true
             };
-            
+
             Process.Start(processInfo);
 
-            // Shutdown the current application so the installer can overwrite the files
             Application.Current.Dispatcher.Invoke(() =>
             {
                 Application.Current.Shutdown();
@@ -159,10 +224,7 @@ public static class GitHubUpdater
         }
         catch (Exception ex)
         {
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                MessageBox.Show($"Ошибка при скачивании или установке обновления:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
-            });
+            MessageBox.Show($"Не удалось запустить обновление:\n{ex.Message}", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
         }
     }
 }
