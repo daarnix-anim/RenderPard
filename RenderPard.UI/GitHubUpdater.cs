@@ -84,35 +84,28 @@ public static class GitHubUpdater
                         
                         Application.Current.Dispatcher.Invoke(() =>
                         {
-                            string updateMessage = $"Доступно обновление: {latestRelease.Name} ({latestRelease.TagName}).\n\n";
-                            if (!string.IsNullOrWhiteSpace(latestRelease.Body))
-                            {
-                                string bodyText = latestRelease.Body.Length > 400 ? latestRelease.Body.Substring(0, 400) + "..." : latestRelease.Body;
-                                updateMessage += $"Что нового:\n{bodyText}\n\n";
-                            }
-                            
-                            if (exeAsset != null)
-                            {
-                                var result = MessageBox.Show(
-                                    updateMessage + "Скачать и подготовить обновление в фоновом режиме прямо сейчас?",
-                                    "Обновление RenderPard",
-                                    MessageBoxButton.YesNo,
-                                    MessageBoxImage.Information);
+                            var dialog = new UpdateAvailableDialog(
+                                releaseTitle: latestRelease.Name,
+                                currentVersion: currentVersionString,
+                                newVersion: latestRelease.TagName,
+                                releaseNotes: latestRelease.Body,
+                                htmlUrl: latestRelease.HtmlUrl,
+                                hasExeAsset: exeAsset != null);
 
-                                if (result == MessageBoxResult.Yes)
+                            if (Application.Current.MainWindow != null && Application.Current.MainWindow.IsVisible)
+                            {
+                                dialog.Owner = Application.Current.MainWindow;
+                            }
+
+                            bool? dialogResult = dialog.ShowDialog();
+
+                            if (dialogResult == true && dialog.UserWantsDownload)
+                            {
+                                if (exeAsset != null)
                                 {
                                     _ = StartDownloadUpdateAsync(exeAsset.BrowserDownloadUrl, latestRelease.TagName);
                                 }
-                            }
-                            else
-                            {
-                                var result = MessageBox.Show(
-                                    updateMessage + "Перейти на GitHub для скачивания?",
-                                    "Обновление RenderPard",
-                                    MessageBoxButton.YesNo,
-                                    MessageBoxImage.Information);
-
-                                if (result == MessageBoxResult.Yes && !string.IsNullOrEmpty(latestRelease.HtmlUrl))
+                                else if (!string.IsNullOrEmpty(latestRelease.HtmlUrl))
                                 {
                                     Process.Start(new ProcessStartInfo
                                     {
