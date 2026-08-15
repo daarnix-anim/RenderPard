@@ -12,9 +12,10 @@ namespace RenderPard.Core;
 [SupportedOSPlatform("windows")]
 public static class ContextMenuManager
 {
-    private static readonly string[] VideoExtensions = { ".mp4", ".mov", ".mkv", ".avi", ".m4v", ".webm" };
+    private static readonly string[] VideoExtensions = { ".mp4", ".mov", ".mkv", ".avi", ".m4v", ".webm", ".wmv", ".flv", ".ts", ".mts", ".m2ts", ".3gp" };
+    private static readonly string[] AudioExtensions = { ".wav", ".wave", ".ogg", ".opus", ".m4a", ".aac", ".flac", ".aif", ".aiff", ".aifc", ".amr", ".3ga", ".caf", ".wma", ".weba", ".mp2", ".ac3", ".alac", ".ape", ".wv", ".mp3" };
     private static readonly string[] ImageExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".ai", ".pdf", ".heic", ".cr2", ".nef", ".arw", ".dng" };
-    private static readonly string[] SupportedExtensions = VideoExtensions.Concat(ImageExtensions).ToArray();
+    private static readonly string[] SupportedExtensions = VideoExtensions.Concat(AudioExtensions).Concat(ImageExtensions).Distinct().ToArray();
     private const string MenuName = "RenderPard";
 
     public static void Register(List<Preset> presets)
@@ -40,10 +41,10 @@ public static class ContextMenuManager
     {
         try
         {
-            // Check either of the new keys
             using var key1 = Registry.CurrentUser.OpenSubKey($@"Software\Classes\SystemFileAssociations\.mp4\shell\{MenuName}_Video");
-            using var key2 = Registry.CurrentUser.OpenSubKey($@"Software\Classes\SystemFileAssociations\.jpg\shell\{MenuName}_Image");
-            return key1 != null || key2 != null;
+            using var key2 = Registry.CurrentUser.OpenSubKey($@"Software\Classes\SystemFileAssociations\.mp3\shell\{MenuName}_Audio");
+            using var key3 = Registry.CurrentUser.OpenSubKey($@"Software\Classes\SystemFileAssociations\.jpg\shell\{MenuName}_Image");
+            return key1 != null || key2 != null || key3 != null;
         }
         catch
         {
@@ -57,6 +58,7 @@ public static class ContextMenuManager
         try { Registry.CurrentUser.DeleteSubKeyTree($@"Software\Classes\SystemFileAssociations\{ext}\shell\{MenuName}", false); } catch { }
 
         bool isVideo = VideoExtensions.Contains(ext);
+        bool isAudio = AudioExtensions.Contains(ext);
         bool isImage = ImageExtensions.Contains(ext);
 
         // Force Windows to recognize the extension so SystemFileAssociations works even if no default app is set
@@ -67,19 +69,26 @@ public static class ContextMenuManager
                 if (extKey != null)
                 {
                     if (isImage) extKey.SetValue("PerceivedType", "image");
+                    else if (isAudio) extKey.SetValue("PerceivedType", "audio");
                     else if (isVideo) extKey.SetValue("PerceivedType", "video");
                 }
             }
         }
         catch { }
 
-        var videoPresets = presets.Where(p => !p.IsImagePreset).ToList();
-        var imagePresets = presets.Where(p => p.IsImagePreset).ToList();
+        var videoPresets = presets.Where(p => p.ShowInContextMenu && (p.IsVideoPreset || p.IsAudioPreset)).ToList();
+        var audioPresets = presets.Where(p => p.ShowInContextMenu && p.IsAudioPreset).ToList();
+        var imagePresets = presets.Where(p => p.ShowInContextMenu && p.IsImagePreset).ToList();
 
         if (isVideo && videoPresets.Any())
             RegisterSubMenu(ext, $"{MenuName}_Video", "RenderPard 🎬", videoPresets, exePath);
         else
             try { Registry.CurrentUser.DeleteSubKeyTree($@"Software\Classes\SystemFileAssociations\{ext}\shell\{MenuName}_Video", false); } catch { }
+
+        if (isAudio && audioPresets.Any())
+            RegisterSubMenu(ext, $"{MenuName}_Audio", "RenderPard 🎵", audioPresets, exePath);
+        else
+            try { Registry.CurrentUser.DeleteSubKeyTree($@"Software\Classes\SystemFileAssociations\{ext}\shell\{MenuName}_Audio", false); } catch { }
 
         if (isImage && imagePresets.Any())
             RegisterSubMenu(ext, $"{MenuName}_Image", "RenderPard 🖼", imagePresets, exePath);
@@ -130,6 +139,26 @@ public static class ContextMenuManager
                     }
                 }
 
+                // Add "Trim" option for video & audio
+                if (VideoExtensions.Contains(ext) || AudioExtensions.Contains(ext))
+                {
+                    using (RegistryKey trimKey = shellKey.CreateSubKey("001_Trim"))
+                    {
+                        if (trimKey != null)
+                        {
+                            trimKey.SetValue("MUIVerb", "✂ Обрезать (In / Out)...");
+                            trimKey.SetValue("Icon", $"\"{exePath}\"");
+                            using (RegistryKey commandKey = trimKey.CreateSubKey("command"))
+                            {
+                                if (commandKey != null)
+                                {
+                                    commandKey.SetValue("", $"\"{exePath}\" --trim \"%1\"");
+                                }
+                            }
+                        }
+                    }
+                }
+
                 for (int i = 0; i < presets.Count; i++)
                 {
                     var preset = presets[i];
@@ -145,30 +174,54 @@ public static class ContextMenuManager
                         presetKey.SetValue("MUIVerb", preset.Name);
                         
                         string exeDir = Path.GetDirectoryName(exePath) ?? "";
-                        string presetIconPath;
+                        string presetIconPath = string.Empty;
                         string iconsDir = Path.Combine(exeDir, "Icons");
-                        string possibleIcon = Path.Combine(iconsDir, preset.CustomIcon + ".ico");
+                        string customIconsDir = Path.Combine(
+                            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                            "RenderPard", "CustomIcons");
                         
-                        if (Path.IsPathRooted(preset.CustomIcon) && File.Exists(preset.CustomIcon))
+                        if (!string.IsNullOrEmpty(preset.CustomIcon))
                         {
-                            presetIconPath = preset.CustomIcon;
+                            string possibleBuiltin = Path.Combine(iconsDir, preset.CustomIcon + ".ico");
+                            string possibleCustom = Path.Combine(customIconsDir, preset.CustomIcon + ".ico");
+                            string possibleCustomDirect = Path.Combine(customIconsDir, preset.CustomIcon);
+
+                            if (Path.IsPathRooted(preset.CustomIcon) && File.Exists(preset.CustomIcon))
+                            {
+                                presetIconPath = preset.CustomIcon;
+                            }
+                            else if (File.Exists(possibleBuiltin))
+                            {
+                                presetIconPath = possibleBuiltin;
+                            }
+                            else if (File.Exists(possibleCustom))
+                            {
+                                presetIconPath = possibleCustom;
+                            }
+                            else if (File.Exists(possibleCustomDirect))
+                            {
+                                presetIconPath = possibleCustomDirect;
+                            }
                         }
-                        else if (File.Exists(possibleIcon))
+
+                        if (string.IsNullOrEmpty(presetIconPath) || !File.Exists(presetIconPath))
                         {
-                            presetIconPath = possibleIcon;
-                        }
-                        else
-                        {
-                            string iconIdentifier = string.IsNullOrEmpty(preset.CustomIcon) || preset.CustomIcon == "Default" 
-                                ? "none" 
-                                : string.Join("_", preset.CustomIcon.Split(Path.GetInvalidFileNameChars()));
-                            presetIconPath = Path.Combine(exeDir, $"icon_{iconIdentifier}.ico");
+                            // Type-specific clean fallback icon
+                            string typeFallback = preset.IsAudioPreset
+                                ? Path.Combine(iconsDir, "audio.ico")
+                                : (preset.IsImagePreset ? Path.Combine(iconsDir, "image.ico") : Path.Combine(iconsDir, "video.ico"));
+
+                            if (File.Exists(typeFallback))
+                            {
+                                presetIconPath = typeFallback;
+                            }
+                            else
+                            {
+                                presetIconPath = exePath;
+                            }
                         }
                         
-                        if (File.Exists(presetIconPath))
-                            presetKey.SetValue("Icon", $"\"{presetIconPath}\"");
-                        else
-                            presetKey.SetValue("Icon", $"\"{exePath}\"");
+                        presetKey.SetValue("Icon", $"\"{presetIconPath}\"");
                         
                         using (RegistryKey commandKey = presetKey.CreateSubKey("command"))
                         {
@@ -191,6 +244,7 @@ public static class ContextMenuManager
     {
         try { Registry.CurrentUser.DeleteSubKeyTree($@"Software\Classes\SystemFileAssociations\{ext}\shell\{MenuName}", false); } catch { }
         try { Registry.CurrentUser.DeleteSubKeyTree($@"Software\Classes\SystemFileAssociations\{ext}\shell\{MenuName}_Video", false); } catch { }
+        try { Registry.CurrentUser.DeleteSubKeyTree($@"Software\Classes\SystemFileAssociations\{ext}\shell\{MenuName}_Audio", false); } catch { }
         try { Registry.CurrentUser.DeleteSubKeyTree($@"Software\Classes\SystemFileAssociations\{ext}\shell\{MenuName}_Image", false); } catch { }
     }
 }

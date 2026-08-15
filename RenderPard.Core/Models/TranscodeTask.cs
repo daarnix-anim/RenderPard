@@ -46,4 +46,41 @@ public partial class TranscodeTask : ObservableObject
     public bool HasAudio { get; set; }
     public double Fps { get; set; }
     public int Rotation { get; set; }
+
+    // Trimming & Cutting properties
+    [ObservableProperty]
+    private double? _trimStartSeconds;
+
+    [ObservableProperty]
+    private double? _trimEndSeconds;
+
+    [ObservableProperty]
+    private bool _isLosslessCopy;
+
+    public bool IsTrimmed => TrimStartSeconds.HasValue || TrimEndSeconds.HasValue;
+
+    public double EffectiveDurationSeconds
+    {
+        get
+        {
+            if (IsTrimmed)
+            {
+                double start = TrimStartSeconds ?? 0;
+                double end = TrimEndSeconds ?? (DurationSeconds > 0 ? DurationSeconds : start + 1);
+                return Math.Max(0.1, end - start);
+            }
+            return DurationSeconds;
+        }
+    }
+
+    public string TrimSummary
+    {
+        get
+        {
+            if (!IsTrimmed) return string.Empty;
+            string startStr = TrimStartSeconds.HasValue ? System.TimeSpan.FromSeconds(TrimStartSeconds.Value).ToString(@"mm\:ss\.f") : "00:00.0";
+            string endStr = TrimEndSeconds.HasValue ? System.TimeSpan.FromSeconds(TrimEndSeconds.Value).ToString(@"mm\:ss\.f") : (DurationSeconds > 0 ? System.TimeSpan.FromSeconds(DurationSeconds).ToString(@"mm\:ss\.f") : "Конец");
+            return $"[{startStr} - {endStr}]";
+        }
+    }
 }

@@ -105,6 +105,7 @@
     <!-- Enums and Tabs -->
     <system:String x:Key="PresetsTabVideo">Видео</system:String>
     <system:String x:Key="PresetsTabPhoto">Фото</system:String>
+    <system:String x:Key="PresetsTabAudio">Аудио</system:String>
     
     <system:String x:Key="Enum_NamingMode_Suffix">Суффикс (Название пресета)</system:String>
     <system:String x:Key="Enum_NamingMode_Prefix">Префикс (Название пресета)</system:String>
@@ -120,6 +121,11 @@
     <system:String x:Key="Enum_ContainerFormat_Png">PNG</system:String>
     <system:String x:Key="Enum_ContainerFormat_Webp">WebP</system:String>
     <system:String x:Key="Enum_ContainerFormat_MXF">MXF</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Mp3">MP3</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Wav">WAV</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Ogg">OGG (Opus)</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Flac">FLAC</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Aac">AAC (M4A)</system:String>
     
     <system:String x:Key="Enum_VideoCodec_H264">H.264</system:String>
     <system:String x:Key="Enum_VideoCodec_H264_Nvenc">H.264 (NVENC)</system:String>
@@ -136,7 +142,9 @@
     <system:String x:Key="Enum_AudioCodec_Aac">AAC (Стандарт)</system:String>
     <system:String x:Key="Enum_AudioCodec_Mp3">MP3</system:String>
     <system:String x:Key="Enum_AudioCodec_Opus">Opus</system:String>
+    <system:String x:Key="Enum_AudioCodec_Pcm16">PCM 16-bit (WAV)</system:String>
     <system:String x:Key="Enum_AudioCodec_Pcm24">PCM 24-bit (Вещательный)</system:String>
+    <system:String x:Key="Enum_AudioCodec_Flac">FLAC (Lossless)</system:String>
 
     <system:String x:Key="Enum_AudioSampleRate_Original">Оригинал (Авто)</system:String>
     <system:String x:Key="Enum_AudioSampleRate_Hz48000">48 kHz (Стандарт видео)</system:String>
@@ -159,4 +167,21 @@
     <system:String x:Key="Enum_Position9_BottomLeft">Снизу Слева</system:String>
     <system:String x:Key="Enum_Position9_BottomCenter">Снизу по Центру</system:String>
     <system:String x:Key="Enum_Position9_BottomRight">Снизу Справа</system:String>
+
+    <!-- Trimming / Cutting Module -->
+    <system:String x:Key="TrimTitle">Обрезка медиафрагмента (In / Out)</system:String>
+    <system:String x:Key="TrimBtnIn">Вход [I]</system:String>
+    <system:String x:Key="TrimBtnOut">Выход [O]</system:String>
+    <system:String x:Key="TrimInPoint">Точка входа [In]:</system:String>
+    <system:String x:Key="TrimOutPoint">Точка выхода [Out]:</system:String>
+    <system:String x:Key="TrimDuration">Длина отрезка:</system:String>
+    <system:String x:Key="TrimCurrent">Текущее время:</system:String>
+    <system:String x:Key="TrimReset">Сбросить</system:String>
+    <system:String x:Key="TrimPreset">Пресет для рендера:</system:String>
+    <system:String x:Key="TrimLossless">⚡ Мгновенный срез без пересжатия (Stream Copy)</system:String>
+    <system:String x:Key="TrimAddToQueue">➕ Добавить в очередь</system:String>
+    <system:String x:Key="TrimExportNow">⚡ Рендер сейчас</system:String>
+    <system:String x:Key="TrimCutButton">✂ Обрезать</system:String>
+    <system:String x:Key="TrimQuickButton">✂ Быстрая обрезка</system:String>
+    <system:String x:Key="TrimHotkeysHelp">Space: Пауза | I / [ : Точка входа | O / ] : Точка выхода | ←/→ : 1 кадр | Shift+←/→ : 1 сек</system:String>
 </ResourceDictionary>

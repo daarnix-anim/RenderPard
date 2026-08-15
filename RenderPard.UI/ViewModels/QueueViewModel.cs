@@ -198,6 +198,12 @@ public partial class QueueViewModel : ObservableObject
                 ContainerFormat.Jpeg => ".jpg",
                 ContainerFormat.Png => ".png",
                 ContainerFormat.Webp => ".webp",
+                ContainerFormat.MXF => ".mxf",
+                ContainerFormat.Mp3 => ".mp3",
+                ContainerFormat.Wav => ".wav",
+                ContainerFormat.Ogg => ".ogg",
+                ContainerFormat.Flac => ".flac",
+                ContainerFormat.Aac => ".m4a",
                 _ => ".mp4"
             };
 
@@ -413,6 +419,64 @@ public partial class QueueViewModel : ObservableObject
         var globalSettingsWindow = new GlobalSettingsWindow();
         globalSettingsWindow.Owner = App.Current.MainWindow;
         globalSettingsWindow.ShowDialog();
+    }
+
+    [RelayCommand]
+    public void OpenQuickTrim()
+    {
+        var dialog = new Microsoft.Win32.OpenFileDialog
+        {
+            Filter = "Media files (*.mp4;*.mov;*.mkv;*.avi;*.webm;*.mp3;*.wav;*.ogg;*.flac;*.m4a)|*.mp4;*.mov;*.mkv;*.avi;*.webm;*.mp3;*.wav;*.ogg;*.flac;*.m4a|All files (*.*)|*.*",
+            Title = "Выберите медиафайл для обрезки"
+        };
+
+        if (dialog.ShowDialog() == true)
+        {
+            OpenTrimWindowForFile(dialog.FileName);
+        }
+    }
+
+    public void OpenTrimWindowForFile(string filePath, Preset? initialPreset = null)
+    {
+        var trimWindow = new TrimWindow(filePath, initialPreset)
+        {
+            Owner = System.Windows.Application.Current.MainWindow
+        };
+
+        if (trimWindow.ShowDialog() == true && trimWindow.CreatedTask != null)
+        {
+            Tasks.Add(trimWindow.CreatedTask);
+            if (trimWindow.StartImmediately && !IsQueueActive)
+            {
+                IsQueueActive = true;
+            }
+        }
+    }
+
+    [RelayCommand]
+    public void TrimTask(TranscodeTask task)
+    {
+        if (task == null || string.IsNullOrEmpty(task.SourceFilePath)) return;
+
+        var trimWindow = new TrimWindow(task.SourceFilePath, task.Preset)
+        {
+            Owner = System.Windows.Application.Current.MainWindow
+        };
+
+        if (trimWindow.ShowDialog() == true && trimWindow.CreatedTask != null)
+        {
+            task.TrimStartSeconds = trimWindow.CreatedTask.TrimStartSeconds;
+            task.TrimEndSeconds = trimWindow.CreatedTask.TrimEndSeconds;
+            task.Preset = trimWindow.CreatedTask.Preset;
+            task.IsLosslessCopy = trimWindow.CreatedTask.IsLosslessCopy;
+            task.TargetFilePath = trimWindow.CreatedTask.TargetFilePath;
+            task.Status = TranscodeTaskStatus.Pending;
+
+            if (trimWindow.StartImmediately && !IsQueueActive)
+            {
+                IsQueueActive = true;
+            }
+        }
     }
 
     [RelayCommand]

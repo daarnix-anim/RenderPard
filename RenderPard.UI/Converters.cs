@@ -133,14 +133,26 @@ namespace RenderPard.UI
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is RenderPard.Core.Models.ContainerFormat format && 
-                (format == RenderPard.Core.Models.ContainerFormat.Gif || 
-                 format == RenderPard.Core.Models.ContainerFormat.MXF ||
-                 format == RenderPard.Core.Models.ContainerFormat.Jpeg ||
-                 format == RenderPard.Core.Models.ContainerFormat.Png ||
-                 format == RenderPard.Core.Models.ContainerFormat.Webp))
+            if (value is bool isVideo)
             {
-                return System.Windows.Visibility.Collapsed;
+                return isVideo ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
+            }
+            if (value is RenderPard.Core.Models.ContainerFormat format)
+            {
+                if (format == RenderPard.Core.Models.ContainerFormat.Gif || 
+                    format == RenderPard.Core.Models.ContainerFormat.MXF ||
+                    format == RenderPard.Core.Models.ContainerFormat.Jpeg ||
+                    format == RenderPard.Core.Models.ContainerFormat.Png ||
+                    format == RenderPard.Core.Models.ContainerFormat.Webp ||
+                    format == RenderPard.Core.Models.ContainerFormat.Mp3 ||
+                    format == RenderPard.Core.Models.ContainerFormat.Wav ||
+                    format == RenderPard.Core.Models.ContainerFormat.Ogg ||
+                    format == RenderPard.Core.Models.ContainerFormat.Flac ||
+                    format == RenderPard.Core.Models.ContainerFormat.Aac)
+                {
+                    return System.Windows.Visibility.Collapsed;
+                }
+                return System.Windows.Visibility.Visible;
             }
             return System.Windows.Visibility.Visible;
         }
@@ -227,14 +239,72 @@ namespace RenderPard.UI
             {
                 if (System.IO.Path.IsPathRooted(iconName) && System.IO.File.Exists(iconName))
                 {
-                    try { return new System.Windows.Media.Imaging.BitmapImage(new Uri(iconName)); } catch { }
+                    try 
+                    { 
+                        var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                        bmp.BeginInit();
+                        bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                        bmp.UriSource = new Uri(iconName, UriKind.Absolute);
+                        bmp.EndInit();
+                        bmp.Freeze();
+                        return bmp;
+                    } 
+                    catch { }
                 }
 
+                // Check custom icons directory in AppData
+                string customIconsDir = System.IO.Path.Combine(
+                    System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData),
+                    "RenderPard", "CustomIcons");
+                string customIco = System.IO.Path.Combine(customIconsDir, iconName + ".ico");
+                if (System.IO.File.Exists(customIco))
+                {
+                    try 
+                    { 
+                        var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                        bmp.BeginInit();
+                        bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                        bmp.UriSource = new Uri(customIco, UriKind.Absolute);
+                        bmp.EndInit();
+                        bmp.Freeze();
+                        return bmp;
+                    } 
+                    catch { }
+                }
+
+                // Check built-in Icons directory
                 string iconsDir = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Icons");
                 string icoPath = System.IO.Path.Combine(iconsDir, iconName + ".ico");
                 if (System.IO.File.Exists(icoPath))
                 {
-                    try { return new System.Windows.Media.Imaging.BitmapImage(new Uri(icoPath)); } catch { }
+                    try 
+                    { 
+                        var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                        bmp.BeginInit();
+                        bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                        bmp.UriSource = new Uri(icoPath, UriKind.Absolute);
+                        bmp.EndInit();
+                        bmp.Freeze();
+                        return bmp;
+                    } 
+                    catch { }
+                }
+
+                // Fallback to video.ico
+                string fallback = System.IO.Path.Combine(iconsDir, "video.ico");
+                if (System.IO.File.Exists(fallback))
+                {
+                    try 
+                    { 
+                        var bmp = new System.Windows.Media.Imaging.BitmapImage();
+                        bmp.BeginInit();
+                        bmp.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                        bmp.UriSource = new Uri(fallback, UriKind.Absolute);
+                        bmp.EndInit();
+                        bmp.Freeze();
+                        return bmp;
+                    } 
+                    catch { }
                 }
 
                 return RenderPard.UI.IconGenerator.GetIconImageSource(iconName);
@@ -262,6 +332,20 @@ namespace RenderPard.UI
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 
+    public class AudioSettingsVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool isAudio && isAudio)
+            {
+                return System.Windows.Visibility.Visible;
+            }
+            return System.Windows.Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
+
     public class AudioEncodeSettingsVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
@@ -271,6 +355,18 @@ namespace RenderPard.UI
                 return System.Windows.Visibility.Visible;
             }
             return System.Windows.Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
+
+    public class BooleanToPlayPauseTextConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is bool isPlaying && isPlaying)
+                return "❚❚";
+            return "▶";
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();

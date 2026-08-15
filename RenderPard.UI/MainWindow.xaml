@@ -121,6 +121,13 @@
                         </ToggleButton.Style>
                     </ToggleButton>
 
+                    <Button Command="{Binding OpenQuickTrimCommand}" Margin="0,0,8,0" Height="22" Padding="8,0" Background="Transparent" Foreground="{StaticResource AppTextBrush}" BorderThickness="1" BorderBrush="{StaticResource AppBorderBrush}" Cursor="Hand" ToolTip="{DynamicResource TrimQuickButton}">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="✂" FontSize="11" Margin="0,0,4,0" VerticalAlignment="Center" Foreground="{StaticResource AppLinkBrush}"/>
+                            <TextBlock Text="{DynamicResource TrimCutButton}" VerticalAlignment="Center" FontSize="11"/>
+                        </StackPanel>
+                    </Button>
+
                     <Button Command="{Binding ToggleMenuCommand}" Margin="0,0,8,0" Height="22" Padding="8,0" Background="Transparent" Foreground="{StaticResource AppTextBrush}" BorderThickness="1" BorderBrush="{StaticResource AppBorderBrush}" Cursor="Hand">
                         <Button.Style>
                             <Style TargetType="Button">
@@ -182,7 +189,18 @@
                     </Style>
                 </DataGrid.Resources>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="{DynamicResource ColFile}" Binding="{Binding FileName}" Width="250"/>
+                    <DataGridTemplateColumn Header="{DynamicResource ColFile}" Width="260">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding FileName}" Foreground="{StaticResource AppTextBrush}" TextTrimming="CharacterEllipsis" MaxWidth="180" VerticalAlignment="Center"/>
+                                    <Border Background="#2B2414" CornerRadius="3" BorderBrush="#F39C12" BorderThickness="1" Margin="6,0,0,0" Padding="4,1" VerticalAlignment="Center" Visibility="{Binding IsTrimmed, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <TextBlock Text="{Binding TrimSummary}" Foreground="#F39C12" FontSize="9.5" FontWeight="SemiBold"/>
+                                    </Border>
+                                </StackPanel>
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
                     <DataGridTextColumn Header="{DynamicResource ColPreset}" Binding="{Binding Preset.Name}" Width="120"/>
                     <DataGridTextColumn Header="{DynamicResource ColStatus}" Binding="{Binding Status}" Width="100"/>
                     <DataGridTemplateColumn Header="{DynamicResource ColProgress}" Width="150">
@@ -199,9 +217,14 @@
                     <DataGridTemplateColumn Header="{DynamicResource ColAction}" Width="80">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <Button Command="{Binding DataContext.RemoveTaskCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="{DynamicResource RemoveTaskTooltip}" Padding="4">
-                                    <Path Data="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" Fill="{StaticResource AppTextSecondaryBrush}" Width="16" Height="16" Stretch="Uniform"/>
-                                </Button>
+                                <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                                    <Button Command="{Binding DataContext.TrimTaskCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="{DynamicResource TrimCutButton}" Padding="4" Margin="0,0,4,0">
+                                        <TextBlock Text="✂" Foreground="{StaticResource AppLinkBrush}" FontSize="13" VerticalAlignment="Center"/>
+                                    </Button>
+                                    <Button Command="{Binding DataContext.RemoveTaskCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="{DynamicResource RemoveTaskTooltip}" Padding="4">
+                                        <Path Data="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" Fill="{StaticResource AppTextSecondaryBrush}" Width="15" Height="15" Stretch="Uniform"/>
+                                    </Button>
+                                </StackPanel>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

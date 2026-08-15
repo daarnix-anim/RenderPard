@@ -99,6 +99,14 @@ public partial class MainWindow : Window
         });
     }
 
+    public void OpenTrimWindow(string filePath, Preset? preset = null)
+    {
+        Dispatcher.InvokeAsync(() =>
+        {
+            _viewModel.OpenTrimWindowForFile(filePath, preset);
+        });
+    }
+
     public void StartQueue()
     {
         Dispatcher.InvokeAsync(() =>
@@ -147,11 +155,26 @@ public partial class MainWindow : Window
             
             var headerItem = new System.Windows.Controls.MenuItem 
             { 
-                Header = "Выберите пресет для обработки:", 
+                Header = "Выберите действие / пресет:", 
                 IsEnabled = false,
                 FontWeight = FontWeights.Bold
             };
             contextMenu.Items.Add(headerItem);
+
+            if (files.Length == 1)
+            {
+                var trimItem = new System.Windows.Controls.MenuItem 
+                { 
+                    Header = "✂ Обрезать фрагмент (In / Out)...",
+                    FontWeight = FontWeights.SemiBold
+                };
+                trimItem.Click += (s, args) =>
+                {
+                    _viewModel.OpenTrimWindowForFile(files[0]);
+                };
+                contextMenu.Items.Add(trimItem);
+            }
+
             contextMenu.Items.Add(new System.Windows.Controls.Separator());
 
             foreach (var preset in presets)

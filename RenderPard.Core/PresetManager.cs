@@ -37,6 +37,7 @@ public class PresetManager
                 var loaded = JsonSerializer.Deserialize<List<Preset>>(json, options);
                 if (loaded != null)
                 {
+                    MergeBuiltInPresets(loaded);
                     return loaded.OrderBy(p => p.SortOrder).ToList();
                 }
             }
@@ -74,9 +75,22 @@ public class PresetManager
             }
             else
             {
-                // Could optionally overwrite existing built-in properties with defaults
-                // to ensure updates to the app also update the built-in presets logic.
-                // For MVP, just keeping the existing one is fine if user customized `ShowInContextMenu`.
+                // If existing built-in preset has legacy "Default" or empty icon, update it to clean default icon
+                if (string.IsNullOrEmpty(existing.CustomIcon) || existing.CustomIcon == "Default")
+                {
+                    existing.CustomIcon = def.CustomIcon;
+                }
+            }
+        }
+
+        // Also fix any user preset with legacy "Default" icon
+        foreach (var p in loaded)
+        {
+            if (p.CustomIcon == "Default")
+            {
+                if (p.IsImagePreset) p.CustomIcon = "image";
+                else if (p.IsAudioPreset) p.CustomIcon = "audio";
+                else p.CustomIcon = "video";
             }
         }
     }
@@ -90,6 +104,7 @@ public class PresetManager
                 Name = "Telegram",
                 IsBuiltIn = true,
                 SortOrder = 0,
+                CustomIcon = "telegram",
                 Container = ContainerFormat.Mp4,
                 VideoCodec = VideoCodec.H264_Nvenc,
                 MaxLongSideSize = 1280,
@@ -103,6 +118,7 @@ public class PresetManager
                 Name = "Demo",
                 IsBuiltIn = true,
                 SortOrder = 1,
+                CustomIcon = "play",
                 Container = ContainerFormat.Mp4,
                 VideoCodec = VideoCodec.H264_Nvenc,
                 MaxLongSideSize = 1280,
@@ -128,6 +144,7 @@ public class PresetManager
                 Name = "Web_pre",
                 IsBuiltIn = true,
                 SortOrder = 2,
+                CustomIcon = "video",
                 Container = ContainerFormat.Mp4,
                 VideoCodec = VideoCodec.H264_Nvenc,
                 UseWebPreLogic = true,
@@ -142,6 +159,7 @@ public class PresetManager
                 Name = "Web_Alpha",
                 IsBuiltIn = true,
                 SortOrder = 3,
+                CustomIcon = "sparkles",
                 Container = ContainerFormat.WebM,
                 VideoCodec = VideoCodec.Vp9,
                 MaxLongSideSize = 1280,
@@ -155,6 +173,7 @@ public class PresetManager
                 Name = "Web_Split_Alpha",
                 IsBuiltIn = true,
                 SortOrder = 4,
+                CustomIcon = "cut",
                 Container = ContainerFormat.Mp4,
                 VideoCodec = VideoCodec.H265_Nvenc,
                 MaxLongSideSize = 2160,
@@ -169,6 +188,7 @@ public class PresetManager
                 Name = "GIF (Web)",
                 IsBuiltIn = true,
                 SortOrder = 5,
+                CustomIcon = "fmt_gif",
                 Container = ContainerFormat.Gif,
                 VideoCodec = VideoCodec.Gif,
                 GifFps = 15,
@@ -182,6 +202,7 @@ public class PresetManager
                 Name = "Фото в JPEG",
                 IsBuiltIn = true,
                 SortOrder = 6,
+                CustomIcon = "fmt_jpeg",
                 Container = ContainerFormat.Jpeg,
                 ImageQuality = 90
             },
@@ -190,8 +211,56 @@ public class PresetManager
                 Name = "Фото в WebP (Для Web)",
                 IsBuiltIn = true,
                 SortOrder = 7,
+                CustomIcon = "fmt_webp",
                 Container = ContainerFormat.Webp,
                 ImageQuality = 80
+            },
+            new Preset
+            {
+                Name = "Извлечь / Аудио в MP3",
+                IsBuiltIn = true,
+                SortOrder = 8,
+                Container = ContainerFormat.Mp3,
+                AudioCodec = AudioCodec.Mp3,
+                AudioBitrateKbps = 192,
+                AudioSampleRate = AudioSampleRate.Hz48000,
+                AudioChannels = AudioChannels.Stereo,
+                CustomIcon = "fmt_mp3"
+            },
+            new Preset
+            {
+                Name = "Голосовые в MP3 (128 kbps)",
+                IsBuiltIn = true,
+                SortOrder = 9,
+                Container = ContainerFormat.Mp3,
+                AudioCodec = AudioCodec.Mp3,
+                AudioBitrateKbps = 128,
+                AudioSampleRate = AudioSampleRate.Hz44100,
+                AudioChannels = AudioChannels.Mono,
+                CustomIcon = "fmt_mp3"
+            },
+            new Preset
+            {
+                Name = "Аудио в MP3 HQ (320 kbps)",
+                IsBuiltIn = true,
+                SortOrder = 10,
+                Container = ContainerFormat.Mp3,
+                AudioCodec = AudioCodec.Mp3,
+                AudioBitrateKbps = 320,
+                AudioSampleRate = AudioSampleRate.Hz48000,
+                AudioChannels = AudioChannels.Stereo,
+                CustomIcon = "fmt_mp3"
+            },
+            new Preset
+            {
+                Name = "Аудио в WAV (PCM 16-bit)",
+                IsBuiltIn = true,
+                SortOrder = 11,
+                Container = ContainerFormat.Wav,
+                AudioCodec = AudioCodec.Pcm16,
+                AudioSampleRate = AudioSampleRate.Hz48000,
+                AudioChannels = AudioChannels.Stereo,
+                CustomIcon = "fmt_wav"
             }
         };
     }

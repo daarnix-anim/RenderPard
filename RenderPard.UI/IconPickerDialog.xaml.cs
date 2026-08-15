@@ -49,8 +49,28 @@ namespace RenderPard.UI
             };
             if (dialog.ShowDialog() == true)
             {
-                SelectedIconName = dialog.FileName;
-                DialogResult = true;
+                try
+                {
+                    string customIconsDir = System.IO.Path.Combine(
+                        System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData),
+                        "RenderPard", "CustomIcons");
+                    if (!System.IO.Directory.Exists(customIconsDir))
+                    {
+                        System.IO.Directory.CreateDirectory(customIconsDir);
+                    }
+
+                    string fileName = System.IO.Path.GetFileName(dialog.FileName);
+                    string destPath = System.IO.Path.Combine(customIconsDir, fileName);
+                    System.IO.File.Copy(dialog.FileName, destPath, true);
+
+                    SelectedIconName = destPath;
+                    DialogResult = true;
+                }
+                catch
+                {
+                    SelectedIconName = dialog.FileName;
+                    DialogResult = true;
+                }
             }
         }
     }

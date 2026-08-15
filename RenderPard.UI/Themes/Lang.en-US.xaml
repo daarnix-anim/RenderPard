@@ -105,6 +105,7 @@
     <!-- Enums and Tabs -->
     <system:String x:Key="PresetsTabVideo">Video</system:String>
     <system:String x:Key="PresetsTabPhoto">Photo</system:String>
+    <system:String x:Key="PresetsTabAudio">Audio</system:String>
     
     <system:String x:Key="Enum_NamingMode_Suffix">Suffix (Preset Name)</system:String>
     <system:String x:Key="Enum_NamingMode_Prefix">Prefix (Preset Name)</system:String>
@@ -120,6 +121,11 @@
     <system:String x:Key="Enum_ContainerFormat_Png">PNG</system:String>
     <system:String x:Key="Enum_ContainerFormat_Webp">WebP</system:String>
     <system:String x:Key="Enum_ContainerFormat_MXF">MXF</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Mp3">MP3</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Wav">WAV</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Ogg">OGG (Opus)</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Flac">FLAC</system:String>
+    <system:String x:Key="Enum_ContainerFormat_Aac">AAC (M4A)</system:String>
     
     <system:String x:Key="Enum_VideoCodec_H264">H.264</system:String>
     <system:String x:Key="Enum_VideoCodec_H264_Nvenc">H.264 (NVENC)</system:String>
@@ -136,7 +142,9 @@
     <system:String x:Key="Enum_AudioCodec_Aac">AAC (Standard)</system:String>
     <system:String x:Key="Enum_AudioCodec_Mp3">MP3</system:String>
     <system:String x:Key="Enum_AudioCodec_Opus">Opus</system:String>
+    <system:String x:Key="Enum_AudioCodec_Pcm16">PCM 16-bit (WAV)</system:String>
     <system:String x:Key="Enum_AudioCodec_Pcm24">PCM 24-bit (Broadcast)</system:String>
+    <system:String x:Key="Enum_AudioCodec_Flac">FLAC (Lossless)</system:String>
 
     <system:String x:Key="Enum_AudioSampleRate_Original">Original (Auto)</system:String>
     <system:String x:Key="Enum_AudioSampleRate_Hz48000">48 kHz (Video Standard)</system:String>
@@ -159,4 +167,21 @@
     <system:String x:Key="Enum_Position9_BottomLeft">Bottom Left</system:String>
     <system:String x:Key="Enum_Position9_BottomCenter">Bottom Center</system:String>
     <system:String x:Key="Enum_Position9_BottomRight">Bottom Right</system:String>
+
+    <!-- Trimming / Cutting Module -->
+    <system:String x:Key="TrimTitle">Media Trimmer (In / Out)</system:String>
+    <system:String x:Key="TrimBtnIn">In Point [I]</system:String>
+    <system:String x:Key="TrimBtnOut">Out Point [O]</system:String>
+    <system:String x:Key="TrimInPoint">In Point [In]:</system:String>
+    <system:String x:Key="TrimOutPoint">Out Point [Out]:</system:String>
+    <system:String x:Key="TrimDuration">Clip Duration:</system:String>
+    <system:String x:Key="TrimCurrent">Current Time:</system:String>
+    <system:String x:Key="TrimReset">Reset</system:String>
+    <system:String x:Key="TrimPreset">Export Preset:</system:String>
+    <system:String x:Key="TrimLossless">⚡ Direct Stream Copy (Lossless 1-sec cut)</system:String>
+    <system:String x:Key="TrimAddToQueue">➕ Add to Queue</system:String>
+    <system:String x:Key="TrimExportNow">⚡ Render Now</system:String>
+    <system:String x:Key="TrimCutButton">✂ Trim</system:String>
+    <system:String x:Key="TrimQuickButton">✂ Quick Trim</system:String>
+    <system:String x:Key="TrimHotkeysHelp">Space: Pause | I / [ : In Point | O / ] : Out Point | ←/→ : 1 Frame | Shift+←/→ : 1 Sec</system:String>
 </ResourceDictionary>

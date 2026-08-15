@@ -21,7 +21,7 @@
             </Grid>
         </Border>
         
-        <ScrollViewer Grid.Row="1" Margin="10,10,2,0" VerticalScrollBarVisibility="Auto" Padding="0,0,5,0">
+        <ScrollViewer Grid.Row="1" Margin="10,10,5,5" VerticalScrollBarVisibility="Auto" Padding="0,0,5,0">
             <ListBox x:Name="IconsList" Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.ItemsPanel>
                     <ItemsPanelTemplate>
@@ -30,10 +30,14 @@
                 </ListBox.ItemsPanel>
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Margin="2" Width="40" Height="50" ToolTip="{Binding Name}">
-                            <Image Source="{Binding Image}" Width="24" Height="24" Stretch="Uniform" HorizontalAlignment="Center"/>
-                            <TextBlock Text="{Binding Name}" FontSize="9" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="0,2,0,0" Foreground="{StaticResource AppTextBrush}"/>
-                        </StackPanel>
+                        <Border Width="56" Height="62" Margin="2" CornerRadius="6" Background="#1E2026" BorderBrush="#2D3038" BorderThickness="1" ToolTip="{Binding Name}">
+                            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center">
+                                <Border Background="#2C2F38" CornerRadius="4" Width="30" Height="30" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <Image Source="{Binding Image}" Width="20" Height="20" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                </Border>
+                                <TextBlock Text="{Binding Name}" FontSize="8.5" TextAlignment="Center" TextTrimming="CharacterEllipsis" Margin="2,3,2,0" Foreground="{StaticResource AppTextSecondaryBrush}"/>
+                            </StackPanel>
+                        </Border>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>

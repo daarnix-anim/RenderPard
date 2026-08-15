@@ -120,6 +120,24 @@ public partial class App : Application
                 file = args[i + 1];
                 i++;
             }
+            else if (args[i] == "--trim" && i + 1 < args.Length)
+            {
+                string trimFile = args[i + 1];
+                i++;
+                if (MainWindow is MainWindow window)
+                {
+                    window.OpenTrimWindow(trimFile);
+                    if (isSecondInstance)
+                    {
+                        Dispatcher.Invoke(() =>
+                        {
+                            window.WindowState = WindowState.Normal;
+                            window.Activate();
+                        });
+                    }
+                }
+                return;
+            }
             else if (args[i] == "--open")
             {
                 openApp = true;

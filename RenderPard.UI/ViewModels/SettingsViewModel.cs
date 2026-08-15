@@ -21,25 +21,47 @@ public partial class SettingsViewModel : ObservableObject
     private bool _minimizeToTrayOnClose;
     private string _language;
         
-    private bool _isVideoTabSelected = true;
-    public bool IsVideoTabSelected
+    private int _selectedTabIndex = 0; // 0 = Video, 1 = Photo, 2 = Audio
+    public int SelectedTabIndex
     {
-        get => _isVideoTabSelected;
+        get => _selectedTabIndex;
         set
         {
-            if (SetProperty(ref _isVideoTabSelected, value))
+            if (SetProperty(ref _selectedTabIndex, value))
             {
+                OnPropertyChanged(nameof(IsVideoTabSelected));
+                OnPropertyChanged(nameof(IsPhotoTabSelected));
+                OnPropertyChanged(nameof(IsAudioTabSelected));
                 FilteredPresetsView.Refresh();
                 SelectedPreset = FilteredPresetsView.Cast<Preset>().FirstOrDefault();
             }
         }
     }
 
+    public bool IsVideoTabSelected
+    {
+        get => _selectedTabIndex == 0;
+        set { if (value) SelectedTabIndex = 0; }
+    }
+
+    public bool IsPhotoTabSelected
+    {
+        get => _selectedTabIndex == 1;
+        set { if (value) SelectedTabIndex = 1; }
+    }
+
+    public bool IsAudioTabSelected
+    {
+        get => _selectedTabIndex == 2;
+        set { if (value) SelectedTabIndex = 2; }
+    }
+
     public System.ComponentModel.ICollectionView FilteredPresetsView { get; }
 
     public ObservableCollection<Preset> Presets { get; }
-    public System.Collections.Generic.IEnumerable<Preset> VideoPresets => Presets.Where(p => !p.IsImagePreset);
+    public System.Collections.Generic.IEnumerable<Preset> VideoPresets => Presets.Where(p => p.IsVideoPreset);
     public System.Collections.Generic.IEnumerable<Preset> ImagePresets => Presets.Where(p => p.IsImagePreset);
+    public System.Collections.Generic.IEnumerable<Preset> AudioPresets => Presets.Where(p => p.IsAudioPreset);
     
     public ObservableCollection<IconItemViewModel> AvailableIcons { get; } = new();
 
@@ -122,7 +144,9 @@ public partial class SettingsViewModel : ObservableObject
         {
             if (item is Preset p)
             {
-                return IsVideoTabSelected ? !p.IsImagePreset : p.IsImagePreset;
+                if (IsVideoTabSelected) return p.IsVideoPreset;
+                if (IsPhotoTabSelected) return p.IsImagePreset;
+                if (IsAudioTabSelected) return p.IsAudioPreset;
             }
             return false;
         };
@@ -130,40 +154,70 @@ public partial class SettingsViewModel : ObservableObject
         {
             OnPropertyChanged(nameof(VideoPresets));
             OnPropertyChanged(nameof(ImagePresets));
+            OnPropertyChanged(nameof(AudioPresets));
         };
         
-        // Load default ICOs from Icons
         string iconsDir = System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory, "Icons");
-        
-        // Always load built-in icons from generator
-        foreach (var iconName in IconGenerator.AvailableIcons)
-        {
-            var image = IconGenerator.GetIconImageSource(iconName);
-            AvailableIcons.Add(new IconItemViewModel { Name = iconName, Image = image });
-        }
+        string customIconsDir = System.IO.Path.Combine(
+            System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData), 
+            "RenderPard", "CustomIcons");
 
-        // Add any external icons found in the Icons directory
+        try
+        {
+            if (!System.IO.Directory.Exists(customIconsDir))
+            {
+                System.IO.Directory.CreateDirectory(customIconsDir);
+            }
+        }
+        catch { }
+
+        // 1. Load built-in ICO files from Icons directory (86 icons)
         if (System.IO.Directory.Exists(iconsDir))
         {
-            foreach (var icoFile in System.IO.Directory.GetFiles(iconsDir, "*.ico"))
+            var icoFiles = System.IO.Directory.GetFiles(iconsDir, "*.ico")
+                .OrderBy(f => System.IO.Path.GetFileName(f));
+
+            foreach (var icoFile in icoFiles)
             {
                 string iconName = System.IO.Path.GetFileNameWithoutExtension(icoFile);
                 if (!AvailableIcons.Any(i => i.Name == iconName))
                 {
-                    AvailableIcons.Add(new IconItemViewModel 
-                    { 
-                        Name = iconName, 
-                        Image = TryLoadExternalIcon(icoFile)
-                    });
+                    var img = TryLoadExternalIcon(icoFile);
+                    if (img != null)
+                    {
+                        AvailableIcons.Add(new IconItemViewModel { Name = iconName, Image = img });
+                    }
                 }
             }
         }
 
+        // 2. Load custom persistent user icons from %AppData%\RenderPard\CustomIcons
+        if (System.IO.Directory.Exists(customIconsDir))
+        {
+            foreach (var customFile in System.IO.Directory.GetFiles(customIconsDir, "*.*"))
+            {
+                string iconName = System.IO.Path.GetFileNameWithoutExtension(customFile);
+                if (!AvailableIcons.Any(i => i.Name == iconName || i.Name == customFile))
+                {
+                    var img = TryLoadExternalIcon(customFile);
+                    if (img != null)
+                    {
+                        AvailableIcons.Add(new IconItemViewModel { Name = customFile, Image = img });
+                    }
+                }
+            }
+        }
+
+        // 3. For any preset with custom file path, load it as well
         foreach (var preset in Presets)
         {
             if (!string.IsNullOrEmpty(preset.CustomIcon) && !AvailableIcons.Any(i => i.Name == preset.CustomIcon))
             {
-                AvailableIcons.Add(new IconItemViewModel { Name = preset.CustomIcon, Image = TryLoadExternalIcon(preset.CustomIcon) });
+                var img = TryLoadExternalIcon(preset.CustomIcon);
+                if (img != null)
+                {
+                    AvailableIcons.Add(new IconItemViewModel { Name = preset.CustomIcon, Image = img });
+                }
             }
         }
 
@@ -177,9 +231,15 @@ public partial class SettingsViewModel : ObservableObject
     {
         try
         {
-            if (System.IO.Path.GetExtension(path).ToLower() == ".ico")
+            if (System.IO.File.Exists(path))
             {
-                return new System.Windows.Media.Imaging.BitmapImage(new System.Uri(path));
+                var bitmap = new System.Windows.Media.Imaging.BitmapImage();
+                bitmap.BeginInit();
+                bitmap.CacheOption = System.Windows.Media.Imaging.BitmapCacheOption.OnLoad;
+                bitmap.UriSource = new System.Uri(path, System.UriKind.Absolute);
+                bitmap.EndInit();
+                bitmap.Freeze();
+                return bitmap;
             }
         }
         catch { }
@@ -193,18 +253,36 @@ public partial class SettingsViewModel : ObservableObject
         
         var dialog = new Microsoft.Win32.OpenFileDialog
         {
-            Filter = "Icon files (*.ico)|*.ico|All files (*.*)|*.*",
-            Title = "Select Custom Icon"
+            Filter = "Icon files (*.ico;*.png;*.jpg;*.jpeg;*.webp)|*.ico;*.png;*.jpg;*.jpeg;*.webp|All files (*.*)|*.*",
+            Title = "Выберите иконку"
         };
         
         if (dialog.ShowDialog() == true)
         {
-            if (!AvailableIcons.Any(i => i.Name == dialog.FileName))
+            string finalPath = dialog.FileName;
+            try
             {
-                AvailableIcons.Add(new IconItemViewModel { Name = dialog.FileName, Image = TryLoadExternalIcon(dialog.FileName) });
+                string customIconsDir = System.IO.Path.Combine(
+                    System.Environment.GetFolderPath(System.Environment.SpecialFolder.LocalApplicationData),
+                    "RenderPard", "CustomIcons");
+                if (!System.IO.Directory.Exists(customIconsDir))
+                {
+                    System.IO.Directory.CreateDirectory(customIconsDir);
+                }
+
+                string fileName = System.IO.Path.GetFileName(dialog.FileName);
+                string destPath = System.IO.Path.Combine(customIconsDir, fileName);
+                System.IO.File.Copy(dialog.FileName, destPath, true);
+                finalPath = destPath;
+            }
+            catch { }
+
+            if (!AvailableIcons.Any(i => i.Name == finalPath))
+            {
+                AvailableIcons.Add(new IconItemViewModel { Name = finalPath, Image = TryLoadExternalIcon(finalPath) });
             }
             
-            SelectedPreset.CustomIcon = dialog.FileName;
+            SelectedPreset.CustomIcon = finalPath;
             // Force UI update
             var temp = SelectedPreset;
             SelectedPreset = null!;
@@ -222,6 +300,11 @@ public partial class SettingsViewModel : ObservableObject
         if (dialog.ShowDialog() == true)
         {
             SelectedPreset.CustomIcon = dialog.SelectedIconName;
+            if (!AvailableIcons.Any(i => i.Name == dialog.SelectedIconName))
+            {
+                AvailableIcons.Add(new IconItemViewModel { Name = dialog.SelectedIconName, Image = TryLoadExternalIcon(dialog.SelectedIconName) });
+            }
+
             // Force UI update
             var temp = SelectedPreset;
             SelectedPreset = null!;
@@ -243,13 +326,14 @@ public partial class SettingsViewModel : ObservableObject
                 TargetVideoBitrateKbps = 2000,
                 AudioMode = AudioMode.Encode,
                 AudioCodec = AudioCodec.Aac,
-                AudioBitrateKbps = 128
+                AudioBitrateKbps = 192,
+                CustomIcon = "video"
             };
             Presets.Add(newPreset);
             FilteredPresetsView.Refresh();
             SelectedPreset = newPreset;
         }
-        else
+        else if (IsPhotoTabSelected)
         {
             var newPreset = new Preset
             {
@@ -257,7 +341,25 @@ public partial class SettingsViewModel : ObservableObject
                 ShowInContextMenu = true,
                 Container = ContainerFormat.Jpeg,
                 ImageQuality = 80,
-                FilenamePattern = "{original}_{preset}"
+                FilenamePattern = "{original}_{preset}",
+                CustomIcon = "image"
+            };
+            Presets.Add(newPreset);
+            FilteredPresetsView.Refresh();
+            SelectedPreset = newPreset;
+        }
+        else if (IsAudioTabSelected)
+        {
+            var newPreset = new Preset
+            {
+                Name = "New Audio Preset",
+                ShowInContextMenu = true,
+                Container = ContainerFormat.Mp3,
+                AudioCodec = AudioCodec.Mp3,
+                AudioBitrateKbps = 192,
+                AudioSampleRate = AudioSampleRate.Hz48000,
+                AudioChannels = AudioChannels.Stereo,
+                CustomIcon = "fmt_mp3"
             };
             Presets.Add(newPreset);
             FilteredPresetsView.Refresh();

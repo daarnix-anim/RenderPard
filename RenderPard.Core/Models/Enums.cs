@@ -47,7 +47,9 @@ public enum AudioCodec
     Aac,
     Mp3,
     Opus,
-    Pcm24
+    Pcm16,
+    Pcm24,
+    Flac
 }
 
 public enum AudioSampleRate
@@ -90,7 +92,12 @@ public enum ContainerFormat
     Jpeg,
     Png,
     Webp,
-    MXF
+    MXF,
+    Mp3,
+    Wav,
+    Ogg,
+    Flac,
+    Aac
 }
 
 public enum ResizeMode

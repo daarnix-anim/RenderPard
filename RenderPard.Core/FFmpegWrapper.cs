@@ -116,7 +116,32 @@ public class FFmpegWrapper
         var sb = new StringBuilder();
         sb.Append("-y "); // overwrite
         sb.Append("-progress pipe:2 "); // Progress formatting
+
+        if (task.IsTrimmed)
+        {
+            if (task.TrimStartSeconds.HasValue && task.TrimStartSeconds.Value > 0)
+            {
+                sb.Append($"-ss {task.TrimStartSeconds.Value.ToString("0.###", CultureInfo.InvariantCulture)} ");
+            }
+            if (task.TrimEndSeconds.HasValue && task.TrimEndSeconds.Value > (task.TrimStartSeconds ?? 0))
+            {
+                sb.Append($"-to {task.TrimEndSeconds.Value.ToString("0.###", CultureInfo.InvariantCulture)} ");
+            }
+        }
+
         sb.Append($"-i \"{task.SourceFilePath}\" ");
+
+        if (task.IsLosslessCopy)
+        {
+            sb.Append("-c copy ");
+            string targetExt = Path.GetExtension(task.TargetFilePath).ToLower();
+            if (targetExt is ".mp4" or ".mov" || task.Preset.Container == ContainerFormat.Mp4)
+            {
+                sb.Append("-movflags +faststart ");
+            }
+            sb.Append($"\"{task.TargetFilePath}.part\"");
+            return sb.ToString();
+        }
 
         void AppendVideoOptions(StringBuilder b)
         {
@@ -185,6 +210,63 @@ public class FFmpegWrapper
                 return;
             }
 
+            if (task.Preset.IsAudioPreset)
+            {
+                if (task.Preset.Container == ContainerFormat.Mp3 || task.Preset.AudioCodec == AudioCodec.Mp3)
+                {
+                    b.Append("-c:a libmp3lame ");
+                    int bitrate = task.Preset.AudioBitrateKbps > 0 ? task.Preset.AudioBitrateKbps : 192;
+                    b.Append($"-b:a {bitrate}k ");
+                }
+                else if (task.Preset.Container == ContainerFormat.Wav || task.Preset.AudioCodec == AudioCodec.Pcm16)
+                {
+                    b.Append("-c:a pcm_s16le ");
+                }
+                else if (task.Preset.AudioCodec == AudioCodec.Pcm24)
+                {
+                    b.Append("-c:a pcm_s24le ");
+                }
+                else if (task.Preset.Container == ContainerFormat.Flac || task.Preset.AudioCodec == AudioCodec.Flac)
+                {
+                    b.Append("-c:a flac ");
+                }
+                else if (task.Preset.Container == ContainerFormat.Ogg || task.Preset.AudioCodec == AudioCodec.Opus)
+                {
+                    b.Append("-c:a libopus ");
+                    int bitrate = task.Preset.AudioBitrateKbps > 0 ? task.Preset.AudioBitrateKbps : 128;
+                    b.Append($"-b:a {bitrate}k ");
+                }
+                else if (task.Preset.Container == ContainerFormat.Aac || task.Preset.AudioCodec == AudioCodec.Aac)
+                {
+                    b.Append("-c:a aac ");
+                    int bitrate = task.Preset.AudioBitrateKbps > 0 ? task.Preset.AudioBitrateKbps : 192;
+                    b.Append($"-b:a {bitrate}k ");
+                }
+                else
+                {
+                    b.Append("-c:a libmp3lame -b:a 192k ");
+                }
+
+                if (task.Preset.AudioSampleRate == AudioSampleRate.Hz48000)
+                    b.Append("-ar 48000 ");
+                else if (task.Preset.AudioSampleRate == AudioSampleRate.Hz44100)
+                    b.Append("-ar 44100 ");
+
+                if (task.Preset.AudioChannels == AudioChannels.Stereo)
+                    b.Append("-ac 2 ");
+                else if (task.Preset.AudioChannels == AudioChannels.Mono)
+                    b.Append("-ac 1 ");
+
+                if (task.Preset.NormalizeAudio)
+                {
+                    if (task.Preset.NormalizationTarget == AudioNormalizationTarget.Web)
+                        b.Append("-af \"loudnorm=I=-14:LRA=11:TP=-1.0\" ");
+                    else
+                        b.Append("-af \"loudnorm=I=-23:LRA=18:TP=-1.0\" ");
+                }
+                return;
+            }
+
             if (task.Preset.Container == ContainerFormat.MXF || task.Preset.VideoCodec == VideoCodec.XdcamHd422)
             {
                 b.Append("-c:a pcm_s24le -ar 48000 ");
@@ -211,12 +293,16 @@ public class FFmpegWrapper
                     b.Append("-c:a libmp3lame ");
                 else if (task.Preset.AudioCodec == AudioCodec.Opus)
                     b.Append("-c:a libopus ");
+                else if (task.Preset.AudioCodec == AudioCodec.Pcm16)
+                    b.Append("-c:a pcm_s16le ");
                 else if (task.Preset.AudioCodec == AudioCodec.Pcm24)
                     b.Append("-c:a pcm_s24le ");
+                else if (task.Preset.AudioCodec == AudioCodec.Flac)
+                    b.Append("-c:a flac ");
                 else
                     b.Append("-c:a aac ");
 
-                if (task.Preset.AudioCodec != AudioCodec.Pcm24)
+                if (task.Preset.AudioCodec != AudioCodec.Pcm24 && task.Preset.AudioCodec != AudioCodec.Pcm16 && task.Preset.AudioCodec != AudioCodec.Flac)
                 {
                     int bitrate = task.Preset.AudioBitrateKbps > 0 ? task.Preset.AudioBitrateKbps : 192;
                     b.Append($"-b:a {bitrate}k ");
@@ -252,8 +338,27 @@ public class FFmpegWrapper
                 b.Append("-f image2 ");
             else if (task.Preset.Container == ContainerFormat.MXF)
                 b.Append("-f mxf ");
+            else if (task.Preset.Container == ContainerFormat.Mp3)
+                b.Append("-f mp3 ");
+            else if (task.Preset.Container == ContainerFormat.Wav)
+                b.Append("-f wav ");
+            else if (task.Preset.Container == ContainerFormat.Ogg)
+                b.Append("-f ogg ");
+            else if (task.Preset.Container == ContainerFormat.Flac)
+                b.Append("-f flac ");
+            else if (task.Preset.Container == ContainerFormat.Aac)
+                b.Append("-f adts ");
             else
                 b.Append("-f mp4 ");
+        }
+
+        if (task.Preset.IsAudioPreset)
+        {
+            sb.Append("-vn ");
+            AppendAudioOptions(sb);
+            AppendContainerOption(sb);
+            sb.Append($"\"{task.TargetFilePath}.part\"");
+            return sb.ToString();
         }
 
         string filterGraph = BuildFilterGraph(task);
@@ -483,9 +588,10 @@ public class FFmpegWrapper
                     if (long.TryParse(e.Data.Substring(12), out long microseconds))
                     {
                         double seconds = microseconds / 1000000.0;
-                        if (task.DurationSeconds > 0)
+                        double targetDuration = task.EffectiveDurationSeconds > 0 ? task.EffectiveDurationSeconds : task.DurationSeconds;
+                        if (targetDuration > 0)
                         {
-                            task.Progress = seconds / task.DurationSeconds;
+                            task.Progress = Math.Min(1.0, seconds / targetDuration);
                         }
                     }
                 }

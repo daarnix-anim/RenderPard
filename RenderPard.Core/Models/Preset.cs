@@ -37,11 +37,22 @@ public class Preset : ObservableObject
             if (SetProperty(ref _container, value))
             {
                 OnPropertyChanged(nameof(IsImagePreset));
+                OnPropertyChanged(nameof(IsAudioPreset));
+                OnPropertyChanged(nameof(IsVideoPreset));
                 OnPropertyChanged(nameof(IsMXF));
                 if (_container == ContainerFormat.MXF)
                 {
                     VideoCodec = VideoCodec.XdcamHd422;
                     AudioCodec = AudioCodec.Pcm24;
+                }
+                else if (IsAudioPreset)
+                {
+                    AudioMode = AudioMode.Encode;
+                    if (_container == ContainerFormat.Mp3) AudioCodec = AudioCodec.Mp3;
+                    else if (_container == ContainerFormat.Wav) AudioCodec = AudioCodec.Pcm16;
+                    else if (_container == ContainerFormat.Flac) AudioCodec = AudioCodec.Flac;
+                    else if (_container == ContainerFormat.Ogg) AudioCodec = AudioCodec.Opus;
+                    else if (_container == ContainerFormat.Aac) AudioCodec = AudioCodec.Aac;
                 }
             }
         }
@@ -110,6 +121,12 @@ public class Preset : ObservableObject
 
     [JsonIgnore]
     public bool IsImagePreset => Container == ContainerFormat.Jpeg || Container == ContainerFormat.Png || Container == ContainerFormat.Webp;
+    
+    [JsonIgnore]
+    public bool IsAudioPreset => Container == ContainerFormat.Mp3 || Container == ContainerFormat.Wav || Container == ContainerFormat.Ogg || Container == ContainerFormat.Flac || Container == ContainerFormat.Aac;
+
+    [JsonIgnore]
+    public bool IsVideoPreset => !IsImagePreset && !IsAudioPreset;
     
     [JsonIgnore]
     public bool IsMXF => Container == ContainerFormat.MXF;
