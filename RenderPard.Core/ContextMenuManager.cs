@@ -106,8 +106,14 @@ public static class ContextMenuManager
             {
                 if (baseKey == null) return;
 
+                string exeDir = Path.GetDirectoryName(exePath) ?? "";
+                string iconsDir = Path.Combine(exeDir, "Icons");
+                string renderpardIcon = Path.Combine(iconsDir, "renderpard.ico");
+                string settingsIcon = Path.Combine(iconsDir, "settings.ico");
+                string cutIcon = Path.Combine(iconsDir, "cut.ico");
+
                 baseKey.SetValue("MUIVerb", displayTitle);
-                baseKey.SetValue("Icon", $"\"{exePath}\"");
+                baseKey.SetValue("Icon", File.Exists(renderpardIcon) ? $"\"{renderpardIcon}\"" : $"\"{exePath}\"");
                 
                 baseKey.SetValue("SubCommands", "");
                 try { baseKey.DeleteValue("ExtendedSubCommandsKey"); } catch { }
@@ -122,13 +128,18 @@ public static class ContextMenuManager
             {
                 if (shellKey == null) return;
 
+                string exeDir = Path.GetDirectoryName(exePath) ?? "";
+                string iconsDir = Path.Combine(exeDir, "Icons");
+                string settingsIcon = Path.Combine(iconsDir, "settings.ico");
+                string cutIcon = Path.Combine(iconsDir, "cut.ico");
+
                 // Add "Settings" option at the very top
                 using (RegistryKey settingsKey = shellKey.CreateSubKey("000_Settings"))
                 {
                     if (settingsKey != null)
                     {
                         settingsKey.SetValue("MUIVerb", "Настройки");
-                        settingsKey.SetValue("Icon", $"\"{exePath}\"");
+                        settingsKey.SetValue("Icon", File.Exists(settingsIcon) ? $"\"{settingsIcon}\"" : $"\"{exePath}\"");
                         using (RegistryKey commandKey = settingsKey.CreateSubKey("command"))
                         {
                             if (commandKey != null)
@@ -147,7 +158,7 @@ public static class ContextMenuManager
                         if (trimKey != null)
                         {
                             trimKey.SetValue("MUIVerb", "✂ Обрезать (In / Out)...");
-                            trimKey.SetValue("Icon", $"\"{exePath}\"");
+                            trimKey.SetValue("Icon", File.Exists(cutIcon) ? $"\"{cutIcon}\"" : $"\"{exePath}\"");
                             using (RegistryKey commandKey = trimKey.CreateSubKey("command"))
                             {
                                 if (commandKey != null)
@@ -173,9 +184,7 @@ public static class ContextMenuManager
 
                         presetKey.SetValue("MUIVerb", preset.Name);
                         
-                        string exeDir = Path.GetDirectoryName(exePath) ?? "";
                         string presetIconPath = string.Empty;
-                        string iconsDir = Path.Combine(exeDir, "Icons");
                         string customIconsDir = Path.Combine(
                             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                             "RenderPard", "CustomIcons");
