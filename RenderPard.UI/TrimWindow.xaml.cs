@@ -47,6 +47,9 @@ public partial class TrimWindow : Window
             UpdateTimelineVisuals();
             UpdateCropVisuals();
         };
+
+        TimelineTrackGrid.SizeChanged += (s, e) => UpdateTimelineVisuals();
+        MiniNavigatorGrid.SizeChanged += (s, e) => UpdateTimelineVisuals();
     }
 
     private void TrimWindow_Loaded(object sender, RoutedEventArgs e)
@@ -159,25 +162,25 @@ public partial class TrimWindow : Window
         MaskRight.Height = Math.Max(0, boxH);
     }
 
-    private void CropBoxGrid_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    private void CropCenterDragArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
         _isDraggingCropBox = true;
         _lastCropMousePosition = e.GetPosition(CropCanvas);
-        CropBoxGrid.CaptureMouse();
+        CropCenterDragArea.CaptureMouse();
         e.Handled = true;
     }
 
-    private void CropBoxGrid_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    private void CropCenterDragArea_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
     {
         if (_isDraggingCropBox)
         {
             _isDraggingCropBox = false;
-            CropBoxGrid.ReleaseMouseCapture();
+            CropCenterDragArea.ReleaseMouseCapture();
             e.Handled = true;
         }
     }
 
-    private void CropBoxGrid_MouseMove(object sender, MouseEventArgs e)
+    private void CropCenterDragArea_MouseMove(object sender, MouseEventArgs e)
     {
         if (!_isDraggingCropBox) return;
 
@@ -217,6 +220,7 @@ public partial class TrimWindow : Window
 
     private void ResizeHandle_S(double dy)
     {
+        // Anchor: Top edge (Y) is strictly fixed
         var vRect = GetVideoDisplayRect();
         double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
         double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
@@ -267,6 +271,7 @@ public partial class TrimWindow : Window
 
     private void ResizeHandle_N(double dy)
     {
+        // Anchor: Bottom edge (Y + Height) is strictly fixed
         var vRect = GetVideoDisplayRect();
         double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
         double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
@@ -285,7 +290,7 @@ public partial class TrimWindow : Window
         if (ratio.HasValue)
         {
             int maxH = bottom;
-            int targetH = (_viewModel.CropHeight - dVidY);
+            int targetH = _viewModel.CropHeight - dVidY;
             int newH = Math.Max(minSize, Math.Min(maxH, targetH));
             int newW = (int)(newH * ratio.Value);
 
@@ -319,6 +324,7 @@ public partial class TrimWindow : Window
 
     private void ResizeHandle_E(double dx)
     {
+        // Anchor: Left edge (X) is strictly fixed
         var vRect = GetVideoDisplayRect();
         double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
         double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
@@ -369,6 +375,7 @@ public partial class TrimWindow : Window
 
     private void ResizeHandle_W(double dx)
     {
+        // Anchor: Right edge (X + Width) is strictly fixed
         var vRect = GetVideoDisplayRect();
         double sw = _viewModel.SourceVideoWidth > 0 ? _viewModel.SourceVideoWidth : 1920;
         double sh = _viewModel.SourceVideoHeight > 0 ? _viewModel.SourceVideoHeight : 1080;
@@ -387,7 +394,7 @@ public partial class TrimWindow : Window
         if (ratio.HasValue)
         {
             int maxW = right;
-            int targetW = (_viewModel.CropWidth - dVidX);
+            int targetW = _viewModel.CropWidth - dVidX;
             int newW = Math.Max(minSize, Math.Min(maxW, targetW));
             int newH = (int)(newW / ratio.Value);
 
@@ -442,7 +449,7 @@ public partial class TrimWindow : Window
         if (ratio.HasValue)
         {
             int limitW = Math.Min(maxW, (int)(maxH * ratio.Value));
-            int deltaW = Math.Abs(dVidX) > Math.Abs((int)(dVidY * ratio.Value)) ? dVidX : (int)(dVidY * ratio.Value);
+            int deltaW = Math.Abs(dVidX) >= Math.Abs((int)(dVidY * ratio.Value)) ? dVidX : (int)(dVidY * ratio.Value);
             int newW = Math.Max(minSize, Math.Min(limitW, _viewModel.CropWidth + deltaW));
             int newH = (int)(newW / ratio.Value);
 
@@ -488,7 +495,7 @@ public partial class TrimWindow : Window
         if (ratio.HasValue)
         {
             int limitW = Math.Min(maxW, (int)(maxH * ratio.Value));
-            int deltaW = Math.Abs(dVidX) > Math.Abs((int)(dVidY * ratio.Value)) ? -dVidX : -(int)(dVidY * ratio.Value);
+            int deltaW = Math.Abs(dVidX) >= Math.Abs((int)(dVidY * ratio.Value)) ? -dVidX : -(int)(dVidY * ratio.Value);
             int newW = Math.Max(minSize, Math.Min(limitW, _viewModel.CropWidth + deltaW));
             int newH = (int)(newW / ratio.Value);
 
@@ -536,7 +543,7 @@ public partial class TrimWindow : Window
         if (ratio.HasValue)
         {
             int limitW = Math.Min(maxW, (int)(maxH * ratio.Value));
-            int deltaW = Math.Abs(dVidX) > Math.Abs((int)(dVidY * ratio.Value)) ? dVidX : -(int)(dVidY * ratio.Value);
+            int deltaW = Math.Abs(dVidX) >= Math.Abs((int)(dVidY * ratio.Value)) ? dVidX : -(int)(dVidY * ratio.Value);
             int newW = Math.Max(minSize, Math.Min(limitW, _viewModel.CropWidth + deltaW));
             int newH = (int)(newW / ratio.Value);
 
@@ -583,7 +590,7 @@ public partial class TrimWindow : Window
         if (ratio.HasValue)
         {
             int limitW = Math.Min(maxW, (int)(maxH * ratio.Value));
-            int deltaW = Math.Abs(dVidX) > Math.Abs((int)(dVidY * ratio.Value)) ? -dVidX : (int)(dVidY * ratio.Value);
+            int deltaW = Math.Abs(dVidX) >= Math.Abs((int)(dVidY * ratio.Value)) ? -dVidX : (int)(dVidY * ratio.Value);
             int newW = Math.Max(minSize, Math.Min(limitW, _viewModel.CropWidth + deltaW));
             int newH = (int)(newW / ratio.Value);
 
@@ -666,7 +673,11 @@ public partial class TrimWindow : Window
     {
         if (e.PropertyName is nameof(TrimViewModel.InPointSeconds) or 
             nameof(TrimViewModel.OutPointSeconds) or 
-            nameof(TrimViewModel.TotalDurationSeconds))
+            nameof(TrimViewModel.TotalDurationSeconds) or
+            nameof(TrimViewModel.ViewportStart) or
+            nameof(TrimViewModel.ViewportEnd) or
+            nameof(TrimViewModel.ZoomLevel) or
+            nameof(TrimViewModel.CurrentTimeSeconds))
         {
             UpdateTimelineVisuals();
         }
@@ -675,19 +686,140 @@ public partial class TrimWindow : Window
     private void UpdateTimelineVisuals()
     {
         double trackWidth = TimelineSlider.ActualWidth;
-        if (trackWidth <= 0 || _viewModel.TotalDurationSeconds <= 0) return;
+        double totDur = _viewModel.TotalDurationSeconds;
+        if (totDur <= 0) return;
 
-        double inFraction = _viewModel.InPointFraction;
-        double outFraction = _viewModel.OutPointFraction;
+        double vStart = _viewModel.ViewportStart;
+        double vEnd = _viewModel.ViewportEnd > 0 ? _viewModel.ViewportEnd : totDur;
+        double vDur = Math.Max(0.001, vEnd - vStart);
 
-        double inX = inFraction * trackWidth;
-        double outX = outFraction * trackWidth;
+        // 1. Zoomed Main Timeline markers
+        if (trackWidth > 0)
+        {
+            double inSec = _viewModel.InPointSeconds ?? 0;
+            double outSec = _viewModel.OutPointSeconds ?? totDur;
 
-        Canvas.SetLeft(InBracketMarker, Math.Max(0, inX - 4));
-        Canvas.SetLeft(OutBracketMarker, Math.Max(0, outX - 4));
+            double inX = ((inSec - vStart) / vDur) * trackWidth;
+            double outX = ((outSec - vStart) / vDur) * trackWidth;
 
-        Canvas.SetLeft(TrimHighlightBar, inX);
-        TrimHighlightBar.Width = Math.Max(0, outX - inX);
+            Canvas.SetLeft(InBracketMarker, Math.Max(-8, Math.Min(trackWidth, inX - 8)));
+            Canvas.SetLeft(OutBracketMarker, Math.Max(0, Math.Min(trackWidth, outX)));
+
+            double hLeft = Math.Max(0, inX);
+            double hRight = Math.Min(trackWidth, outX);
+            Canvas.SetLeft(TrimHighlightBar, hLeft);
+            TrimHighlightBar.Width = Math.Max(0, hRight - hLeft);
+        }
+
+        // 2. Mini Navigator Overview Bar
+        double navWidth = MiniNavigatorGrid.ActualWidth;
+        if (navWidth > 0)
+        {
+            // Mini In/Out range
+            double miniInFrac = (_viewModel.InPointSeconds ?? 0) / totDur;
+            double miniOutFrac = (_viewModel.OutPointSeconds ?? totDur) / totDur;
+            Canvas.SetLeft(MiniInHighlight, miniInFrac * navWidth);
+            MiniInHighlight.Width = Math.Max(0, (miniOutFrac - miniInFrac) * navWidth);
+
+            // Mini Playhead
+            double miniPlayFrac = _viewModel.CurrentTimeSeconds / totDur;
+            Canvas.SetLeft(MiniPlayheadMarker, Math.Max(0, Math.Min(navWidth - 3, miniPlayFrac * navWidth)));
+
+            // Mini Viewport Window
+            double vpStartFrac = vStart / totDur;
+            double vpEndFrac = vEnd / totDur;
+            Canvas.SetLeft(MiniViewportWindow, vpStartFrac * navWidth);
+            MiniViewportWindow.Width = Math.Max(8, (vpEndFrac - vpStartFrac) * navWidth);
+        }
+    }
+
+    private void TimelineSlider_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (sender is Slider slider && slider.ActualWidth > 0)
+        {
+            Point pos = e.GetPosition(slider);
+            double min = slider.Minimum;
+            double max = slider.Maximum;
+            double ratio = Math.Max(0, Math.Min(1.0, pos.X / slider.ActualWidth));
+            double targetSec = min + ratio * (max - min);
+
+            _viewModel.CurrentTimeSeconds = targetSec;
+            _viewModel.SeekTo(targetSec);
+        }
+    }
+
+    private void TimelineTrack_MouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        {
+            // Zoom centered at mouse position
+            Point pos = e.GetPosition(TimelineTrackGrid);
+            double frac = Math.Max(0, Math.Min(1.0, pos.X / Math.Max(1.0, TimelineTrackGrid.ActualWidth)));
+            double mouseTime = _viewModel.ViewportStart + frac * (_viewModel.ViewportEnd - _viewModel.ViewportStart);
+
+            if (e.Delta > 0)
+                _viewModel.SetZoom(_viewModel.ZoomLevel * 1.25, mouseTime);
+            else if (e.Delta < 0)
+                _viewModel.SetZoom(_viewModel.ZoomLevel / 1.25, mouseTime);
+
+            UpdateTimelineVisuals();
+            e.Handled = true;
+        }
+        else if (_viewModel.IsZoomed)
+        {
+            // Pan with mouse wheel
+            double windowDur = _viewModel.ViewportEnd - _viewModel.ViewportStart;
+            double panStep = (windowDur * 0.1) * (e.Delta > 0 ? -1 : 1);
+            _viewModel.PanViewport(panStep);
+            UpdateTimelineVisuals();
+            e.Handled = true;
+        }
+    }
+
+    private void MiniNavigator_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (_viewModel.TotalDurationSeconds <= 0 || MiniNavigatorGrid.ActualWidth <= 0) return;
+        Point pos = e.GetPosition(MiniNavigatorGrid);
+        double frac = Math.Max(0, Math.Min(1.0, pos.X / MiniNavigatorGrid.ActualWidth));
+        double centerSec = frac * _viewModel.TotalDurationSeconds;
+        _viewModel.UpdateViewportFromZoom(centerSec);
+        _viewModel.CurrentTimeSeconds = centerSec;
+        _viewModel.SeekTo(centerSec);
+        UpdateTimelineVisuals();
+    }
+
+    private bool _isDraggingViewportWindow = false;
+    private Point _lastViewportMousePos;
+
+    private void MiniViewportWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _isDraggingViewportWindow = true;
+        _lastViewportMousePos = e.GetPosition(MiniNavigatorGrid);
+        MiniViewportWindow.CaptureMouse();
+        e.Handled = true;
+    }
+
+    private void MiniViewportWindow_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (_isDraggingViewportWindow)
+        {
+            _isDraggingViewportWindow = false;
+            MiniViewportWindow.ReleaseMouseCapture();
+            e.Handled = true;
+        }
+    }
+
+    private void MiniViewportWindow_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (!_isDraggingViewportWindow || _viewModel.TotalDurationSeconds <= 0 || MiniNavigatorGrid.ActualWidth <= 0) return;
+        Point currentPos = e.GetPosition(MiniNavigatorGrid);
+        double deltaX = currentPos.X - _lastViewportMousePos.X;
+        _lastViewportMousePos = currentPos;
+
+        double deltaSec = (deltaX / MiniNavigatorGrid.ActualWidth) * _viewModel.TotalDurationSeconds;
+        _viewModel.PanViewport(deltaSec);
+        UpdateTimelineVisuals();
+        e.Handled = true;
     }
 
     private void TimelineSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)

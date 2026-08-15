@@ -49,6 +49,20 @@ public partial class TrimViewModel : ObservableObject
     [ObservableProperty]
     private Preset? _selectedPreset;
 
+    // Timeline Zoom & Viewport properties (Premiere-style scaling for long videos)
+    [ObservableProperty]
+    private double _zoomLevel = 1.0; // 1.0 = full video, 20.0 = 20x zoom
+
+    [ObservableProperty]
+    private double _viewportStart = 0;
+
+    [ObservableProperty]
+    private double _viewportEnd = 0;
+
+    public bool IsZoomed => ZoomLevel > 1.001;
+
+    public string ZoomText => $"{ZoomLevel:0.#}x";
+
     // Crop / Framing properties
     [ObservableProperty]
     private CropAspectRatioMode _cropMode = CropAspectRatioMode.None;
@@ -289,7 +303,75 @@ public partial class TrimViewModel : ObservableObject
     partial void OnCurrentTimeSecondsChanged(double value)
     {
         OnPropertyChanged(nameof(CurrentTimeText));
+
+        // Auto-pan viewport if playhead moves outside current zoom window
+        if (IsZoomed && TotalDurationSeconds > 0)
+        {
+            double windowDur = ViewportEnd - ViewportStart;
+            if (value < ViewportStart)
+            {
+                ViewportStart = Math.Max(0, value - windowDur * 0.1);
+                ViewportEnd = Math.Min(TotalDurationSeconds, ViewportStart + windowDur);
+            }
+            else if (value > ViewportEnd)
+            {
+                ViewportEnd = Math.Min(TotalDurationSeconds, value + windowDur * 0.1);
+                ViewportStart = Math.Max(0, ViewportEnd - windowDur);
+            }
+        }
     }
+
+    partial void OnZoomLevelChanged(double value)
+    {
+        OnPropertyChanged(nameof(IsZoomed));
+        OnPropertyChanged(nameof(ZoomText));
+        UpdateViewportFromZoom(CurrentTimeSeconds);
+    }
+
+    public void SetZoom(double level, double? centerTime = null)
+    {
+        level = Math.Max(1.0, Math.Min(30.0, level));
+        ZoomLevel = level;
+        UpdateViewportFromZoom(centerTime ?? CurrentTimeSeconds);
+    }
+
+    public void UpdateViewportFromZoom(double centerTime)
+    {
+        if (TotalDurationSeconds <= 0) return;
+
+        if (ZoomLevel <= 1.001)
+        {
+            ViewportStart = 0;
+            ViewportEnd = TotalDurationSeconds;
+            return;
+        }
+
+        double windowDur = TotalDurationSeconds / ZoomLevel;
+        double start = centerTime - windowDur / 2;
+        if (start < 0) start = 0;
+        if (start + windowDur > TotalDurationSeconds) start = Math.Max(0, TotalDurationSeconds - windowDur);
+
+        ViewportStart = start;
+        ViewportEnd = Math.Min(TotalDurationSeconds, start + windowDur);
+    }
+
+    public void PanViewport(double deltaSeconds)
+    {
+        if (TotalDurationSeconds <= 0 || ZoomLevel <= 1.001) return;
+        double windowDur = ViewportEnd - ViewportStart;
+        double newStart = Math.Max(0, Math.Min(TotalDurationSeconds - windowDur, ViewportStart + deltaSeconds));
+        ViewportStart = newStart;
+        ViewportEnd = newStart + windowDur;
+    }
+
+    [RelayCommand]
+    public void ZoomIn() => SetZoom(ZoomLevel * 1.5);
+
+    [RelayCommand]
+    public void ZoomOut() => SetZoom(ZoomLevel / 1.5);
+
+    [RelayCommand]
+    public void ResetZoom() => SetZoom(1.0);
 
     partial void OnInPointSecondsChanged(double? value)
     {
@@ -315,6 +397,12 @@ public partial class TrimViewModel : ObservableObject
         OnPropertyChanged(nameof(InPointFraction));
         OnPropertyChanged(nameof(OutPointFraction));
         OnPropertyChanged(nameof(SelectedDurationFraction));
+
+        if (ViewportEnd <= 0 || ZoomLevel <= 1.001)
+        {
+            ViewportStart = 0;
+            ViewportEnd = value;
+        }
     }
 
     [RelayCommand]
