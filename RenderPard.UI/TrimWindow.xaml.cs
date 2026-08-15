@@ -53,7 +53,7 @@ public partial class TrimWindow : Window
         MiniNavigatorGrid.SizeChanged += (s, e) => UpdateTimelineVisuals();
     }
 
-    private void TrimWindow_Loaded(object sender, RoutedEventArgs e)
+    private async void TrimWindow_Loaded(object sender, RoutedEventArgs e)
     {
         string ext = Path.GetExtension(_viewModel.SourceFilePath).ToLower();
         bool isAudio = ext is ".mp3" or ".wav" or ".ogg" or ".opus" or ".flac" or ".aac" or ".m4a" or ".wma" or ".caf" or ".aiff";
@@ -64,9 +64,30 @@ public partial class TrimWindow : Window
 
         try
         {
+            // Fallback metadata probe via FFprobe for instant duration/resolution
+            var probeTask = new TranscodeTask { SourceFilePath = _viewModel.SourceFilePath };
+            var ffmpeg = new RenderPard.Core.FFmpegWrapper();
+            await ffmpeg.ProbeTaskAsync(probeTask);
+            if (probeTask.DurationSeconds > 0 && _viewModel.TotalDurationSeconds <= 0)
+            {
+                _viewModel.TotalDurationSeconds = probeTask.DurationSeconds;
+                if (probeTask.VideoWidth > 0 && probeTask.VideoHeight > 0)
+                {
+                    _viewModel.SetSourceResolution(probeTask.VideoWidth, probeTask.VideoHeight);
+                }
+                UpdateTimelineVisuals();
+            }
+
             PlayerMediaElement.Source = new Uri(_viewModel.SourceFilePath, UriKind.Absolute);
             PlayerMediaElement.Play();
-            PlayerMediaElement.Pause(); // Pre-load frame
+
+            // Give DirectX surface 60ms to initialize and present the first video frame, then pause
+            await Task.Delay(60);
+            if (!_viewModel.IsPlaying)
+            {
+                PlayerMediaElement.Pause();
+                PlayerMediaElement.Position = TimeSpan.Zero;
+            }
         }
         catch (Exception ex)
         {
@@ -76,7 +97,7 @@ public partial class TrimWindow : Window
 
     private void PlayerMediaElement_MediaOpened(object sender, RoutedEventArgs e)
     {
-        if (PlayerMediaElement.NaturalDuration.HasTimeSpan)
+        if (PlayerMediaElement.NaturalDuration.HasTimeSpan && PlayerMediaElement.NaturalDuration.TimeSpan.TotalSeconds > 0)
         {
             _viewModel.TotalDurationSeconds = PlayerMediaElement.NaturalDuration.TimeSpan.TotalSeconds;
             UpdateTimelineVisuals();
@@ -87,6 +108,17 @@ public partial class TrimWindow : Window
             _viewModel.SetSourceResolution(PlayerMediaElement.NaturalVideoWidth, PlayerMediaElement.NaturalVideoHeight);
             Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(UpdateCropVisuals));
         }
+
+        if (!PlayerMediaElement.HasAudio)
+        {
+            PlayerMediaElement.Volume = 0;
+            PlayerMediaElement.IsMuted = true;
+        }
+    }
+
+    private void PlayerMediaElement_MediaFailed(object? sender, ExceptionRoutedEventArgs e)
+    {
+        System.Diagnostics.Debug.WriteLine($"MediaElement failed: {e.ErrorException?.Message}");
     }
 
     private void PlayerViewport_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -738,6 +770,11 @@ public partial class TrimWindow : Window
     private void OnRequestSeek(double seconds)
     {
         PlayerMediaElement.Position = TimeSpan.FromSeconds(seconds);
+        if (!_viewModel.IsPlaying)
+        {
+            PlayerMediaElement.Play();
+            PlayerMediaElement.Pause();
+        }
     }
 
     private void OnRequestExport(TranscodeTask task, bool startImmediately)

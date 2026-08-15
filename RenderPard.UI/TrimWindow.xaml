@@ -169,6 +169,7 @@
                               ScrubbingEnabled="True"
                               MediaOpened="PlayerMediaElement_MediaOpened"
                               MediaEnded="PlayerMediaElement_MediaEnded"
+                              MediaFailed="PlayerMediaElement_MediaFailed"
                               HorizontalAlignment="Center"
                               VerticalAlignment="Center"
                               Stretch="Uniform"/>
