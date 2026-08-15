@@ -256,14 +256,17 @@ public partial class TrimWindow : Window
 
         if (ratio.HasValue)
         {
+            double r = ratio.Value;
             double maxW = sw - anchorX;
             double maxH = sh - anchorY;
-            double limitW = Math.Min(maxW, maxH * ratio.Value);
+            double limitW = Math.Min(maxW, maxH * r);
 
-            double deltaW = Math.Abs(dVidX) >= Math.Abs(dVidY * ratio.Value) ? dVidX : (dVidY * ratio.Value);
+            // Continuous 2D vector projection onto diagonal to eliminate slow-drag jitter
+            double projected = (dVidX * r + dVidY) / (r * r + 1.0);
+            double deltaW = projected * r;
             double targetW = _dragStartCropW + deltaW;
             double newW = Math.Max(minSize, Math.Min(limitW, targetW));
-            double newH = newW / ratio.Value;
+            double newH = newW / r;
 
             _viewModel.CropX = (int)Math.Round(anchorX) & ~1;
             _viewModel.CropY = (int)Math.Round(anchorY) & ~1;
@@ -307,14 +310,17 @@ public partial class TrimWindow : Window
 
         if (ratio.HasValue)
         {
+            double r = ratio.Value;
             double maxW = anchorRight;
             double maxH = anchorBottom;
-            double limitW = Math.Min(maxW, maxH * ratio.Value);
+            double limitW = Math.Min(maxW, maxH * r);
 
-            double deltaW = Math.Abs(dVidX) >= Math.Abs(dVidY * ratio.Value) ? -dVidX : -(dVidY * ratio.Value);
+            // Continuous 2D vector projection (moving left & up expands)
+            double projected = (-dVidX * r - dVidY) / (r * r + 1.0);
+            double deltaW = projected * r;
             double targetW = _dragStartCropW + deltaW;
             double newW = Math.Max(minSize, Math.Min(limitW, targetW));
-            double newH = newW / ratio.Value;
+            double newH = newW / r;
 
             double newLeft = anchorRight - newW;
             double newTop = anchorBottom - newH;
@@ -361,14 +367,17 @@ public partial class TrimWindow : Window
 
         if (ratio.HasValue)
         {
+            double r = ratio.Value;
             double maxW = sw - anchorLeft;
             double maxH = anchorBottom;
-            double limitW = Math.Min(maxW, maxH * ratio.Value);
+            double limitW = Math.Min(maxW, maxH * r);
 
-            double deltaW = Math.Abs(dVidX) >= Math.Abs(dVidY * ratio.Value) ? dVidX : -(dVidY * ratio.Value);
+            // Continuous 2D vector projection (moving right & up expands)
+            double projected = (dVidX * r - dVidY) / (r * r + 1.0);
+            double deltaW = projected * r;
             double targetW = _dragStartCropW + deltaW;
             double newW = Math.Max(minSize, Math.Min(limitW, targetW));
-            double newH = newW / ratio.Value;
+            double newH = newW / r;
 
             double newTop = anchorBottom - newH;
 
@@ -414,14 +423,17 @@ public partial class TrimWindow : Window
 
         if (ratio.HasValue)
         {
+            double r = ratio.Value;
             double maxW = anchorRight;
             double maxH = sh - anchorTop;
-            double limitW = Math.Min(maxW, maxH * ratio.Value);
+            double limitW = Math.Min(maxW, maxH * r);
 
-            double deltaW = Math.Abs(dVidX) >= Math.Abs(dVidY * ratio.Value) ? -dVidX : (dVidY * ratio.Value);
+            // Continuous 2D vector projection (moving left & down expands)
+            double projected = (-dVidX * r + dVidY) / (r * r + 1.0);
+            double deltaW = projected * r;
             double targetW = _dragStartCropW + deltaW;
             double newW = Math.Max(minSize, Math.Min(limitW, targetW));
-            double newH = newW / ratio.Value;
+            double newH = newW / r;
 
             double newLeft = anchorRight - newW;
 
@@ -777,8 +789,8 @@ public partial class TrimWindow : Window
             double inX = ((inSec - vStart) / vDur) * trackWidth;
             double outX = ((outSec - vStart) / vDur) * trackWidth;
 
-            Canvas.SetLeft(InBracketMarker, Math.Max(-8, Math.Min(trackWidth, inX - 8)));
-            Canvas.SetLeft(OutBracketMarker, Math.Max(0, Math.Min(trackWidth, outX)));
+            Canvas.SetLeft(InBracketThumb, Math.Max(-14, Math.Min(trackWidth, inX - 14)));
+            Canvas.SetLeft(OutBracketThumb, Math.Max(0, Math.Min(trackWidth, outX)));
 
             double hLeft = Math.Max(0, inX);
             double hRight = Math.Min(trackWidth, outX);
@@ -865,11 +877,76 @@ public partial class TrimWindow : Window
         }
     }
 
+    // Direct Interactive In/Out Drag Brackets
+    private double _dragStartInSec;
+    private double _dragStartOutSec;
+    private double _accumBracketDragX;
+
+    private void InBracketThumb_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
+    {
+        _dragStartInSec = _viewModel.InPointSeconds ?? 0;
+        _accumBracketDragX = 0;
+    }
+
+    private void InBracketThumb_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        double trackWidth = TimelineTrackGrid.ActualWidth > 0 ? TimelineTrackGrid.ActualWidth : TimelineSlider.ActualWidth;
+        double totDur = _viewModel.TotalDurationSeconds;
+        if (trackWidth <= 0 || totDur <= 0) return;
+
+        double vStart = _viewModel.ViewportStart;
+        double vEnd = _viewModel.ViewportEnd > 0 ? _viewModel.ViewportEnd : totDur;
+        double vDur = Math.Max(0.001, vEnd - vStart);
+
+        _accumBracketDragX += e.HorizontalChange;
+        double deltaSec = (_accumBracketDragX / trackWidth) * vDur;
+
+        double maxIn = (_viewModel.OutPointSeconds ?? totDur) - 0.05;
+        double newIn = Math.Max(0, Math.Min(maxIn, _dragStartInSec + deltaSec));
+
+        _viewModel.InPointSeconds = newIn;
+        _viewModel.SeekTo(newIn);
+        UpdateTimelineVisuals();
+    }
+
+    private void OutBracketThumb_DragStarted(object sender, System.Windows.Controls.Primitives.DragStartedEventArgs e)
+    {
+        _dragStartOutSec = _viewModel.OutPointSeconds ?? _viewModel.TotalDurationSeconds;
+        _accumBracketDragX = 0;
+    }
+
+    private void OutBracketThumb_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        double trackWidth = TimelineTrackGrid.ActualWidth > 0 ? TimelineTrackGrid.ActualWidth : TimelineSlider.ActualWidth;
+        double totDur = _viewModel.TotalDurationSeconds;
+        if (trackWidth <= 0 || totDur <= 0) return;
+
+        double vStart = _viewModel.ViewportStart;
+        double vEnd = _viewModel.ViewportEnd > 0 ? _viewModel.ViewportEnd : totDur;
+        double vDur = Math.Max(0.001, vEnd - vStart);
+
+        _accumBracketDragX += e.HorizontalChange;
+        double deltaSec = (_accumBracketDragX / trackWidth) * vDur;
+
+        double minOut = (_viewModel.InPointSeconds ?? 0) + 0.05;
+        double newOut = Math.Max(minOut, Math.Min(totDur, _dragStartOutSec + deltaSec));
+
+        _viewModel.OutPointSeconds = newOut;
+        _viewModel.SeekTo(newOut);
+        UpdateTimelineVisuals();
+    }
+
     // Direct Click & Drag to Seek anywhere across the timeline track
     private bool _isScrubbingTimeline = false;
 
     private void TimelineTrackGrid_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
+        if (FindVisualParent<System.Windows.Controls.Primitives.Thumb>(e.OriginalSource as DependencyObject) != null)
+        {
+            // Allow Thumb (e.g. InBracketThumb / OutBracketThumb) to handle dragging without moving playhead
+            return;
+        }
+
         _isScrubbingTimeline = true;
         TimelineTrackGrid.CaptureMouse();
         SeekTimelineFromMouse(e.GetPosition(TimelineTrackGrid));

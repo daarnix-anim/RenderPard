@@ -559,6 +559,19 @@ public partial class TrimViewModel : ObservableObject
         Segments.Add(seg);
         HasSegments = Segments.Count > 0;
         SelectedSegment = seg;
+
+        // Auto-shift for next segment: position right after current segment with identical duration
+        double segDuration = Math.Max(0.5, end - start);
+        double totDur = TotalDurationSeconds;
+
+        if (totDur > 0 && end < totDur)
+        {
+            double newIn = end;
+            double newOut = Math.Min(totDur, newIn + segDuration);
+            InPointSeconds = newIn;
+            OutPointSeconds = newOut;
+            SeekTo(newIn);
+        }
     }
 
     [RelayCommand]
