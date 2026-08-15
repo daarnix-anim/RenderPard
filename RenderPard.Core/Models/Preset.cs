@@ -114,17 +114,22 @@ public class Preset : ObservableObject
     [JsonIgnore]
     public bool IsMXF => Container == ContainerFormat.MXF;
 
-    public AudioMode AudioMode { get; set; } = AudioMode.Encode;
+    private AudioMode _audioMode = AudioMode.Copy;
+    public AudioMode AudioMode
+    {
+        get => _audioMode;
+        set => SetProperty(ref _audioMode, value);
+    }
     
     [JsonIgnore]
     public bool CopyAudio
     {
-        get => AudioMode == AudioMode.CopyOrEncode;
+        get => AudioMode == AudioMode.Copy;
         set
         {
-            if (AudioMode != AudioMode.Remove)
+            if (AudioMode != AudioMode.None)
             {
-                AudioMode = value ? AudioMode.CopyOrEncode : AudioMode.Encode;
+                AudioMode = value ? AudioMode.Copy : AudioMode.Encode;
                 OnPropertyChanged(nameof(CopyAudio));
             }
         }
@@ -133,10 +138,10 @@ public class Preset : ObservableObject
     [JsonIgnore]
     public bool IncludeAudio
     {
-        get => AudioMode != AudioMode.Remove;
+        get => AudioMode != AudioMode.None;
         set
         {
-            AudioMode = value ? AudioMode.Encode : AudioMode.Remove;
+            AudioMode = value ? AudioMode.Encode : AudioMode.None;
             OnPropertyChanged(nameof(IncludeAudio));
             OnPropertyChanged(nameof(CopyAudio));
         }
@@ -158,9 +163,35 @@ public class Preset : ObservableObject
             }
         }
     }
-    public int AudioBitrateKbps { get; set; } = 128;
+
+    private int _audioBitrateKbps = 192;
+    public int AudioBitrateKbps
+    {
+        get => _audioBitrateKbps;
+        set => SetProperty(ref _audioBitrateKbps, value);
+    }
+
+    private AudioSampleRate _audioSampleRate = AudioSampleRate.Hz48000;
+    public AudioSampleRate AudioSampleRate
+    {
+        get => _audioSampleRate;
+        set => SetProperty(ref _audioSampleRate, value);
+    }
+
+    private AudioChannels _audioChannels = AudioChannels.Stereo;
+    public AudioChannels AudioChannels
+    {
+        get => _audioChannels;
+        set => SetProperty(ref _audioChannels, value);
+    }
     
-    public bool NormalizeAudio { get; set; }
+    private bool _normalizeAudio;
+    public bool NormalizeAudio
+    {
+        get => _normalizeAudio;
+        set => SetProperty(ref _normalizeAudio, value);
+    }
+
     public AudioNormalizationTarget NormalizationTarget { get; set; } = AudioNormalizationTarget.Web;
 
     private bool _hasWatermark;
@@ -178,7 +209,7 @@ public class Preset : ObservableObject
         set => SetProperty(ref _hasTimecode, value);
     }
     // Different timecode styles based on aspect ratio
-    public List<TimecodeStyle> TimecodeStyles { get; set; } = new List<TimecodeStyle>
+    public List<TimecodeStyle> TimecodeStyles { get; set; } = new()
     {
         new TimecodeStyle { AspectRatioRange = AspectRatioCategory.Landscape },
         new TimecodeStyle { AspectRatioRange = AspectRatioCategory.Portrait },
@@ -212,6 +243,8 @@ public class Preset : ObservableObject
             AudioMode = AudioMode,
             AudioCodec = AudioCodec,
             AudioBitrateKbps = AudioBitrateKbps,
+            AudioSampleRate = AudioSampleRate,
+            AudioChannels = AudioChannels,
             NormalizeAudio = NormalizeAudio,
             NormalizationTarget = NormalizationTarget,
             HasWatermark = HasWatermark,

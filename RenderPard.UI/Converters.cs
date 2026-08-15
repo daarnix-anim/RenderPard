@@ -1,7 +1,8 @@
-﻿using System.Windows;
+using System.Windows;
 using System;
 using System.Globalization;
 using System.Windows.Data;
+using RenderPard.Core.Models;
 
 namespace RenderPard.UI
 {
@@ -261,7 +262,19 @@ namespace RenderPard.UI
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
     }
 
-    
+    public class AudioEncodeSettingsVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is AudioMode mode && mode == AudioMode.Encode)
+            {
+                return System.Windows.Visibility.Visible;
+            }
+            return System.Windows.Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
 }
 
 

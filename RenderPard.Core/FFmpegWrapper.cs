@@ -179,15 +179,59 @@ public class FFmpegWrapper
 
         void AppendAudioOptions(StringBuilder b)
         {
+            if (task.Preset.IsImagePreset || task.Preset.Container == ContainerFormat.Gif)
+            {
+                b.Append("-an ");
+                return;
+            }
+
+            if (task.Preset.Container == ContainerFormat.MXF || task.Preset.VideoCodec == VideoCodec.XdcamHd422)
+            {
+                b.Append("-c:a pcm_s24le -ar 48000 ");
+                return;
+            }
+
+            if (task.Preset.AudioMode == AudioMode.None)
+            {
+                b.Append("-an ");
+                return;
+            }
+
+            if (task.Preset.AudioMode == AudioMode.Copy)
+            {
+                b.Append("-c:a copy ");
+                return;
+            }
+
             if (task.Preset.AudioMode == AudioMode.Encode)
             {
                 if (task.Preset.AudioCodec == AudioCodec.Aac)
-                    b.Append($"-c:a aac -b:a {task.Preset.AudioBitrateKbps}k ");
+                    b.Append("-c:a aac ");
+                else if (task.Preset.AudioCodec == AudioCodec.Mp3)
+                    b.Append("-c:a libmp3lame ");
                 else if (task.Preset.AudioCodec == AudioCodec.Opus)
-                    b.Append($"-c:a libopus -b:a {task.Preset.AudioBitrateKbps}k ");
+                    b.Append("-c:a libopus ");
                 else if (task.Preset.AudioCodec == AudioCodec.Pcm24)
-                    b.Append("-c:a pcm_s24le -ar 48000 ");
-                    
+                    b.Append("-c:a pcm_s24le ");
+                else
+                    b.Append("-c:a aac ");
+
+                if (task.Preset.AudioCodec != AudioCodec.Pcm24)
+                {
+                    int bitrate = task.Preset.AudioBitrateKbps > 0 ? task.Preset.AudioBitrateKbps : 192;
+                    b.Append($"-b:a {bitrate}k ");
+                }
+
+                if (task.Preset.AudioSampleRate == AudioSampleRate.Hz48000)
+                    b.Append("-ar 48000 ");
+                else if (task.Preset.AudioSampleRate == AudioSampleRate.Hz44100)
+                    b.Append("-ar 44100 ");
+
+                if (task.Preset.AudioChannels == AudioChannels.Stereo)
+                    b.Append("-ac 2 ");
+                else if (task.Preset.AudioChannels == AudioChannels.Mono)
+                    b.Append("-ac 1 ");
+
                 if (task.Preset.NormalizeAudio)
                 {
                     if (task.Preset.NormalizationTarget == AudioNormalizationTarget.Web)
@@ -195,10 +239,6 @@ public class FFmpegWrapper
                     else
                         b.Append("-af \"loudnorm=I=-23:LRA=18:TP=-1.0\" ");
                 }
-            }
-            else
-            {
-                b.Append("-c:a copy ");
             }
         }
 
@@ -252,7 +292,7 @@ public class FFmpegWrapper
             
             // 1st Output: Main Video
             sb.Append("-map \"[out1]\" ");
-            if (task.HasAudio && task.Preset.AudioMode != AudioMode.Remove)
+            if (task.HasAudio && task.Preset.AudioMode != AudioMode.None)
             {
                 sb.Append("-map 0:a? ");
                 AppendAudioOptions(sb);
@@ -281,7 +321,7 @@ public class FFmpegWrapper
             if (!string.IsNullOrEmpty(filterGraph))
                 sb.Append($"-vf \"{filterGraph}\" ");
 
-            if (!task.HasAudio || task.Preset.AudioMode == AudioMode.Remove)
+            if (!task.HasAudio || task.Preset.AudioMode == AudioMode.None)
                 sb.Append("-an ");
             else
                 AppendAudioOptions(sb);

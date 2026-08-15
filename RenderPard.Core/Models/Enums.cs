@@ -1,17 +1,67 @@
+using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
 namespace RenderPard.Core.Models;
 
+[JsonConverter(typeof(AudioModeJsonConverter))]
 public enum AudioMode
 {
-    CopyOrEncode, // The spec says "сохранить/перекодировать аудио". We can just encode it by default to chosen codec if not copying. Actually let's do:
-    Encode,       // Re-encode to chosen codec
-    Remove        // Убрать аудио полностью
+    Copy,
+    Encode,
+    None
+}
+
+public class AudioModeJsonConverter : JsonConverter<AudioMode>
+{
+    public override AudioMode Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType == JsonTokenType.String)
+        {
+            var str = reader.GetString();
+            if (string.Equals(str, "Copy", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(str, "CopyOrEncode", StringComparison.OrdinalIgnoreCase))
+                return AudioMode.Copy;
+            if (string.Equals(str, "Encode", StringComparison.OrdinalIgnoreCase))
+                return AudioMode.Encode;
+            if (string.Equals(str, "None", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(str, "Remove", StringComparison.OrdinalIgnoreCase))
+                return AudioMode.None;
+        }
+        else if (reader.TokenType == JsonTokenType.Number && reader.TryGetInt32(out int val))
+        {
+            if (Enum.IsDefined(typeof(AudioMode), val))
+                return (AudioMode)val;
+        }
+        return AudioMode.Copy;
+    }
+
+    public override void Write(Utf8JsonWriter writer, AudioMode value, JsonSerializerOptions options)
+    {
+        writer.WriteStringValue(value.ToString());
+    }
 }
 
 public enum AudioCodec
 {
     Aac,
+    Mp3,
     Opus,
     Pcm24
+}
+
+public enum AudioSampleRate
+{
+    Original = 0,
+    Hz48000 = 48000,
+    Hz44100 = 44100
+}
+
+public enum AudioChannels
+{
+    Original = 0,
+    Stereo = 2,
+    Mono = 1
 }
 
 public enum AudioNormalizationTarget

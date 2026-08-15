@@ -174,7 +174,7 @@ public class PresetManager
                 GifFps = 15,
                 MaxLongSideSize = 480,
                 TargetVideoBitrateKbps = 0,
-                AudioMode = AudioMode.Remove,
+                AudioMode = AudioMode.None,
                 ExtractAlphaMask = false
             },
             new Preset

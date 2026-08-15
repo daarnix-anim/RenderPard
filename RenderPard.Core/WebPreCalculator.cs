@@ -31,12 +31,10 @@ public static class WebPreCalculator
         {
             audioBitrateKbps = preset.AudioBitrateKbps;
         }
-        else if (task.HasAudio && preset.AudioMode == AudioMode.CopyOrEncode)
+        else if (task.HasAudio && preset.AudioMode == AudioMode.Copy)
         {
-            // If copying, we might guess. But spec says "сохранить/перекодировать аудио". 
-            // We'll assume the encoded audio bitrate for simplicity if we can't probe the exact track.
-            // In MVP, we encode audio if selected to ensure predictable sizes.
-            audioBitrateKbps = 128; // fallback guess
+            // If copying, fallback estimate
+            audioBitrateKbps = 128;
         }
 
         double videoBitrateKbps = totalBitrateKbps - audioBitrateKbps;

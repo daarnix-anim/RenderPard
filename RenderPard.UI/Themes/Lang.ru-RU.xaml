@@ -72,11 +72,14 @@
     <system:String x:Key="NumberingLabel">Нумерация:</system:String>
     <system:String x:Key="NumberingTooltip">Добавляет порядковый номер к имени файла (например, _1, _2)</system:String>
 
-    <!-- Audio Tab -->
+    <!-- Audio Settings -->
     <system:String x:Key="TabAudio">Аудио</system:String>
     <system:String x:Key="AudioMode">Режим аудио:</system:String>
     <system:String x:Key="AudioCodec">Аудио кодек:</system:String>
-    <system:String x:Key="AudioBitrate">Аудио битрейт (kbps):</system:String>
+    <system:String x:Key="AudioBitrate">Битрейт аудио:</system:String>
+    <system:String x:Key="AudioSampleRate">Частота дискретизации:</system:String>
+    <system:String x:Key="AudioChannels">Каналы аудио:</system:String>
+    <system:String x:Key="AudioNormalizeWeb">Выравнивать громкость под веб (-14 LUFS для YouTube/Reels/TikTok)</system:String>
 
     <!-- Watermark Tab -->
     <system:String x:Key="TabWatermark">Водяной знак</system:String>
@@ -126,14 +129,22 @@
     <system:String x:Key="Enum_VideoCodec_ProRes">Apple ProRes</system:String>
     <system:String x:Key="Enum_VideoCodec_XdcamHd422">XDCAM HD422</system:String>
     
-    <system:String x:Key="Enum_AudioMode_Copy">Копировать</system:String>
+    <system:String x:Key="Enum_AudioMode_Copy">Копировать оригинал</system:String>
     <system:String x:Key="Enum_AudioMode_Encode">Перекодировать</system:String>
-    <system:String x:Key="Enum_AudioMode_None">Без аудио</system:String>
+    <system:String x:Key="Enum_AudioMode_None">Без звука (удалить аудио)</system:String>
 
-    <system:String x:Key="Enum_AudioCodec_Aac">AAC</system:String>
+    <system:String x:Key="Enum_AudioCodec_Aac">AAC (Стандарт)</system:String>
     <system:String x:Key="Enum_AudioCodec_Mp3">MP3</system:String>
     <system:String x:Key="Enum_AudioCodec_Opus">Opus</system:String>
-    <system:String x:Key="Enum_AudioCodec_Pcm">PCM</system:String>
+    <system:String x:Key="Enum_AudioCodec_Pcm24">PCM 24-bit (Вещательный)</system:String>
+
+    <system:String x:Key="Enum_AudioSampleRate_Original">Оригинал (Авто)</system:String>
+    <system:String x:Key="Enum_AudioSampleRate_Hz48000">48 kHz (Стандарт видео)</system:String>
+    <system:String x:Key="Enum_AudioSampleRate_Hz44100">44.1 kHz (Музыка)</system:String>
+
+    <system:String x:Key="Enum_AudioChannels_Original">Оригинал (Авто)</system:String>
+    <system:String x:Key="Enum_AudioChannels_Stereo">Стерео (2.0)</system:String>
+    <system:String x:Key="Enum_AudioChannels_Mono">Моно (1.0)</system:String>
 
     <system:String x:Key="Enum_ResizeMode_Original">Оригинал</system:String>
     <system:String x:Key="Enum_ResizeMode_MaxLongSide">По длинной стороне</system:String>

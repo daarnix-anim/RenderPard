@@ -72,11 +72,14 @@
     <system:String x:Key="NumberingLabel">Numbering:</system:String>
     <system:String x:Key="NumberingTooltip">Adds sequential number to filename (e.g., _1, _2)</system:String>
 
-    <!-- Audio Tab -->
+    <!-- Audio Settings -->
     <system:String x:Key="TabAudio">Audio</system:String>
     <system:String x:Key="AudioMode">Audio Mode:</system:String>
     <system:String x:Key="AudioCodec">Audio Codec:</system:String>
-    <system:String x:Key="AudioBitrate">Audio Bitrate (kbps):</system:String>
+    <system:String x:Key="AudioBitrate">Audio Bitrate:</system:String>
+    <system:String x:Key="AudioSampleRate">Sample Rate:</system:String>
+    <system:String x:Key="AudioChannels">Audio Channels:</system:String>
+    <system:String x:Key="AudioNormalizeWeb">Normalize loudness (-14 LUFS for YouTube/Reels/TikTok)</system:String>
 
     <!-- Watermark Tab -->
     <system:String x:Key="TabWatermark">Watermark</system:String>
@@ -126,14 +129,22 @@
     <system:String x:Key="Enum_VideoCodec_ProRes">Apple ProRes</system:String>
     <system:String x:Key="Enum_VideoCodec_XdcamHd422">XDCAM HD422</system:String>
 
-    <system:String x:Key="Enum_AudioMode_Copy">Copy</system:String>
+    <system:String x:Key="Enum_AudioMode_Copy">Copy original</system:String>
     <system:String x:Key="Enum_AudioMode_Encode">Encode</system:String>
-    <system:String x:Key="Enum_AudioMode_None">No Audio</system:String>
+    <system:String x:Key="Enum_AudioMode_None">No audio (remove track)</system:String>
 
-    <system:String x:Key="Enum_AudioCodec_Aac">AAC</system:String>
+    <system:String x:Key="Enum_AudioCodec_Aac">AAC (Standard)</system:String>
     <system:String x:Key="Enum_AudioCodec_Mp3">MP3</system:String>
     <system:String x:Key="Enum_AudioCodec_Opus">Opus</system:String>
-    <system:String x:Key="Enum_AudioCodec_Pcm">PCM</system:String>
+    <system:String x:Key="Enum_AudioCodec_Pcm24">PCM 24-bit (Broadcast)</system:String>
+
+    <system:String x:Key="Enum_AudioSampleRate_Original">Original (Auto)</system:String>
+    <system:String x:Key="Enum_AudioSampleRate_Hz48000">48 kHz (Video Standard)</system:String>
+    <system:String x:Key="Enum_AudioSampleRate_Hz44100">44.1 kHz (Music)</system:String>
+
+    <system:String x:Key="Enum_AudioChannels_Original">Original (Auto)</system:String>
+    <system:String x:Key="Enum_AudioChannels_Stereo">Stereo (2.0)</system:String>
+    <system:String x:Key="Enum_AudioChannels_Mono">Mono (1.0)</system:String>
     
     <system:String x:Key="Enum_ResizeMode_Original">Original</system:String>
     <system:String x:Key="Enum_ResizeMode_MaxLongSide">Max Long Side</system:String>

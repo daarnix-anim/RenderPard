@@ -24,6 +24,7 @@
         <local:GifVisibilityConverter x:Key="GifVisibilityConverter"/>
         <local:IconNameToImageSourceConverter x:Key="IconNameToImageSourceConverter"/>
         <local:ImageSettingsVisibilityConverter x:Key="ImageSettingsVisibilityConverter"/>
+        <local:AudioEncodeSettingsVisibilityConverter x:Key="AudioEncodeSettingsVisibilityConverter"/>
         <local:EnumToLocalizedStringConverter x:Key="EnumToLocalizedStringConverter"/>
         <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
@@ -75,14 +76,14 @@
                     <TextBlock Grid.Row="0" Text="{DynamicResource PresetsHeader}" FontWeight="Bold" FontSize="18" Foreground="{StaticResource AppTextBrush}"/>
                     
                     <!-- Tabs (Video / Photo) -->
-                    <Border Grid.Row="2" Background="#16181D" CornerRadius="6" Padding="3" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1">
+                    <Border Grid.Row="2" Background="#0E0F12" CornerRadius="6" Padding="2" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1">
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             
-                            <RadioButton Grid.Column="0" Content="{DynamicResource PresetsTabVideo}" IsChecked="{Binding IsVideoTabSelected}" Margin="0,0,2,0">
+                            <RadioButton Grid.Column="0" Content="{DynamicResource PresetsTabVideo}" IsChecked="{Binding IsVideoTabSelected}" Margin="0,0,1,0">
                                 <RadioButton.Style>
                                     <Style TargetType="RadioButton">
                                         <Setter Property="Background" Value="Transparent"/>
@@ -91,17 +92,18 @@
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="RadioButton">
-                                                    <Border x:Name="tabBorder" Background="{TemplateBinding Background}" CornerRadius="4" Padding="0,6">
-                                                        <TextBlock Text="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="13" FontWeight="Medium" Foreground="{TemplateBinding Foreground}"/>
+                                                    <Border x:Name="tabBorder" Background="{TemplateBinding Background}" CornerRadius="4" Padding="0,5">
+                                                        <TextBlock Text="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" FontWeight="Medium" Foreground="{TemplateBinding Foreground}"/>
                                                     </Border>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="tabBorder" Property="Background" Value="#22252E"/>
+                                                            <Setter TargetName="tabBorder" Property="Background" Value="#1AFFFFFF"/>
                                                             <Setter Property="Foreground" Value="{StaticResource AppTextBrush}"/>
                                                         </Trigger>
                                                         <Trigger Property="IsChecked" Value="True">
                                                             <Setter TargetName="tabBorder" Property="Background" Value="{StaticResource AppBackgroundSecondaryBrush}"/>
-                                                            <Setter Property="Foreground" Value="{StaticResource AppLinkBrush}"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource AppTextBrush}"/>
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
                                                         </Trigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
@@ -111,7 +113,7 @@
                                 </RadioButton.Style>
                             </RadioButton>
                             
-                            <RadioButton Grid.Column="1" Content="{DynamicResource PresetsTabPhoto}" IsChecked="{Binding IsVideoTabSelected, Converter={StaticResource InverseBooleanConverter}}" Margin="2,0,0,0">
+                            <RadioButton Grid.Column="1" Content="{DynamicResource PresetsTabPhoto}" IsChecked="{Binding IsVideoTabSelected, Converter={StaticResource InverseBooleanConverter}}" Margin="1,0,0,0">
                                 <RadioButton.Style>
                                     <Style TargetType="RadioButton">
                                         <Setter Property="Background" Value="Transparent"/>
@@ -120,17 +122,18 @@
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="RadioButton">
-                                                    <Border x:Name="tabBorder" Background="{TemplateBinding Background}" CornerRadius="4" Padding="0,6">
-                                                        <TextBlock Text="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="13" FontWeight="Medium" Foreground="{TemplateBinding Foreground}"/>
+                                                    <Border x:Name="tabBorder" Background="{TemplateBinding Background}" CornerRadius="4" Padding="0,5">
+                                                        <TextBlock Text="{TemplateBinding Content}" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="12" FontWeight="Medium" Foreground="{TemplateBinding Foreground}"/>
                                                     </Border>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter TargetName="tabBorder" Property="Background" Value="#22252E"/>
+                                                            <Setter TargetName="tabBorder" Property="Background" Value="#1AFFFFFF"/>
                                                             <Setter Property="Foreground" Value="{StaticResource AppTextBrush}"/>
                                                         </Trigger>
                                                         <Trigger Property="IsChecked" Value="True">
                                                             <Setter TargetName="tabBorder" Property="Background" Value="{StaticResource AppBackgroundSecondaryBrush}"/>
-                                                            <Setter Property="Foreground" Value="{StaticResource AppLinkBrush}"/>
+                                                            <Setter Property="Foreground" Value="{StaticResource AppTextBrush}"/>
+                                                            <Setter Property="FontWeight" Value="SemiBold"/>
                                                         </Trigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
@@ -197,34 +200,78 @@
                         </ListBox.ItemTemplate>
                     </ListBox>
 
-                    <!-- Bottom Actions (Add & Delete) -->
+                    <!-- Bottom Actions (Ghost Carbon Style) -->
                     <Grid Grid.Row="6">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="10"/>
+                            <ColumnDefinition Width="8"/>
                             <ColumnDefinition Width="*"/>
                         </Grid.ColumnDefinitions>
-                        <Button Grid.Column="0" Command="{Binding AddPresetCommand}" Background="{StaticResource AppLinkBrush}" Foreground="White" BorderThickness="0" Height="30" Cursor="Hand">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <TextBlock Text="➕" Margin="0,0,5,0" VerticalAlignment="Center" FontSize="11"/>
-                                <TextBlock Text="{DynamicResource AddPreset}" VerticalAlignment="Center" FontWeight="Medium"/>
-                            </StackPanel>
-                            <Button.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="6"/>
+                        
+                        <Button Grid.Column="0" Command="{Binding AddPresetCommand}" Height="28" Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource AppBorderBrush}"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Setter Property="Foreground" Value="{StaticResource AppTextSecondaryBrush}"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5">
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                        <TextBlock Text="+" Margin="0,0,5,0" VerticalAlignment="Center" FontSize="13" FontWeight="Bold" Foreground="{TemplateBinding Foreground}"/>
+                                                        <TextBlock Text="{DynamicResource AddPreset}" VerticalAlignment="Center" FontSize="11" FontWeight="Medium" Foreground="{TemplateBinding Foreground}"/>
+                                                    </StackPanel>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="btnBorder" Property="Background" Value="#1AFFFFFF"/>
+                                                        <Setter TargetName="btnBorder" Property="BorderBrush" Value="#3C404B"/>
+                                                        <Setter Property="Foreground" Value="{StaticResource AppTextBrush}"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsPressed" Value="True">
+                                                        <Setter TargetName="btnBorder" Property="Background" Value="#25FFFFFF"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
                                 </Style>
-                            </Button.Resources>
+                            </Button.Style>
                         </Button>
-                        <Button Grid.Column="2" Command="{Binding DeletePresetCommand}" Background="Transparent" Foreground="#FF4757" BorderBrush="#4DFF4757" BorderThickness="1" Height="30" Cursor="Hand">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <TextBlock Text="🗑️" Margin="0,0,5,0" VerticalAlignment="Center" FontSize="11"/>
-                                <TextBlock Text="{DynamicResource RemovePreset}" VerticalAlignment="Center" FontWeight="Medium"/>
-                            </StackPanel>
-                            <Button.Resources>
-                                <Style TargetType="Border">
-                                    <Setter Property="CornerRadius" Value="6"/>
+                        
+                        <Button Grid.Column="2" Command="{Binding DeletePresetCommand}" Height="28" Cursor="Hand">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Background" Value="Transparent"/>
+                                    <Setter Property="BorderBrush" Value="{StaticResource AppBorderBrush}"/>
+                                    <Setter Property="BorderThickness" Value="1"/>
+                                    <Setter Property="Foreground" Value="{StaticResource AppTextSecondaryBrush}"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="btnBorder" Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="5">
+                                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                                        <TextBlock Text="✕" Margin="0,0,5,0" VerticalAlignment="Center" FontSize="10" Foreground="{TemplateBinding Foreground}"/>
+                                                        <TextBlock Text="{DynamicResource RemovePreset}" VerticalAlignment="Center" FontSize="11" FontWeight="Medium" Foreground="{TemplateBinding Foreground}"/>
+                                                    </StackPanel>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="btnBorder" Property="Background" Value="#1AEB5757"/>
+                                                        <Setter TargetName="btnBorder" Property="BorderBrush" Value="#4DEB5757"/>
+                                                        <Setter Property="Foreground" Value="#EB5757"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsPressed" Value="True">
+                                                        <Setter TargetName="btnBorder" Property="Background" Value="#33EB5757"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
                                 </Style>
-                            </Button.Resources>
+                            </Button.Style>
                         </Button>
                     </Grid>
                 </Grid>
@@ -365,12 +412,79 @@
                                     <CheckBox IsChecked="{Binding KeepOriginalResolution}" Margin="15,0,0,0" Foreground="{StaticResource AppTextBrush}" VerticalAlignment="Center" ToolTip="{DynamicResource KeepOriginalResolution}"/>
                                 </StackPanel>
 
-                                <!-- Auto Calc Bitrate & Audio Options -->
-                                <StackPanel Grid.Row="10" Grid.ColumnSpan="2" Visibility="{Binding Container, Converter={StaticResource VideoSettingsVisibilityConverter}}">
-                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
-                                        <CheckBox Content="{DynamicResource IncludeAudio}" IsChecked="{Binding IncludeAudio}" Foreground="{StaticResource AppTextBrush}"/>
-                                        <CheckBox Content="{DynamicResource CopyAudio}" IsChecked="{Binding CopyAudio}" Margin="15,0,0,0" Foreground="{StaticResource AppTextBrush}" IsEnabled="{Binding IncludeAudio}"/>
-                                    </StackPanel>
+                                <!-- Audio Mode Selection (Hidden for GIF/Images/MXF) -->
+                                <TextBlock Grid.Row="10" Grid.Column="0" Text="{DynamicResource AudioMode}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding Container, Converter={StaticResource VideoSettingsVisibilityConverter}}"/>
+                                <ComboBox Grid.Row="10" Grid.Column="1" SelectedItem="{Binding AudioMode}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:AudioMode}}}" Visibility="{Binding Container, Converter={StaticResource VideoSettingsVisibilityConverter}}">
+                                    <ComboBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedStringConverter}}"/>
+                                        </DataTemplate>
+                                    </ComboBox.ItemTemplate>
+                                </ComboBox>
+
+                                <!-- Audio Encode Detailed Parameters (Visible only when AudioMode == Encode) -->
+                                <StackPanel Grid.Row="12" Grid.ColumnSpan="2" Visibility="{Binding AudioMode, Converter={StaticResource AudioEncodeSettingsVisibilityConverter}}">
+                                    <Grid Visibility="{Binding Container, Converter={StaticResource VideoSettingsVisibilityConverter}}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="180"/>
+                                            <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="6"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="6"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="6"/>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="6"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+
+                                        <!-- Audio Codec -->
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource AudioCodec}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}"/>
+                                        <ComboBox Grid.Row="0" Grid.Column="1" SelectedItem="{Binding AudioCodec}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:AudioCodec}}}">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedStringConverter}}"/>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+
+                                        <!-- Audio Bitrate -->
+                                        <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource AudioBitrate}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}"/>
+                                        <StackPanel Grid.Row="2" Grid.Column="1" Orientation="Horizontal">
+                                            <TextBox Text="{Binding AudioBitrateKbps, UpdateSourceTrigger=PropertyChanged}" Width="80"/>
+                                            <TextBlock Text=" kbps" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Margin="5,0,0,0"/>
+                                        </StackPanel>
+
+                                        <!-- Audio Sample Rate -->
+                                        <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource AudioSampleRate}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}"/>
+                                        <ComboBox Grid.Row="4" Grid.Column="1" SelectedItem="{Binding AudioSampleRate}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:AudioSampleRate}}}">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedStringConverter}}"/>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+
+                                        <!-- Audio Channels -->
+                                        <TextBlock Grid.Row="6" Grid.Column="0" Text="{DynamicResource AudioChannels}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}"/>
+                                        <ComboBox Grid.Row="6" Grid.Column="1" SelectedItem="{Binding AudioChannels}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:AudioChannels}}}">
+                                            <ComboBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedStringConverter}}"/>
+                                                </DataTemplate>
+                                            </ComboBox.ItemTemplate>
+                                        </ComboBox>
+
+                                        <!-- Normalize Audio Checkbox -->
+                                        <CheckBox Grid.Row="8" Grid.ColumnSpan="2" Content="{DynamicResource AudioNormalizeWeb}" IsChecked="{Binding NormalizeAudio}" Foreground="{StaticResource AppTextBrush}" Margin="0,4,0,0"/>
+                                    </Grid>
+                                </StackPanel>
+
+                                <!-- Auto Calc Bitrate & Alpha Mask -->
+                                <StackPanel Grid.Row="14" Grid.ColumnSpan="2" Visibility="{Binding Container, Converter={StaticResource VideoSettingsVisibilityConverter}}" Margin="0,6,0,0">
                                     <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                                         <CheckBox Content="{DynamicResource AutoCalcBitrate}" IsChecked="{Binding UseWebPreLogic}" Foreground="{StaticResource AppTextBrush}" VerticalAlignment="Center"/>
                                         <TextBox Text="{Binding MaxSizeMb, UpdateSourceTrigger=PropertyChanged}" Width="60" Margin="10,0,0,0" IsEnabled="{Binding UseWebPreLogic}"/>
@@ -379,15 +493,15 @@
                                 </StackPanel>
 
                                 <!-- GIF FPS (Visible only if GIF) -->
-                                <TextBlock Grid.Row="14" Grid.Column="0" Text="{DynamicResource GifFps}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding Container, Converter={StaticResource GifVisibilityConverter}}"/>
-                                <StackPanel Grid.Row="14" Grid.Column="1" Orientation="Horizontal" Visibility="{Binding Container, Converter={StaticResource GifVisibilityConverter}}">
+                                <TextBlock Grid.Row="16" Grid.Column="0" Text="{DynamicResource GifFps}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding Container, Converter={StaticResource GifVisibilityConverter}}"/>
+                                <StackPanel Grid.Row="16" Grid.Column="1" Orientation="Horizontal" Visibility="{Binding Container, Converter={StaticResource GifVisibilityConverter}}">
                                     <TextBox Text="{Binding GifFps, UpdateSourceTrigger=PropertyChanged}" Width="60"/>
                                     <TextBlock Text=" fps" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Margin="5,0,0,0"/>
                                 </StackPanel>
 
                                 <!-- IMAGE QUALITY -->
-                                <TextBlock Grid.Row="16" Grid.Column="0" Text="{DynamicResource ImageQuality}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}"/>
-                                <Grid Grid.Row="16" Grid.Column="1" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}">
+                                <TextBlock Grid.Row="18" Grid.Column="0" Text="{DynamicResource ImageQuality}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}"/>
+                                <Grid Grid.Row="18" Grid.Column="1" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="50"/>
@@ -397,8 +511,8 @@
                                 </Grid>
 
                                 <!-- IMAGE RESIZE MODE -->
-                                <TextBlock Grid.Row="18" Grid.Column="0" Text="{DynamicResource ImageResizeMode}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}"/>
-                                <ComboBox Grid.Row="18" Grid.Column="1" SelectedItem="{Binding ImageResizeMode}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:ResizeMode}}}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}">
+                                <TextBlock Grid.Row="20" Grid.Column="0" Text="{DynamicResource ImageResizeMode}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}"/>
+                                <ComboBox Grid.Row="20" Grid.Column="1" SelectedItem="{Binding ImageResizeMode}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:ResizeMode}}}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedStringConverter}}"/>
@@ -407,8 +521,8 @@
                                 </ComboBox>
 
                                 <!-- IMAGE RESIZE VALUE (Disabled when Original) -->
-                                <TextBlock Grid.Row="20" Grid.Column="0" Text="{DynamicResource ImageResizeValue}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}"/>
-                                <TextBox Grid.Row="20" Grid.Column="1" Text="{Binding ImageResizeValue, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}">
+                                <TextBlock Grid.Row="22" Grid.Column="0" Text="{DynamicResource ImageResizeValue}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}"/>
+                                <TextBox Grid.Row="22" Grid.Column="1" Text="{Binding ImageResizeValue, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding IsImagePreset, Converter={StaticResource ImageSettingsVisibilityConverter}}">
                                     <TextBox.Style>
                                         <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
                                             <Style.Triggers>

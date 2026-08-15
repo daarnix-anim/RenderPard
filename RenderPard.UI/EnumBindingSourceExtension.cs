@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Windows.Markup;
 
 namespace RenderPard.UI
@@ -38,7 +39,14 @@ namespace RenderPard.UI
                 throw new InvalidOperationException("The EnumType must be specified.");
 
             Type actualEnumType = Nullable.GetUnderlyingType(_enumType) ?? _enumType;
-            Array enumValues = Enum.GetValues(actualEnumType);
+            Array rawEnumValues = Enum.GetValues(actualEnumType);
+            var distinctValues = rawEnumValues.Cast<object>().Distinct().ToArray();
+
+            Array enumValues = Array.CreateInstance(actualEnumType, distinctValues.Length);
+            for (int i = 0; i < distinctValues.Length; i++)
+            {
+                enumValues.SetValue(distinctValues[i], i);
+            }
 
             if (actualEnumType == _enumType)
                 return enumValues;
