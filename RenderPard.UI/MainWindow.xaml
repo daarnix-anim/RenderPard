@@ -193,9 +193,12 @@
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding FileName}" Foreground="{StaticResource AppTextBrush}" TextTrimming="CharacterEllipsis" MaxWidth="180" VerticalAlignment="Center"/>
-                                    <Border Background="#2B2414" CornerRadius="3" BorderBrush="#F39C12" BorderThickness="1" Margin="6,0,0,0" Padding="4,1" VerticalAlignment="Center" Visibility="{Binding IsTrimmed, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <TextBlock Text="{Binding FileName}" Foreground="{StaticResource AppTextBrush}" TextTrimming="CharacterEllipsis" MaxWidth="160" VerticalAlignment="Center"/>
+                                    <Border Background="#2B2414" CornerRadius="3" BorderBrush="#F39C12" BorderThickness="1" Margin="4,0,0,0" Padding="4,1" VerticalAlignment="Center" Visibility="{Binding IsTrimmed, Converter={StaticResource BooleanToVisibilityConverter}}">
                                         <TextBlock Text="{Binding TrimSummary}" Foreground="#F39C12" FontSize="9.5" FontWeight="SemiBold"/>
+                                    </Border>
+                                    <Border Background="#1A2D22" CornerRadius="3" BorderBrush="#2ECC71" BorderThickness="1" Margin="4,0,0,0" Padding="4,1" VerticalAlignment="Center" Visibility="{Binding IsCropped, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <TextBlock Text="{Binding CropSummary}" Foreground="#2ECC71" FontSize="9.5" FontWeight="SemiBold"/>
                                     </Border>
                                 </StackPanel>
                             </DataTemplate>

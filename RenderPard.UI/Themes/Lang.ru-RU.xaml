@@ -183,5 +183,13 @@
     <system:String x:Key="TrimExportNow">⚡ Рендер сейчас</system:String>
     <system:String x:Key="TrimCutButton">✂ Обрезать</system:String>
     <system:String x:Key="TrimQuickButton">✂ Быстрая обрезка</system:String>
-    <system:String x:Key="TrimHotkeysHelp">Space: Пауза | I / [ : Точка входа | O / ] : Точка выхода | ←/→ : 1 кадр | Shift+←/→ : 1 сек</system:String>
+    <system:String x:Key="TrimHotkeysHelp">Space: Пауза | I / [ : Точка входа | O / ] : Точка выхода | ←/→ : 1 кадр | Shift+←/→ : 1 сек | Кроп: перетаскивайте рамку на плеере</system:String>
+
+    <!-- Crop & Framing -->
+    <system:String x:Key="CropTitle">Кадрирование (Кроп):</system:String>
+    <system:String x:Key="CropOff">Оригинал</system:String>
+    <system:String x:Key="Crop9x16">📱 9:16</system:String>
+    <system:String x:Key="Crop16x9">🖥 16:9</system:String>
+    <system:String x:Key="Crop1x1">⬛ 1:1</system:String>
+    <system:String x:Key="CropCustom">✂ Свободный</system:String>
 </ResourceDictionary>

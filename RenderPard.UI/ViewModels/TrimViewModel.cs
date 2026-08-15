@@ -9,6 +9,15 @@ using RenderPard.Core.Models;
 
 namespace RenderPard.UI.ViewModels;
 
+public enum CropAspectRatioMode
+{
+    None,
+    Vertical9x16,
+    Horizontal16x9,
+    Square1x1,
+    Custom
+}
+
 public partial class TrimViewModel : ObservableObject
 {
     [ObservableProperty]
@@ -40,6 +49,47 @@ public partial class TrimViewModel : ObservableObject
     [ObservableProperty]
     private Preset? _selectedPreset;
 
+    // Crop / Framing properties
+    [ObservableProperty]
+    private CropAspectRatioMode _cropMode = CropAspectRatioMode.None;
+
+    public bool IsCropActive => CropMode != CropAspectRatioMode.None;
+
+    [ObservableProperty]
+    private int _sourceVideoWidth;
+
+    [ObservableProperty]
+    private int _sourceVideoHeight;
+
+    [ObservableProperty]
+    private int _cropX;
+
+    [ObservableProperty]
+    private int _cropY;
+
+    [ObservableProperty]
+    private int _cropWidth;
+
+    [ObservableProperty]
+    private int _cropHeight;
+
+    public string CropInfoText
+    {
+        get
+        {
+            if (!IsCropActive || CropWidth <= 0 || CropHeight <= 0) return "Без кропа";
+            string modeName = CropMode switch
+            {
+                CropAspectRatioMode.Vertical9x16 => "9:16",
+                CropAspectRatioMode.Horizontal16x9 => "16:9",
+                CropAspectRatioMode.Square1x1 => "1:1",
+                CropAspectRatioMode.Custom => "Custom",
+                _ => ""
+            };
+            return $"{CropWidth} × {CropHeight} ({modeName})";
+        }
+    }
+
     public ObservableCollection<Preset> AvailablePresets { get; } = new();
 
     public event Action? RequestPlay;
@@ -47,6 +97,7 @@ public partial class TrimViewModel : ObservableObject
     public event Action<double>? RequestSeek;
     public event Action<TranscodeTask, bool>? RequestExport; // task, startImmediately
     public event Action? RequestClose;
+    public event Action? RequestCropOverlayUpdate;
 
     public string CurrentTimeText => FormatTime(CurrentTimeSeconds);
     public string TotalDurationText => FormatTime(TotalDurationSeconds);
@@ -112,6 +163,126 @@ public partial class TrimViewModel : ObservableObject
         else
         {
             SelectedPreset = AvailablePresets.FirstOrDefault();
+        }
+    }
+
+    partial void OnCropModeChanged(CropAspectRatioMode value)
+    {
+        OnPropertyChanged(nameof(IsCropActive));
+        OnPropertyChanged(nameof(CropInfoText));
+
+        if (value != CropAspectRatioMode.None && IsLosslessCopy)
+        {
+            IsLosslessCopy = false; // Stream copy cannot crop resolution
+        }
+
+        ApplyCropAspectRatio(value);
+        RequestCropOverlayUpdate?.Invoke();
+    }
+
+    partial void OnCropXChanged(int value) => OnPropertyChanged(nameof(CropInfoText));
+    partial void OnCropYChanged(int value) => OnPropertyChanged(nameof(CropInfoText));
+    partial void OnCropWidthChanged(int value) => OnPropertyChanged(nameof(CropInfoText));
+    partial void OnCropHeightChanged(int value) => OnPropertyChanged(nameof(CropInfoText));
+
+    [RelayCommand]
+    public void SetCropMode(CropAspectRatioMode mode)
+    {
+        CropMode = mode;
+    }
+
+    [RelayCommand]
+    public void ResetCrop()
+    {
+        CropMode = CropAspectRatioMode.None;
+    }
+
+    public void SetSourceResolution(int width, int height)
+    {
+        if (width <= 0 || height <= 0) return;
+        SourceVideoWidth = width;
+        SourceVideoHeight = height;
+        if (CropMode != CropAspectRatioMode.None)
+        {
+            ApplyCropAspectRatio(CropMode);
+        }
+    }
+
+    public void ApplyCropAspectRatio(CropAspectRatioMode mode)
+    {
+        int sw = SourceVideoWidth > 0 ? SourceVideoWidth : 1920;
+        int sh = SourceVideoHeight > 0 ? SourceVideoHeight : 1080;
+
+        switch (mode)
+        {
+            case CropAspectRatioMode.None:
+                CropX = 0;
+                CropY = 0;
+                CropWidth = sw;
+                CropHeight = sh;
+                break;
+
+            case CropAspectRatioMode.Vertical9x16:
+                {
+                    // 9:16 vertical crop centered
+                    int targetW = (int)(sh * 9.0 / 16.0);
+                    int targetH = sh;
+                    if (targetW > sw)
+                    {
+                        targetW = sw;
+                        targetH = (int)(sw * 16.0 / 9.0);
+                    }
+                    targetW &= ~1;
+                    targetH &= ~1;
+                    CropWidth = Math.Max(2, targetW);
+                    CropHeight = Math.Max(2, targetH);
+                    CropX = Math.Max(0, (sw - CropWidth) / 2) & ~1;
+                    CropY = Math.Max(0, (sh - CropHeight) / 2) & ~1;
+                }
+                break;
+
+            case CropAspectRatioMode.Horizontal16x9:
+                {
+                    // 16:9 horizontal crop centered
+                    int targetW = sw;
+                    int targetH = (int)(sw * 9.0 / 16.0);
+                    if (targetH > sh)
+                    {
+                        targetH = sh;
+                        targetW = (int)(sh * 16.0 / 9.0);
+                    }
+                    targetW &= ~1;
+                    targetH &= ~1;
+                    CropWidth = Math.Max(2, targetW);
+                    CropHeight = Math.Max(2, targetH);
+                    CropX = Math.Max(0, (sw - CropWidth) / 2) & ~1;
+                    CropY = Math.Max(0, (sh - CropHeight) / 2) & ~1;
+                }
+                break;
+
+            case CropAspectRatioMode.Square1x1:
+                {
+                    // 1:1 square crop centered
+                    int size = Math.Min(sw, sh) & ~1;
+                    CropWidth = Math.Max(2, size);
+                    CropHeight = Math.Max(2, size);
+                    CropX = Math.Max(0, (sw - size) / 2) & ~1;
+                    CropY = Math.Max(0, (sh - size) / 2) & ~1;
+                }
+                break;
+
+            case CropAspectRatioMode.Custom:
+                if (CropWidth <= 0 || CropHeight <= 0 || CropWidth == sw && CropHeight == sh)
+                {
+                    // Default to 80% box in the center
+                    int cw = (int)(sw * 0.8) & ~1;
+                    int ch = (int)(sh * 0.8) & ~1;
+                    CropWidth = Math.Max(2, cw);
+                    CropHeight = Math.Max(2, ch);
+                    CropX = Math.Max(0, (sw - CropWidth) / 2) & ~1;
+                    CropY = Math.Max(0, (sh - CropHeight) / 2) & ~1;
+                }
+                break;
         }
     }
 
@@ -330,7 +501,12 @@ public partial class TrimViewModel : ObservableObject
             DurationSeconds = TotalDurationSeconds,
             TrimStartSeconds = InPointSeconds,
             TrimEndSeconds = OutPointSeconds,
-            IsLosslessCopy = IsLosslessCopy,
+            IsLosslessCopy = IsLosslessCopy && !IsCropActive,
+            IsCropped = IsCropActive && CropWidth > 0 && CropHeight > 0,
+            CropX = CropX,
+            CropY = CropY,
+            CropWidth = CropWidth,
+            CropHeight = CropHeight,
             Status = TranscodeTaskStatus.Pending
         };
 

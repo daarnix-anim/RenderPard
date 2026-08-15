@@ -451,6 +451,16 @@ public class FFmpegWrapper
         if (logicalHeight > logicalWidth) aspectRatio = AspectRatioCategory.Portrait;
         else if (logicalHeight == logicalWidth) aspectRatio = AspectRatioCategory.Square;
 
+        // 0. Crop filter (Applied first before scaling and watermark)
+        if (task.IsCropped && task.CropWidth > 0 && task.CropHeight > 0)
+        {
+            int w = Math.Max(2, task.CropWidth & ~1); // ensure even dimensions for YUV420p
+            int h = Math.Max(2, task.CropHeight & ~1);
+            int x = Math.Max(0, task.CropX & ~1);
+            int y = Math.Max(0, task.CropY & ~1);
+            filters.Add($"crop={w}:{h}:{x}:{y}");
+        }
+
         // 1. Scale
         if (logicalWidth > 0 && logicalHeight > 0 && !task.Preset.KeepOriginalResolution)
         {

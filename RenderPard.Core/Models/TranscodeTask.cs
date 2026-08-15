@@ -83,4 +83,22 @@ public partial class TranscodeTask : ObservableObject
             return $"[{startStr} - {endStr}]";
         }
     }
+
+    // Video Crop & Framing properties
+    [ObservableProperty]
+    private bool _isCropped;
+
+    [ObservableProperty]
+    private int _cropX;
+
+    [ObservableProperty]
+    private int _cropY;
+
+    [ObservableProperty]
+    private int _cropWidth;
+
+    [ObservableProperty]
+    private int _cropHeight;
+
+    public string CropSummary => IsCropped && CropWidth > 0 && CropHeight > 0 ? $"[{CropWidth}×{CropHeight}]" : string.Empty;
 }

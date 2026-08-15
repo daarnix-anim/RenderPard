@@ -183,5 +183,13 @@
     <system:String x:Key="TrimExportNow">⚡ Render Now</system:String>
     <system:String x:Key="TrimCutButton">✂ Trim</system:String>
     <system:String x:Key="TrimQuickButton">✂ Quick Trim</system:String>
-    <system:String x:Key="TrimHotkeysHelp">Space: Pause | I / [ : In Point | O / ] : Out Point | ←/→ : 1 Frame | Shift+←/→ : 1 Sec</system:String>
+    <system:String x:Key="TrimHotkeysHelp">Space: Pause | I / [ : In Point | O / ] : Out Point | ←/→ : 1 Frame | Shift+←/→ : 1 Sec | Crop: Drag crop frame on player</system:String>
+
+    <!-- Crop & Framing -->
+    <system:String x:Key="CropTitle">Framing (Crop):</system:String>
+    <system:String x:Key="CropOff">Original</system:String>
+    <system:String x:Key="Crop9x16">📱 9:16</system:String>
+    <system:String x:Key="Crop16x9">🖥 16:9</system:String>
+    <system:String x:Key="Crop1x1">⬛ 1:1</system:String>
+    <system:String x:Key="CropCustom">✂ Custom</system:String>
 </ResourceDictionary>

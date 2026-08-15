@@ -16,6 +16,76 @@
         <local:IconNameToImageSourceConverter x:Key="IconNameToImageSourceConverter"/>
         <local:BooleanToPlayPauseTextConverter x:Key="BooleanToPlayPauseTextConverter"/>
         <local:InverseBooleanConverter x:Key="InverseBooleanConverter"/>
+        <local:EnumToBooleanConverter x:Key="EnumToBooleanConverter"/>
+
+        <!-- Crop Segmented Button Style -->
+        <Style x:Key="CropToggleButtonStyle" TargetType="RadioButton">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource AppTextSecondaryBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="9,3"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="RadioButton">
+                        <Border x:Name="RootBorder" Background="{TemplateBinding Background}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="RootBorder" Property="Background" Value="#242833"/>
+                                <Setter Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="RootBorder" Property="Background" Value="#f39c12"/>
+                                <Setter Property="Foreground" Value="#1E2026"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Crop Handle Corner Style -->
+        <Style x:Key="CropCornerHandleStyle" TargetType="Thumb">
+            <Setter Property="Width" Value="12"/>
+            <Setter Property="Height" Value="12"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border Background="#f39c12" BorderBrush="#FFFFFF" BorderThickness="1.5" CornerRadius="2"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Crop Handle Edge Horizontal Style -->
+        <Style x:Key="CropEdgeHHandleStyle" TargetType="Thumb">
+            <Setter Property="Width" Value="24"/>
+            <Setter Property="Height" Value="6"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border Background="#f39c12" BorderBrush="#FFFFFF" BorderThickness="1" CornerRadius="2"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Crop Handle Edge Vertical Style -->
+        <Style x:Key="CropEdgeVHandleStyle" TargetType="Thumb">
+            <Setter Property="Width" Value="6"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Thumb">
+                        <Border Background="#f39c12" BorderBrush="#FFFFFF" BorderThickness="1" CornerRadius="2"/>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
 
         <!-- Custom Slider Style for Timeline -->
         <Style x:Key="TimelineSliderStyle" TargetType="Slider">
@@ -77,9 +147,9 @@
             </Grid>
         </Border>
 
-        <!-- VIDEO PLAYER VIEWPORT -->
-        <Border Grid.Row="1" Background="#0A0B0D" Margin="10,10,10,6" CornerRadius="6" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" ClipToBounds="True">
-            <Grid>
+        <!-- VIDEO PLAYER VIEWPORT & CROP OVERLAY -->
+        <Border Grid.Row="1" Background="#0A0B0D" Margin="10,10,10,6" CornerRadius="6" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" ClipToBounds="True" SizeChanged="PlayerViewport_SizeChanged">
+            <Grid x:Name="PlayerContainerGrid">
                 <MediaElement x:Name="PlayerMediaElement"
                               LoadedBehavior="Manual"
                               UnloadedBehavior="Stop"
@@ -98,9 +168,77 @@
                     <TextBlock Text="{Binding FileName}" Foreground="{StaticResource AppTextBrush}" FontSize="14" FontWeight="SemiBold" Margin="0,12,0,0" HorizontalAlignment="Center"/>
                 </StackPanel>
 
+                <!-- Interactive Crop Overlay Canvas -->
+                <Canvas x:Name="CropCanvas"
+                        Visibility="{Binding IsCropActive, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Background="Transparent"
+                        ClipToBounds="True">
+                    
+                    <!-- 4 Dark Mask Borders surrounding the crop rectangle -->
+                    <Border x:Name="MaskTop" Background="#A6000000" IsHitTestVisible="False"/>
+                    <Border x:Name="MaskBottom" Background="#A6000000" IsHitTestVisible="False"/>
+                    <Border x:Name="MaskLeft" Background="#A6000000" IsHitTestVisible="False"/>
+                    <Border x:Name="MaskRight" Background="#A6000000" IsHitTestVisible="False"/>
+
+                    <!-- Movable & Resizable Crop Box -->
+                    <Grid x:Name="CropBoxGrid"
+                          Cursor="SizeAll"
+                          MouseLeftButtonDown="CropBoxGrid_MouseLeftButtonDown"
+                          MouseLeftButtonUp="CropBoxGrid_MouseLeftButtonUp"
+                          MouseMove="CropBoxGrid_MouseMove">
+                        
+                        <!-- Main Glowing Amber Border -->
+                        <Border BorderBrush="#f39c12" BorderThickness="2" Background="#14F39C12"/>
+
+                        <!-- Rule of Thirds 3x3 Grid Lines -->
+                        <Grid IsHitTestVisible="False" Opacity="0.35">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <Border Grid.Row="1" Grid.ColumnSpan="3" BorderBrush="#f39c12" BorderThickness="0,1,0,1"/>
+                            <Border Grid.Column="1" Grid.RowSpan="3" BorderBrush="#f39c12" BorderThickness="1,0,1,0"/>
+                        </Grid>
+
+                        <!-- Crop Info Badge -->
+                        <Border Background="#E615171C" CornerRadius="3" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4" Padding="5,2" BorderBrush="#f39c12" BorderThickness="1" IsHitTestVisible="False">
+                            <TextBlock Text="{Binding CropInfoText}" Foreground="#f39c12" FontSize="10.5" FontWeight="Bold" FontFamily="Consolas, Courier New"/>
+                        </Border>
+
+                        <!-- 8 Resize Thumbs (Corners & Edges) -->
+                        <Thumb x:Name="HandleNW" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="-6,-6,0,0" Style="{StaticResource CropCornerHandleStyle}" Cursor="SizeNWSE" DragDelta="HandleNW_DragDelta"/>
+                        <Thumb x:Name="HandleNE" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-6,-6,0" Style="{StaticResource CropCornerHandleStyle}" Cursor="SizeNESW" DragDelta="HandleNE_DragDelta"/>
+                        <Thumb x:Name="HandleSW" HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="-6,0,0,-6" Style="{StaticResource CropCornerHandleStyle}" Cursor="SizeNESW" DragDelta="HandleSW_DragDelta"/>
+                        <Thumb x:Name="HandleSE" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,-6,-6" Style="{StaticResource CropCornerHandleStyle}" Cursor="SizeNWSE" DragDelta="HandleSE_DragDelta"/>
+
+                        <Thumb x:Name="HandleN" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,-3,0,0" Style="{StaticResource CropEdgeHHandleStyle}" Cursor="SizeNS" DragDelta="HandleN_DragDelta"/>
+                        <Thumb x:Name="HandleS" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,-3" Style="{StaticResource CropEdgeHHandleStyle}" Cursor="SizeNS" DragDelta="HandleS_DragDelta"/>
+                        <Thumb x:Name="HandleW" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="-3,0,0,0" Style="{StaticResource CropEdgeVHandleStyle}" Cursor="SizeWE" DragDelta="HandleW_DragDelta"/>
+                        <Thumb x:Name="HandleE" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,-3,0" Style="{StaticResource CropEdgeVHandleStyle}" Cursor="SizeWE" DragDelta="HandleE_DragDelta"/>
+                    </Grid>
+                </Canvas>
+
+                <!-- Top-Left Crop Mode Toolbar (Overlaid on Player) -->
+                <Border Background="#E615171C" CornerRadius="6" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="10" Padding="4,3" BorderBrush="#2D3139" BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="⬚" FontSize="12" Foreground="{StaticResource AppLinkBrush}" VerticalAlignment="Center" Margin="4,0,6,0"/>
+                        <RadioButton Content="{DynamicResource CropOff}" IsChecked="{Binding CropMode, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=None}" Style="{StaticResource CropToggleButtonStyle}"/>
+                        <RadioButton Content="{DynamicResource Crop9x16}" IsChecked="{Binding CropMode, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Vertical9x16}" Style="{StaticResource CropToggleButtonStyle}" ToolTip="Вертикальное 9:16 (TikTok, Shorts, Reels)"/>
+                        <RadioButton Content="{DynamicResource Crop16x9}" IsChecked="{Binding CropMode, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Horizontal16x9}" Style="{StaticResource CropToggleButtonStyle}" ToolTip="Горизонтальное 16:9 (Стандарт)"/>
+                        <RadioButton Content="{DynamicResource Crop1x1}" IsChecked="{Binding CropMode, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Square1x1}" Style="{StaticResource CropToggleButtonStyle}" ToolTip="Квадратное 1:1 (Посты, Аватары)"/>
+                        <RadioButton Content="{DynamicResource CropCustom}" IsChecked="{Binding CropMode, Converter={StaticResource EnumToBooleanConverter}, ConverterParameter=Custom}" Style="{StaticResource CropToggleButtonStyle}" ToolTip="Свободный кроп (растягивание мышью)"/>
+                    </StackPanel>
+                </Border>
+
                 <!-- Top-Right Timecode HUD overlay -->
-                <Border Background="#CC000000" CornerRadius="4" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="12" Padding="8,4">
-                    <TextBlock Text="{Binding CurrentTimeText}" Foreground="#f39c12" FontFamily="Consolas, Courier New" FontWeight="Bold" FontSize="14"/>
+                <Border Background="#CC000000" CornerRadius="4" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="10" Padding="8,4">
+                    <TextBlock Text="{Binding CurrentTimeText}" Foreground="#f39c12" FontFamily="Consolas, Courier New" FontWeight="Bold" FontSize="13"/>
                 </Border>
             </Grid>
         </Border>
