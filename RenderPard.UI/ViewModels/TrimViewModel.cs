@@ -740,6 +740,7 @@ public partial class TrimViewModel : ObservableObject
         var task = new TranscodeTask
         {
             SourceFilePath = SourceFilePath,
+            OriginalFileName = Path.GetFileName(SourceFilePath),
             TargetFilePath = targetFilePath,
             Preset = preset,
             DurationSeconds = TotalDurationSeconds,

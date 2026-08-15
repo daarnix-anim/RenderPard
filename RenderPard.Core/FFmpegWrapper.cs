@@ -148,10 +148,18 @@ public class FFmpegWrapper
                 string vPrep = "";
                 if (seg.IsCropped && seg.CropWidth > 0 && seg.CropHeight > 0)
                 {
-                    vPrep = $"crop={seg.CropWidth}:{seg.CropHeight}:{seg.CropX}:{seg.CropY},";
+                    int w = Math.Max(2, seg.CropWidth & ~1);
+                    int h = Math.Max(2, seg.CropHeight & ~1);
+                    int x = Math.Max(0, seg.CropX & ~1);
+                    int y = Math.Max(0, seg.CropY & ~1);
+                    vPrep = $"crop={w}:{h}:{x}:{y},";
                 }
                 else if (task.IsCropped && task.CropWidth > 0 && task.CropHeight > 0)
                 {
+                    int w = Math.Max(2, task.CropWidth & ~1);
+                    int h = Math.Max(2, task.CropHeight & ~1);
+                    int x = Math.Max(0, task.CropX & ~1);
+                    int y = Math.Max(0, task.CropY & ~1);
                     vPrep = $"crop={task.CropWidth}:{task.CropHeight}:{task.CropX}:{task.CropY},";
                 }
 
@@ -173,13 +181,28 @@ public class FFmpegWrapper
 
             if (hasAudio)
             {
-                filterSb.Append($"concat=n={segCount}:v=1:a=1[outv][outa]");
+                filterSb.Append($"concat=n={segCount}:v=1:a=1[concatv][outa];");
             }
             else
             {
-                filterSb.Append($"concat=n={segCount}:v=1:a=0[outv]");
+                filterSb.Append($"concat=n={segCount}:v=1:a=0[concatv];");
             }
 
+            // Pixel format for maximum player compatibility
+            if (task.Preset.Container == ContainerFormat.WebM)
+            {
+                filterSb.Append("[concatv]format=yuva420p|yuv420p[outv]");
+            }
+            else if (task.Preset.Container == ContainerFormat.MXF || task.Preset.VideoCodec == VideoCodec.XdcamHd422)
+            {
+                filterSb.Append("[concatv]format=yuv422p[outv]");
+            }
+            else
+            {
+                filterSb.Append("[concatv]format=yuv420p[outv]");
+            }
+
+            sb.Append($"-i \"{task.SourceFilePath}\" ");
             sb.Append($"-filter_complex \"{filterSb}\" ");
             sb.Append("-map \"[outv]\" ");
             if (hasAudio)
@@ -194,6 +217,13 @@ public class FFmpegWrapper
 
             AppendVideoOptions(sb);
             AppendContainerOption(sb);
+
+            string targetExt = Path.GetExtension(task.TargetFilePath).ToLower();
+            if (targetExt is ".mp4" or ".mov" || task.Preset.Container == ContainerFormat.Mp4)
+            {
+                sb.Append("-movflags +faststart ");
+            }
+
             sb.Append($"\"{task.TargetFilePath}.part\"");
             return sb.ToString();
         }
