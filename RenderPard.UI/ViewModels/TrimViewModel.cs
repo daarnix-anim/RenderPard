@@ -355,6 +355,19 @@ public partial class TrimViewModel : ObservableObject
         ViewportEnd = Math.Min(TotalDurationSeconds, start + windowDur);
     }
 
+    public void SetViewportRange(double start, double end)
+    {
+        if (TotalDurationSeconds <= 0) return;
+        const double minDur = 0.5;
+        start = Math.Max(0, Math.Min(TotalDurationSeconds - minDur, start));
+        end = Math.Min(TotalDurationSeconds, Math.Max(start + minDur, end));
+
+        ViewportStart = start;
+        ViewportEnd = end;
+        double windowDur = end - start;
+        ZoomLevel = Math.Max(1.0, Math.Min(50.0, TotalDurationSeconds / windowDur));
+    }
+
     public void PanViewport(double deltaSeconds)
     {
         if (TotalDurationSeconds <= 0 || ZoomLevel <= 1.001) return;

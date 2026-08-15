@@ -13,7 +13,6 @@ public partial class TrimWindow : Window
 {
     private readonly TrimViewModel _viewModel;
     private readonly DispatcherTimer _playbackTimer;
-    private bool _isDraggingSlider;
     private bool _isDraggingCropBox;
     private Point _lastCropMousePosition;
 
@@ -632,7 +631,7 @@ public partial class TrimWindow : Window
 
     private void PlaybackTimer_Tick(object? sender, EventArgs e)
     {
-        if (!_isDraggingSlider && PlayerMediaElement.NaturalDuration.HasTimeSpan)
+        if (!_isScrubbingTimeline && PlayerMediaElement.NaturalDuration.HasTimeSpan)
         {
             double current = PlayerMediaElement.Position.TotalSeconds;
             _viewModel.CurrentTimeSeconds = current;
@@ -683,9 +682,19 @@ public partial class TrimWindow : Window
         }
     }
 
+    private static T? FindVisualParent<T>(DependencyObject? child) where T : DependencyObject
+    {
+        while (child != null)
+        {
+            if (child is T parent) return parent;
+            child = System.Windows.Media.VisualTreeHelper.GetParent(child);
+        }
+        return null;
+    }
+
     private void UpdateTimelineVisuals()
     {
-        double trackWidth = TimelineSlider.ActualWidth;
+        double trackWidth = TimelineTrackGrid.ActualWidth > 0 ? TimelineTrackGrid.ActualWidth : TimelineSlider.ActualWidth;
         double totDur = _viewModel.TotalDurationSeconds;
         if (totDur <= 0) return;
 
@@ -725,26 +734,68 @@ public partial class TrimWindow : Window
             double miniPlayFrac = _viewModel.CurrentTimeSeconds / totDur;
             Canvas.SetLeft(MiniPlayheadMarker, Math.Max(0, Math.Min(navWidth - 3, miniPlayFrac * navWidth)));
 
-            // Mini Viewport Window
+            // Mini Viewport Window with Left/Right resize handles
             double vpStartFrac = vStart / totDur;
             double vpEndFrac = vEnd / totDur;
-            Canvas.SetLeft(MiniViewportWindow, vpStartFrac * navWidth);
-            MiniViewportWindow.Width = Math.Max(8, (vpEndFrac - vpStartFrac) * navWidth);
+            double boxX = vpStartFrac * navWidth;
+            double boxW = Math.Max(22, (vpEndFrac - vpStartFrac) * navWidth);
+            Canvas.SetLeft(MiniViewportGrid, boxX);
+            MiniViewportGrid.Width = Math.Min(navWidth - boxX, boxW);
         }
     }
 
-    private void TimelineSlider_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        if (sender is Slider slider && slider.ActualWidth > 0)
-        {
-            Point pos = e.GetPosition(slider);
-            double min = slider.Minimum;
-            double max = slider.Maximum;
-            double ratio = Math.Max(0, Math.Min(1.0, pos.X / slider.ActualWidth));
-            double targetSec = min + ratio * (max - min);
+    // Direct Click & Drag to Seek anywhere across the timeline track
+    private bool _isScrubbingTimeline = false;
 
-            _viewModel.CurrentTimeSeconds = targetSec;
-            _viewModel.SeekTo(targetSec);
+    private void TimelineTrackGrid_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _isScrubbingTimeline = true;
+        TimelineTrackGrid.CaptureMouse();
+        SeekTimelineFromMouse(e.GetPosition(TimelineTrackGrid));
+        e.Handled = true;
+    }
+
+    private void TimelineTrackGrid_PreviewMouseMove(object sender, MouseEventArgs e)
+    {
+        if (_isScrubbingTimeline)
+        {
+            SeekTimelineFromMouse(e.GetPosition(TimelineTrackGrid));
+            e.Handled = true;
+        }
+    }
+
+    private void TimelineTrackGrid_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (_isScrubbingTimeline)
+        {
+            _isScrubbingTimeline = false;
+            TimelineTrackGrid.ReleaseMouseCapture();
+            e.Handled = true;
+        }
+    }
+
+    private void SeekTimelineFromMouse(Point pos)
+    {
+        double trackW = TimelineTrackGrid.ActualWidth;
+        double totDur = _viewModel.TotalDurationSeconds;
+        if (trackW <= 0 || totDur <= 0) return;
+
+        double vStart = _viewModel.ViewportStart;
+        double vEnd = _viewModel.ViewportEnd > 0 ? _viewModel.ViewportEnd : totDur;
+        double vDur = Math.Max(0.001, vEnd - vStart);
+
+        double ratio = Math.Max(0, Math.Min(1.0, pos.X / trackW));
+        double targetSec = vStart + ratio * vDur;
+
+        _viewModel.CurrentTimeSeconds = targetSec;
+        _viewModel.SeekTo(targetSec);
+    }
+
+    private void TimelineSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+    {
+        if (_isScrubbingTimeline)
+        {
+            _viewModel.SeekTo(e.NewValue);
         }
     }
 
@@ -776,8 +827,72 @@ public partial class TrimWindow : Window
         }
     }
 
-    private void MiniNavigator_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    // Premiere / After Effects style Zoom Navigator Bar handlers
+    private void MiniZoomHandleLeft_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
     {
+        double navWidth = MiniNavigatorGrid.ActualWidth;
+        double totDur = _viewModel.TotalDurationSeconds;
+        if (navWidth <= 0 || totDur <= 0) return;
+
+        double deltaSec = (e.HorizontalChange / navWidth) * totDur;
+        double newStart = _viewModel.ViewportStart + deltaSec;
+        _viewModel.SetViewportRange(newStart, _viewModel.ViewportEnd);
+        UpdateTimelineVisuals();
+    }
+
+    private void MiniZoomHandleRight_DragDelta(object sender, System.Windows.Controls.Primitives.DragDeltaEventArgs e)
+    {
+        double navWidth = MiniNavigatorGrid.ActualWidth;
+        double totDur = _viewModel.TotalDurationSeconds;
+        if (navWidth <= 0 || totDur <= 0) return;
+
+        double deltaSec = (e.HorizontalChange / navWidth) * totDur;
+        double newEnd = _viewModel.ViewportEnd + deltaSec;
+        _viewModel.SetViewportRange(_viewModel.ViewportStart, newEnd);
+        UpdateTimelineVisuals();
+    }
+
+    private bool _isPanningMiniZoomCenter = false;
+    private Point _lastMiniZoomMousePos;
+
+    private void MiniZoomCenterBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        _isPanningMiniZoomCenter = true;
+        _lastMiniZoomMousePos = e.GetPosition(MiniNavigatorGrid);
+        MiniZoomCenterBar.CaptureMouse();
+        e.Handled = true;
+    }
+
+    private void MiniZoomCenterBar_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        if (_isPanningMiniZoomCenter)
+        {
+            _isPanningMiniZoomCenter = false;
+            MiniZoomCenterBar.ReleaseMouseCapture();
+            e.Handled = true;
+        }
+    }
+
+    private void MiniZoomCenterBar_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (!_isPanningMiniZoomCenter || _viewModel.TotalDurationSeconds <= 0 || MiniNavigatorGrid.ActualWidth <= 0) return;
+        Point currentPos = e.GetPosition(MiniNavigatorGrid);
+        double deltaX = currentPos.X - _lastMiniZoomMousePos.X;
+        _lastMiniZoomMousePos = currentPos;
+
+        double deltaSec = (deltaX / MiniNavigatorGrid.ActualWidth) * _viewModel.TotalDurationSeconds;
+        _viewModel.PanViewport(deltaSec);
+        UpdateTimelineVisuals();
+        e.Handled = true;
+    }
+
+    private void MiniNavigator_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+    {
+        if (e.OriginalSource is DependencyObject dep && (dep is System.Windows.Controls.Primitives.Thumb || FindVisualParent<System.Windows.Controls.Primitives.Thumb>(dep) != null || dep == MiniZoomCenterBar))
+        {
+            return;
+        }
+
         if (_viewModel.TotalDurationSeconds <= 0 || MiniNavigatorGrid.ActualWidth <= 0) return;
         Point pos = e.GetPosition(MiniNavigatorGrid);
         double frac = Math.Max(0, Math.Min(1.0, pos.X / MiniNavigatorGrid.ActualWidth));
@@ -786,59 +901,6 @@ public partial class TrimWindow : Window
         _viewModel.CurrentTimeSeconds = centerSec;
         _viewModel.SeekTo(centerSec);
         UpdateTimelineVisuals();
-    }
-
-    private bool _isDraggingViewportWindow = false;
-    private Point _lastViewportMousePos;
-
-    private void MiniViewportWindow_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        _isDraggingViewportWindow = true;
-        _lastViewportMousePos = e.GetPosition(MiniNavigatorGrid);
-        MiniViewportWindow.CaptureMouse();
-        e.Handled = true;
-    }
-
-    private void MiniViewportWindow_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-    {
-        if (_isDraggingViewportWindow)
-        {
-            _isDraggingViewportWindow = false;
-            MiniViewportWindow.ReleaseMouseCapture();
-            e.Handled = true;
-        }
-    }
-
-    private void MiniViewportWindow_MouseMove(object sender, MouseEventArgs e)
-    {
-        if (!_isDraggingViewportWindow || _viewModel.TotalDurationSeconds <= 0 || MiniNavigatorGrid.ActualWidth <= 0) return;
-        Point currentPos = e.GetPosition(MiniNavigatorGrid);
-        double deltaX = currentPos.X - _lastViewportMousePos.X;
-        _lastViewportMousePos = currentPos;
-
-        double deltaSec = (deltaX / MiniNavigatorGrid.ActualWidth) * _viewModel.TotalDurationSeconds;
-        _viewModel.PanViewport(deltaSec);
-        UpdateTimelineVisuals();
-        e.Handled = true;
-    }
-
-    private void TimelineSlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
-    {
-        if (_isDraggingSlider)
-        {
-            _viewModel.SeekTo(e.NewValue);
-        }
-    }
-
-    private void TimelineSlider_PreviewMouseDown(object sender, MouseButtonEventArgs e)
-    {
-        _isDraggingSlider = true;
-    }
-
-    private void TimelineSlider_PreviewMouseUp(object sender, MouseButtonEventArgs e)
-    {
-        _isDraggingSlider = false;
-        _viewModel.SeekTo(TimelineSlider.Value);
     }
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)

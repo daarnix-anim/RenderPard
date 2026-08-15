@@ -87,20 +87,33 @@
             </Setter>
         </Style>
 
-        <!-- Custom Slider Style for Timeline -->
+        <!-- Custom Slider Style for Timeline with True Click-to-Point Support -->
         <Style x:Key="TimelineSliderStyle" TargetType="Slider">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="IsMoveToPointEnabled" Value="True"/>
             <Setter Property="Template">
                 <Setter.Value>
                     <ControlTemplate TargetType="Slider">
-                        <Grid VerticalAlignment="Center">
+                        <Grid VerticalAlignment="Center" Background="Transparent">
                             <Track x:Name="PART_Track">
                                 <Track.DecreaseRepeatButton>
-                                    <RepeatButton Command="{x:Static Slider.DecreaseLarge}" Background="Transparent" BorderThickness="0" Template="{x:Null}"/>
+                                    <RepeatButton Command="{x:Static Slider.DecreaseLarge}" Background="Transparent" BorderThickness="0">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Background="Transparent"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
                                 </Track.DecreaseRepeatButton>
                                 <Track.IncreaseRepeatButton>
-                                    <RepeatButton Command="{x:Static Slider.IncreaseLarge}" Background="Transparent" BorderThickness="0" Template="{x:Null}"/>
+                                    <RepeatButton Command="{x:Static Slider.IncreaseLarge}" Background="Transparent" BorderThickness="0">
+                                        <RepeatButton.Template>
+                                            <ControlTemplate TargetType="RepeatButton">
+                                                <Border Background="Transparent"/>
+                                            </ControlTemplate>
+                                        </RepeatButton.Template>
+                                    </RepeatButton>
                                 </Track.IncreaseRepeatButton>
                                 <Track.Thumb>
                                     <Thumb Width="14" Height="22" Cursor="Hand">
@@ -249,37 +262,77 @@
         <!-- TIMELINE & PLAYHEAD & BRACKETS & PREMIERE-STYLE ZOOM NAVIGATOR -->
         <Border Grid.Row="2" Margin="10,0,10,6" Background="#15171C" CornerRadius="6" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" Padding="10,6">
             <StackPanel>
-                <!-- Mini Overview Navigator (Full Duration Overview & Viewport Window) -->
-                <Grid x:Name="MiniNavigatorGrid" Height="14" Margin="0,0,0,3" Background="Transparent" MouseLeftButtonDown="MiniNavigator_MouseLeftButtonDown">
+                <!-- Premiere / After Effects Style Zoom Navigator Bar -->
+                <Grid x:Name="MiniNavigatorGrid" Height="18" Margin="0,0,0,4" Background="Transparent"
+                      PreviewMouseLeftButtonDown="MiniNavigator_PreviewMouseLeftButtonDown">
                     <!-- Full Track Background -->
-                    <Border Height="6" Background="#1E222A" CornerRadius="3" VerticalAlignment="Center"/>
+                    <Border Height="8" Background="#1E222A" CornerRadius="4" VerticalAlignment="Center" Margin="2,0" IsHitTestVisible="False"/>
 
                     <!-- Full In-Out Range in Mini-Bar -->
-                    <Canvas Height="6" VerticalAlignment="Center" ClipToBounds="True">
-                        <Border x:Name="MiniInHighlight" Height="6" Background="#80F39C12" CornerRadius="2"/>
+                    <Canvas Height="8" VerticalAlignment="Center" ClipToBounds="True" IsHitTestVisible="False">
+                        <Border x:Name="MiniInHighlight" Height="8" Background="#80F39C12" CornerRadius="3"/>
                     </Canvas>
 
                     <!-- Mini Playhead marker -->
-                    <Canvas Height="10" VerticalAlignment="Center" IsHitTestVisible="False">
-                        <Border x:Name="MiniPlayheadMarker" Width="2.5" Height="10" Background="#FFFFFF" CornerRadius="1" HorizontalAlignment="Left"/>
+                    <Canvas Height="14" VerticalAlignment="Center" IsHitTestVisible="False">
+                        <Border x:Name="MiniPlayheadMarker" Width="3" Height="14" Background="#FFFFFF" CornerRadius="1.5" HorizontalAlignment="Left"/>
                     </Canvas>
 
-                    <!-- Draggable Zoom Viewport Window -->
-                    <Canvas Height="14" VerticalAlignment="Center">
-                        <Border x:Name="MiniViewportWindow" Height="14" Background="#3300C8FF" BorderBrush="#00C8FF" BorderThickness="1" CornerRadius="2" Cursor="SizeWE"
-                                MouseLeftButtonDown="MiniViewportWindow_MouseLeftButtonDown"
-                                MouseLeftButtonUp="MiniViewportWindow_MouseLeftButtonUp"
-                                MouseMove="MiniViewportWindow_MouseMove"/>
+                    <!-- Draggable & Resizable Premiere Zoom Viewport Box -->
+                    <Canvas Height="18" VerticalAlignment="Center">
+                        <Grid x:Name="MiniViewportGrid" Height="18">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="10"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="10"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Background highlight -->
+                            <Border Grid.Column="0" Grid.ColumnSpan="3" Background="#3300C8FF" BorderBrush="#00C8FF" BorderThickness="1" CornerRadius="3" IsHitTestVisible="False"/>
+
+                            <!-- Left Zoom Handle (Drag to compress/expand left edge) -->
+                            <Thumb x:Name="MiniZoomHandleLeft" Grid.Column="0" Cursor="SizeWE" DragDelta="MiniZoomHandleLeft_DragDelta">
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Border Background="#00C8FF" CornerRadius="2,0,0,2" Margin="0,1,0,1">
+                                            <TextBlock Text="‹" FontSize="11" FontWeight="Bold" Foreground="#121418" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+
+                            <!-- Center Grab Area (Drag to pan viewport) -->
+                            <Border x:Name="MiniZoomCenterBar" Grid.Column="1" Background="Transparent" Cursor="SizeAll"
+                                    MouseLeftButtonDown="MiniZoomCenterBar_MouseLeftButtonDown"
+                                    MouseLeftButtonUp="MiniZoomCenterBar_MouseLeftButtonUp"
+                                    MouseMove="MiniZoomCenterBar_MouseMove"/>
+
+                            <!-- Right Zoom Handle (Drag to compress/expand right edge) -->
+                            <Thumb x:Name="MiniZoomHandleRight" Grid.Column="2" Cursor="SizeWE" DragDelta="MiniZoomHandleRight_DragDelta">
+                                <Thumb.Template>
+                                    <ControlTemplate TargetType="Thumb">
+                                        <Border Background="#00C8FF" CornerRadius="0,2,2,0" Margin="0,1,0,1">
+                                            <TextBlock Text="›" FontSize="11" FontWeight="Bold" Foreground="#121418" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-2,0,0"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Thumb.Template>
+                            </Thumb>
+                        </Grid>
                     </Canvas>
                 </Grid>
 
-                <!-- Interactive Zoomed Timeline Range Bar -->
-                <Grid x:Name="TimelineTrackGrid" Height="28" Margin="0,0,0,2" MouseWheel="TimelineTrack_MouseWheel">
+                <!-- Interactive Zoomed Timeline Range Bar (Click or Drag anywhere to Seek) -->
+                <Grid x:Name="TimelineTrackGrid" Height="28" Margin="0,0,0,2" Background="Transparent"
+                      PreviewMouseLeftButtonDown="TimelineTrackGrid_PreviewMouseLeftButtonDown"
+                      PreviewMouseMove="TimelineTrackGrid_PreviewMouseMove"
+                      PreviewMouseLeftButtonUp="TimelineTrackGrid_PreviewMouseLeftButtonUp"
+                      MouseWheel="TimelineTrack_MouseWheel">
+                    
                     <!-- Timeline Track Background -->
-                    <Border Height="10" Background="#242833" CornerRadius="4" VerticalAlignment="Center"/>
+                    <Border Height="10" Background="#242833" CornerRadius="4" VerticalAlignment="Center" IsHitTestVisible="False"/>
 
                     <!-- Highlighted In-Out Active Range Area in Zoomed View -->
-                    <Canvas Height="10" VerticalAlignment="Center" ClipToBounds="True">
+                    <Canvas Height="10" VerticalAlignment="Center" ClipToBounds="True" IsHitTestVisible="False">
                         <Border x:Name="TrimHighlightBar" Height="10" Background="#B3F39C12" CornerRadius="3" BorderBrush="#F39C12" BorderThickness="1"/>
                     </Canvas>
 
@@ -304,10 +357,7 @@
                             Minimum="{Binding ViewportStart}"
                             Maximum="{Binding ViewportEnd}"
                             Value="{Binding CurrentTimeSeconds, Mode=TwoWay}"
-                            PreviewMouseLeftButtonDown="TimelineSlider_PreviewMouseLeftButtonDown"
                             ValueChanged="TimelineSlider_ValueChanged"
-                            PreviewMouseDown="TimelineSlider_PreviewMouseDown"
-                            PreviewMouseUp="TimelineSlider_PreviewMouseUp"
                             VerticalAlignment="Center"/>
                 </Grid>
 
