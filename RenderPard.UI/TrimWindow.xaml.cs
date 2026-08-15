@@ -957,7 +957,6 @@ public partial class TrimWindow : Window
         double newIn = Math.Max(0, Math.Min(maxIn, _dragStartInSec + deltaSec));
 
         _viewModel.InPointSeconds = newIn;
-        _viewModel.SeekTo(newIn);
         UpdateTimelineVisuals();
     }
 
@@ -984,7 +983,6 @@ public partial class TrimWindow : Window
         double newOut = Math.Max(minOut, Math.Min(totDur, _dragStartOutSec + deltaSec));
 
         _viewModel.OutPointSeconds = newOut;
-        _viewModel.SeekTo(newOut);
         UpdateTimelineVisuals();
     }
 
@@ -993,10 +991,14 @@ public partial class TrimWindow : Window
 
     private void TimelineTrackGrid_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
     {
-        if (FindVisualParent<System.Windows.Controls.Primitives.Thumb>(e.OriginalSource as DependencyObject) != null)
+        if (e.OriginalSource is DependencyObject dep)
         {
-            // Allow Thumb (e.g. InBracketThumb / OutBracketThumb) to handle dragging without moving playhead
-            return;
+            var thumb = FindVisualParent<System.Windows.Controls.Primitives.Thumb>(dep);
+            if (thumb != null || dep is System.Windows.Controls.Primitives.Thumb)
+            {
+                // Allow Thumbs (InBracketThumb, OutBracketThumb, or Playhead Thumb) to handle dragging naturally without moving playhead
+                return;
+            }
         }
 
         _isScrubbingTimeline = true;

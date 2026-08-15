@@ -343,36 +343,6 @@
                     <!-- Multi-Segment Markers Canvas on Zoomed Timeline -->
                     <Canvas x:Name="MainSegmentsCanvas" Height="10" VerticalAlignment="Center" ClipToBounds="True" IsHitTestVisible="False"/>
 
-                    <!-- In-Point Bracket Drag Handle -->
-                    <Canvas Height="24" VerticalAlignment="Center" ClipToBounds="True">
-                        <Thumb x:Name="InBracketThumb" Width="14" Height="22" Cursor="SizeWE"
-                               DragStarted="InBracketThumb_DragStarted" DragDelta="InBracketThumb_DragDelta">
-                            <Thumb.Template>
-                                <ControlTemplate TargetType="Thumb">
-                                    <Border Background="#F39C12" CornerRadius="3,0,0,3" BorderBrush="#FFFFFF" BorderThickness="1.5,1.5,0,1.5"
-                                            ToolTip="Левая граница обрезки [In] — потяните для изменения">
-                                        <TextBlock Text="[" FontSize="11" FontWeight="Bold" Foreground="#1E2026" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0"/>
-                                    </Border>
-                                </ControlTemplate>
-                            </Thumb.Template>
-                        </Thumb>
-                    </Canvas>
-
-                    <!-- Out-Point Bracket Drag Handle -->
-                    <Canvas Height="24" VerticalAlignment="Center" ClipToBounds="True">
-                        <Thumb x:Name="OutBracketThumb" Width="14" Height="22" Cursor="SizeWE"
-                               DragStarted="OutBracketThumb_DragStarted" DragDelta="OutBracketThumb_DragDelta">
-                            <Thumb.Template>
-                                <ControlTemplate TargetType="Thumb">
-                                    <Border Background="#F39C12" CornerRadius="0,3,3,0" BorderBrush="#FFFFFF" BorderThickness="0,1.5,1.5,1.5"
-                                            ToolTip="Правая граница обрезки [Out] — потяните для изменения">
-                                        <TextBlock Text="]" FontSize="11" FontWeight="Bold" Foreground="#1E2026" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0"/>
-                                    </Border>
-                                </ControlTemplate>
-                            </Thumb.Template>
-                        </Thumb>
-                    </Canvas>
-
                     <!-- Main Timeline Playhead Slider with Direct Click-to-Seek -->
                     <Slider x:Name="TimelineSlider"
                             Style="{StaticResource TimelineSliderStyle}"
@@ -382,6 +352,35 @@
                             Value="{Binding CurrentTimeSeconds, Mode=TwoWay}"
                             ValueChanged="TimelineSlider_ValueChanged"
                             VerticalAlignment="Center"/>
+
+                    <!-- Interactive In/Out Drag Brackets Overlay (Highest Z-Index) -->
+                    <Canvas Height="24" VerticalAlignment="Center" ClipToBounds="True" Panel.ZIndex="100">
+                        <!-- In-Point Bracket Drag Handle -->
+                        <Thumb x:Name="InBracketThumb" Width="16" Height="24" Cursor="SizeWE"
+                               DragStarted="InBracketThumb_DragStarted" DragDelta="InBracketThumb_DragDelta">
+                            <Thumb.Template>
+                                <ControlTemplate TargetType="Thumb">
+                                    <Border Background="#F39C12" CornerRadius="4,0,0,4" BorderBrush="#FFFFFF" BorderThickness="1.5,1.5,0,1.5"
+                                            ToolTip="Левая граница обрезки [In] — потяните мышкой для изменения">
+                                        <TextBlock Text="[" FontSize="12" FontWeight="ExtraBold" Foreground="#1E2026" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Thumb.Template>
+                        </Thumb>
+
+                        <!-- Out-Point Bracket Drag Handle -->
+                        <Thumb x:Name="OutBracketThumb" Width="16" Height="24" Cursor="SizeWE"
+                               DragStarted="OutBracketThumb_DragStarted" DragDelta="OutBracketThumb_DragDelta">
+                            <Thumb.Template>
+                                <ControlTemplate TargetType="Thumb">
+                                    <Border Background="#F39C12" CornerRadius="0,4,4,0" BorderBrush="#FFFFFF" BorderThickness="0,1.5,1.5,1.5"
+                                            ToolTip="Правая граница обрезки [Out] — потяните мышкой для изменения">
+                                        <TextBlock Text="]" FontSize="12" FontWeight="ExtraBold" Foreground="#1E2026" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="0,-1,0,0"/>
+                                    </Border>
+                                </ControlTemplate>
+                            </Thumb.Template>
+                        </Thumb>
+                    </Canvas>
                 </Grid>
 
                 <!-- Transport Bar Controls -->
