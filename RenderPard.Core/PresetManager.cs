@@ -54,6 +54,11 @@ public class PresetManager
 
     public void SavePresets(List<Preset> presets)
     {
+        for (int i = 0; i < presets.Count; i++)
+        {
+            presets[i].SortOrder = i;
+        }
+
         var options = new JsonSerializerOptions
         {
             WriteIndented = true,
@@ -71,6 +76,7 @@ public class PresetManager
             var existing = loaded.FirstOrDefault(p => p.Name == def.Name && p.IsBuiltIn);
             if (existing == null)
             {
+                def.SortOrder = loaded.Count > 0 ? loaded.Max(p => p.SortOrder) + 1 : 0;
                 loaded.Add(def);
             }
             else

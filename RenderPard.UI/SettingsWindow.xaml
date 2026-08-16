@@ -179,7 +179,13 @@
 
                     <!-- Preset List -->
                     <ListBox Grid.Row="4" ItemsSource="{Binding FilteredPresetsView}" SelectedItem="{Binding SelectedPreset}" 
-                             Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                             Background="Transparent" BorderThickness="0" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                             AllowDrop="True"
+                             PreviewMouseLeftButtonDown="PresetsListBox_PreviewMouseLeftButtonDown"
+                             PreviewMouseMove="PresetsListBox_PreviewMouseMove"
+                             DragOver="PresetsListBox_DragOver"
+                             DragLeave="PresetsListBox_DragLeave"
+                             Drop="PresetsListBox_Drop">
                         <ListBox.ItemContainerStyle>
                             <Style TargetType="ListBoxItem">
                                 <Setter Property="Padding" Value="4,3"/>
@@ -190,9 +196,14 @@
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="ListBoxItem">
-                                            <Border x:Name="ItemBorder" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}" BorderThickness="1" BorderBrush="Transparent">
-                                                <ContentPresenter VerticalAlignment="Center"/>
-                                            </Border>
+                                            <Grid>
+                                                <Border x:Name="ItemBorder" Background="{TemplateBinding Background}" CornerRadius="6" Padding="{TemplateBinding Padding}" BorderThickness="1" BorderBrush="Transparent">
+                                                    <ContentPresenter VerticalAlignment="Center"/>
+                                                </Border>
+                                                <!-- Drop Insertion Indicators -->
+                                                <Border x:Name="TopDropIndicator" Height="2" Background="{StaticResource AppLinkBrush}" VerticalAlignment="Top" Margin="2,-2,2,0" CornerRadius="1" Visibility="Collapsed" IsHitTestVisible="False"/>
+                                                <Border x:Name="BottomDropIndicator" Height="2" Background="{StaticResource AppLinkBrush}" VerticalAlignment="Bottom" Margin="2,0,2,-2" CornerRadius="1" Visibility="Collapsed" IsHitTestVisible="False"/>
+                                            </Grid>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter Property="Foreground" Value="White"/>
@@ -214,19 +225,28 @@
                                 <Grid Margin="2,1">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="Auto"/>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition Width="Auto"/>
                                     </Grid.ColumnDefinitions>
+                                    
+                                    <!-- Drag Grip Handle -->
+                                    <Viewbox Grid.Column="0" Width="8" Height="14" Stretch="Uniform" Margin="0,0,6,0" Opacity="0.35" Cursor="SizeAll" VerticalAlignment="Center">
+                                        <Canvas Width="24" Height="24">
+                                            <Path Fill="{StaticResource AppTextSecondaryBrush}" Data="M9,3 C10.1,3 11,3.9 11,5 C11,6.1 10.1,7 9,7 C7.9,7 7,6.1 7,5 C7,3.9 7.9,3 9,3 Z M9,10 C10.1,10 11,10.9 11,12 C11,13.1 10.1,14 9,14 C7.9,14 7,13.1 7,12 C7,10.9 7.9,10 9,10 Z M9,17 C10.1,17 11,17.9 11,19 C11,20.1 10.1,21 9,21 C7.9,21 7,20.1 7,19 C7,17.9 7.9,17 9,17 Z M15,3 C16.1,3 17,3.9 17,5 C17,6.1 16.1,7 15,7 C13.9,7 13,6.1 13,5 C13,3.9 13.9,3 15,3 Z M15,10 C16.1,10 17,10.9 17,12 C17,13.1 16.1,14 15,14 C13.9,14 13,13.1 13,12 C13,10.9 13.9,10 15,10 Z M15,17 C16.1,17 17,17.9 17,19 C17,20.1 16.1,21 15,21 C13.9,21 13,20.1 13,19 C13,17.9 13.9,17 15,17 Z"/>
+                                        </Canvas>
+                                    </Viewbox>
+
                                     <!-- Icon (Left) -->
-                                    <Border Grid.Column="0" Background="#1AFFFFFF" CornerRadius="4" Width="24" Height="24" Margin="0,0,8,0" VerticalAlignment="Center">
+                                    <Border Grid.Column="1" Background="#1AFFFFFF" CornerRadius="4" Width="24" Height="24" Margin="0,0,8,0" VerticalAlignment="Center">
                                         <Image Source="{Binding CustomIcon, Converter={StaticResource IconNameToImageSourceConverter}}" Width="16" Height="16" Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                     </Border>
                                     
                                     <!-- Preset Name (Center, fills space) -->
-                                    <TextBlock Grid.Column="1" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="13"/>
+                                    <TextBlock Grid.Column="2" Text="{Binding Name}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" FontSize="13"/>
                                     
                                     <!-- Context Menu Checkbox (Right) -->
-                                    <CheckBox Grid.Column="2" IsChecked="{Binding ShowInContextMenu}" ToolTip="{DynamicResource ShowInMenu}" Margin="8,0,2,0" VerticalAlignment="Center"/>
+                                    <CheckBox Grid.Column="3" IsChecked="{Binding ShowInContextMenu}" ToolTip="{DynamicResource ShowInMenu}" Margin="8,0,2,0" VerticalAlignment="Center"/>
                                 </Grid>
                             </DataTemplate>
                         </ListBox.ItemTemplate>
@@ -754,7 +774,7 @@
 
                 <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Right">
                     <Button Content="{DynamicResource BtnCancel}" Command="{Binding CancelCommand}" CommandParameter="{Binding ElementName=SettingsWin}" Width="100" Height="26" Margin="0,0,10,0"/>
-                    <Button Content="{DynamicResource SaveClose}" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=SettingsWin}" Width="150" Height="26" FontWeight="Bold"/>
+                    <Button Content="{DynamicResource SaveClose}" Style="{StaticResource PrimaryButton}" Command="{Binding SaveCommand}" CommandParameter="{Binding ElementName=SettingsWin}" Width="110" Height="26" FontWeight="Bold"/>
                 </StackPanel>
             </Grid>
         </Grid>

@@ -1,7 +1,7 @@
 [Setup]
 ; App Information
 AppName=RenderPard
-AppVersion=1.5.6
+AppVersion=1.5.7
 AppPublisher=RenderPard
 AppPublisherURL=https://anipard.ru
 AppSupportURL=https://anipard.ru

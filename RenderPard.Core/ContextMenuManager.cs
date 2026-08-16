@@ -297,7 +297,7 @@ public static class ContextMenuManager
                     if (!preset.ShowInContextMenu) continue;
 
                     string safeName = string.Join("_", preset.Name.Split(Path.GetInvalidFileNameChars()));
-                    string presetKeyPath = $@"{subCommandsPath}\{i:D2}_{safeName}";
+                    string presetKeyPath = $@"{subCommandsPath}\{i + 2:D3}_{safeName}";
                     
                     using (RegistryKey presetKey = Registry.CurrentUser.CreateSubKey(presetKeyPath))
                     {

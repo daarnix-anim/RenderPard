@@ -41,7 +41,7 @@
     <system:String x:Key="PresetsHeader">Пресеты</system:String>
     <system:String x:Key="AddPreset">Добавить</system:String>
     <system:String x:Key="RemovePreset">Удалить</system:String>
-    <system:String x:Key="SaveClose">Сохранить и применить</system:String>
+    <system:String x:Key="SaveClose">Применить</system:String>
     <system:String x:Key="BtnCancel">Отмена</system:String>
     <system:String x:Key="BtnOk">ОК</system:String>
     <system:String x:Key="BtnBrowseFile">Из файла...</system:String>

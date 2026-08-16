@@ -41,7 +41,7 @@
     <system:String x:Key="PresetsHeader">Presets</system:String>
     <system:String x:Key="AddPreset">Add</system:String>
     <system:String x:Key="RemovePreset">Remove</system:String>
-    <system:String x:Key="SaveClose">Save &amp; Apply</system:String>
+    <system:String x:Key="SaveClose">Apply</system:String>
     <system:String x:Key="BtnCancel">Cancel</system:String>
     <system:String x:Key="BtnOk">OK</system:String>
     <system:String x:Key="BtnBrowseFile">From file...</system:String>

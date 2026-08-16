@@ -329,6 +329,47 @@ public partial class SettingsViewModel : ObservableObject
         catch { }
     }
 
+    public void MovePreset(Preset source, Preset target, bool insertAfter = false)
+    {
+        if (source == null || target == null || ReferenceEquals(source, target))
+            return;
+
+        int sourceIndex = Presets.IndexOf(source);
+        int targetIndex = Presets.IndexOf(target);
+
+        if (sourceIndex < 0 || targetIndex < 0)
+            return;
+
+        int destinationIndex;
+        if (insertAfter)
+        {
+            destinationIndex = (sourceIndex < targetIndex) ? targetIndex : targetIndex + 1;
+        }
+        else
+        {
+            destinationIndex = (sourceIndex < targetIndex) ? targetIndex - 1 : targetIndex;
+        }
+
+        if (destinationIndex < 0) destinationIndex = 0;
+        if (destinationIndex >= Presets.Count) destinationIndex = Presets.Count - 1;
+
+        if (sourceIndex != destinationIndex)
+        {
+            Presets.Move(sourceIndex, destinationIndex);
+
+            for (int i = 0; i < Presets.Count; i++)
+            {
+                Presets[i].SortOrder = i;
+            }
+
+            FilteredPresetsView.Refresh();
+            SelectedPreset = source;
+
+            App.PresetManager.SavePresets(Presets.ToList());
+            AutoRefreshContextMenu();
+        }
+    }
+
     [RelayCommand]
     private void AddPreset()
     {
@@ -338,6 +379,7 @@ public partial class SettingsViewModel : ObservableObject
             {
                 Name = "New Video Preset",
                 ShowInContextMenu = true,
+                SortOrder = Presets.Count,
                 Container = ContainerFormat.Mp4,
                 VideoCodec = VideoCodec.H264_Nvenc,
                 TargetVideoBitrateKbps = 2000,
@@ -356,6 +398,7 @@ public partial class SettingsViewModel : ObservableObject
             {
                 Name = "New Image Preset",
                 ShowInContextMenu = true,
+                SortOrder = Presets.Count,
                 Container = ContainerFormat.Jpeg,
                 ImageQuality = 80,
                 FilenamePattern = "{original}_{preset}",
@@ -371,6 +414,7 @@ public partial class SettingsViewModel : ObservableObject
             {
                 Name = "New Audio Preset",
                 ShowInContextMenu = true,
+                SortOrder = Presets.Count,
                 Container = ContainerFormat.Mp3,
                 AudioCodec = AudioCodec.Mp3,
                 AudioBitrateKbps = 192,
@@ -382,6 +426,8 @@ public partial class SettingsViewModel : ObservableObject
             FilteredPresetsView.Refresh();
             SelectedPreset = newPreset;
         }
+        App.PresetManager.SavePresets(Presets.ToList());
+        AutoRefreshContextMenu();
     }
 
     [RelayCommand]
@@ -391,6 +437,7 @@ public partial class SettingsViewModel : ObservableObject
         {
             Name = "New Video Preset",
             ShowInContextMenu = true,
+            SortOrder = Presets.Count,
             Container = ContainerFormat.Mp4,
             VideoCodec = VideoCodec.H264_Nvenc,
             TargetVideoBitrateKbps = 2000,
@@ -401,6 +448,8 @@ public partial class SettingsViewModel : ObservableObject
         Presets.Add(newPreset);
         FilteredPresetsView.Refresh();
         SelectedPreset = newPreset;
+        App.PresetManager.SavePresets(Presets.ToList());
+        AutoRefreshContextMenu();
     }
 
     [RelayCommand]
@@ -410,6 +459,7 @@ public partial class SettingsViewModel : ObservableObject
         {
             Name = "New Image Preset",
             ShowInContextMenu = true,
+            SortOrder = Presets.Count,
             Container = ContainerFormat.Jpeg,
             ImageQuality = 80,
             FilenamePattern = "{original}_{preset}"
@@ -417,6 +467,8 @@ public partial class SettingsViewModel : ObservableObject
         Presets.Add(newPreset);
         FilteredPresetsView.Refresh();
         SelectedPreset = newPreset;
+        App.PresetManager.SavePresets(Presets.ToList());
+        AutoRefreshContextMenu();
     }
 
     [RelayCommand]
@@ -425,8 +477,13 @@ public partial class SettingsViewModel : ObservableObject
         if (SelectedPreset != null)
         {
             Presets.Remove(SelectedPreset);
+            for (int i = 0; i < Presets.Count; i++)
+            {
+                Presets[i].SortOrder = i;
+            }
             FilteredPresetsView.Refresh();
             SelectedPreset = FilteredPresetsView.Cast<Preset>().FirstOrDefault();
+            App.PresetManager.SavePresets(Presets.ToList());
             AutoRefreshContextMenu();
         }
     }
