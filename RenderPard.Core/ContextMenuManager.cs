@@ -65,6 +65,82 @@ public static class ContextMenuManager
         NotifyShell();
     }
 
+    public static bool IsWindows11()
+    {
+        try
+        {
+            return Environment.OSVersion.Version.Major >= 10 && Environment.OSVersion.Version.Build >= 22000;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private const string Win11ClassicMenuKey = @"Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}\InprocServer32";
+    private const string Win11ClassicMenuRootKey = @"Software\Classes\CLSID\{86ca1aa0-34aa-4e8b-a509-50c905bae2a2}";
+
+    public static bool IsWin11ClassicMenuEnabled()
+    {
+        try
+        {
+            using var key = Registry.CurrentUser.OpenSubKey(Win11ClassicMenuKey);
+            return key != null;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    public static void SetWin11ClassicMenuEnabled(bool enable, bool restartExplorer = true)
+    {
+        try
+        {
+            if (enable)
+            {
+                using var key = Registry.CurrentUser.CreateSubKey(Win11ClassicMenuKey);
+                key?.SetValue("", "");
+            }
+            else
+            {
+                try
+                {
+                    Registry.CurrentUser.DeleteSubKeyTree(Win11ClassicMenuRootKey, false);
+                }
+                catch { }
+            }
+
+            NotifyShell();
+
+            if (restartExplorer)
+            {
+                RestartExplorer();
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Failed to toggle Win11 classic menu: {ex.Message}");
+        }
+    }
+
+    public static void RestartExplorer()
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = "/c taskkill /f /im explorer.exe & start explorer.exe",
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
+            Process.Start(psi);
+        }
+        catch { }
+    }
+
     public static bool IsRegistered()
     {
         try

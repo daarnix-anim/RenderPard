@@ -234,4 +234,23 @@
     <system:String x:Key="SettingsUpToDate">У вас установлена последняя версия</system:String>
     <system:String x:Key="SettingsUpdateAvailable">Доступно обновление</system:String>
     <system:String x:Key="SettingsCheckFailed">Не удалось проверить обновления</system:String>
+    <system:String x:Key="SettingsBtnWhatsNew">Что нового</system:String>
+    <system:String x:Key="Win11ClassicMenuLabel">Прямое меню в Windows 11 (без Shift)</system:String>
+    <system:String x:Key="Win11ClassicMenuTooltip">Открывать меню RenderPard сразу по обычному клику правой кнопкой мыши без удержания Shift и без нажатия «Показать дополнительные параметры» (автоматически перезапустит Проводник).</system:String>
+
+    <!-- App Description & WhatsNew Dialog -->
+    <system:String x:Key="AppTagline">Быстрое пакетное перекодирование и мгновенная обрезка видео, фото и аудио без лишних кликов.</system:String>
+    <system:String x:Key="WhatsNewTitle">Что нового в RenderPard</system:String>
+    <system:String x:Key="WhatsNewWelcomeHeader">Добро пожаловать в RenderPard</system:String>
+    <system:String x:Key="WhatsNewSubtitle">Краткая информация о программе и ключевые нововведения версии.</system:String>
+    <system:String x:Key="WhatsNewSectionCoreTitle">🎯 О программе и основные функции:</system:String>
+    <system:String x:Key="WhatsNewSectionCoreDesc">RenderPard предназначен для быстрого пакетного перекодирования медиафайлов и интерактивной покадровой обрезки видео, аудио и изображений.</system:String>
+    <system:String x:Key="WhatsNewSectionFeaturesTitle">✨ Ключевые нововведения в этой версии:</system:String>
+    <system:String x:Key="WhatsNewFeature1">🚀 Интерактивный процесс обновления: живой прогресс-бар, скачанные МБ, скорость (МБ/с), расчет времени и фоновая загрузка.</system:String>
+    <system:String x:Key="WhatsNewFeature2">🔍 Ручная проверка обновлений: кнопка «Проверить обновления» в настройках с актуальным статусом.</system:String>
+    <system:String x:Key="WhatsNewFeature3">✂️ Идеальные иконки меню: устранены дубли ножниц в проводнике и на кнопках, добавлен значок RenderPard для перекодирования.</system:String>
+    <system:String x:Key="WhatsNewFeature4">↕️ Drag-and-Drop сортировка пресетов: удобное перетаскивание с синхронизацией порядка в меню Windows.</system:String>
+    <system:String x:Key="WhatsNewFeature5">⚡ Оптимизация и стабильность: ускоренная обработка очереди и надежная работа с кодеками.</system:String>
+    <system:String x:Key="WhatsNewBtnGetStarted">🚀 Отлично, начать работу!</system:String>
+    <system:String x:Key="WhatsNewBtnGitHub">Подробнее на GitHub ↗</system:String>
 </ResourceDictionary>

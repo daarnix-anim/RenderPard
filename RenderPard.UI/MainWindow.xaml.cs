@@ -28,11 +28,33 @@ public partial class MainWindow : Window
         this.Loaded += MainWindow_Loaded;
     }
 
-    private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+    private void MainWindow_Loaded(object sender, RoutedEventArgs e)
     {
+        string currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.5.8";
+
+        CheckWhatsNewFirstLaunch(currentVersion);
+
         // GitHub Updater check. 
-        string currentVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.4.0";
         _ = GitHubUpdater.CheckForUpdatesAsync("daarnix-anim", "RenderPard", currentVersion);
+    }
+
+    private void CheckWhatsNewFirstLaunch(string currentVersion)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(App.Settings.LastSeenVersion) || App.Settings.LastSeenVersion != currentVersion)
+            {
+                App.Settings.LastSeenVersion = currentVersion;
+                AppSettingsManager.SaveSettings(App.Settings);
+
+                var whatsNewDialog = new WhatsNewDialog(currentVersion)
+                {
+                    Owner = this
+                };
+                whatsNewDialog.ShowDialog();
+            }
+        }
+        catch { }
     }
 
     private void Window_StateChanged(object sender, EventArgs e)

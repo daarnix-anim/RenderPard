@@ -13,6 +13,7 @@ namespace RenderPard.UI
         public bool AlwaysOnTop { get; set; } = false;
         public double WindowWidth { get; set; } = 800;
         public double WindowHeight { get; set; } = 450;
+        public string LastSeenVersion { get; set; } = string.Empty;
     }
 
     public static class AppSettingsManager

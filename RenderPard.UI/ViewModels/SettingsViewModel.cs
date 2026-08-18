@@ -138,6 +138,14 @@ public partial class SettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private void OpenWhatsNew()
+    {
+        string currentVer = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.5.8";
+        var dlg = new WhatsNewDialog(currentVer);
+        dlg.ShowDialog();
+    }
+
+    [RelayCommand]
     private void OpenGlobalSettings()
     {
         var globalSettingsWindow = new GlobalSettingsWindow();
@@ -166,11 +174,27 @@ public partial class SettingsViewModel : ObservableObject
         AppSettingsManager.SaveSettings(App.Settings);
     }
 
+    private bool _isWin11ClassicMenu;
+    public bool IsWin11ClassicMenu
+    {
+        get => _isWin11ClassicMenu;
+        set
+        {
+            if (SetProperty(ref _isWin11ClassicMenu, value))
+            {
+                ContextMenuManager.SetWin11ClassicMenuEnabled(value, restartExplorer: true);
+            }
+        }
+    }
+
+    public bool IsWindows11 => ContextMenuManager.IsWindows11();
+
     public SettingsViewModel()
     {
         _openFolderOnCompletion = App.Settings.OpenFolderOnCompletion;
         _minimizeToTrayOnClose = App.Settings.MinimizeToTrayOnClose;
         _language = App.Settings.Language;
+        _isWin11ClassicMenu = ContextMenuManager.IsWin11ClassicMenuEnabled();
 
         var loadedPresets = App.PresetManager.LoadPresets();
         Presets = new ObservableCollection<Preset>(loadedPresets);

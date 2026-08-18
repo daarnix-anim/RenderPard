@@ -39,7 +39,8 @@
         <Border Grid.Row="1" Background="{StaticResource AppBackgroundBrush}" Padding="20,18">
             <StackPanel>
                 <CheckBox Content="{DynamicResource OpenFolderOnCompletion}" IsChecked="{Binding OpenFolderOnCompletion}" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,14"/>
-                <CheckBox Content="{DynamicResource MinimizeToTrayOnClose}" IsChecked="{Binding MinimizeToTrayOnClose}" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,20"/>
+                <CheckBox Content="{DynamicResource MinimizeToTrayOnClose}" IsChecked="{Binding MinimizeToTrayOnClose}" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,14"/>
+                <CheckBox Content="{DynamicResource Win11ClassicMenuLabel}" ToolTip="{DynamicResource Win11ClassicMenuTooltip}" IsChecked="{Binding IsWin11ClassicMenu}" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,20"/>
                 
                 <!-- Language Selector -->
                 <Grid Margin="0,0,0,4">
@@ -115,22 +116,42 @@
                                 <TextBlock Text="{Binding AppVersion}" FontWeight="Bold" FontSize="13" Foreground="{StaticResource AppTextBrush}" Margin="0,2,0,0"/>
                             </StackPanel>
 
-                            <!-- Check Updates Button -->
-                            <Button Grid.Column="1" Command="{Binding CheckForUpdatesCommand}" Height="28" Padding="12,0" 
-                                    Background="{StaticResource AppBackgroundSecondaryBrush}" Foreground="{StaticResource AppTextBrush}" 
-                                    BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" Cursor="Hand" FontWeight="SemiBold" FontSize="11.5">
-                                <Button.Template>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}">
-                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                        </Border>
-                                    </ControlTemplate>
-                                </Button.Template>
-                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                                    <TextBlock Text="🔄 " FontSize="10.5" VerticalAlignment="Center"/>
-                                    <TextBlock Text="{DynamicResource SettingsCheckUpdates}" VerticalAlignment="Center"/>
-                                </StackPanel>
-                            </Button>
+                            <!-- Action Buttons -->
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                <!-- Whats New Button -->
+                                <Button Command="{Binding OpenWhatsNewCommand}" Height="28" Padding="10,0" Margin="0,0,6,0"
+                                        Background="{StaticResource AppBackgroundSecondaryBrush}" Foreground="{StaticResource AppTextBrush}" 
+                                        BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" Cursor="Hand" FontWeight="SemiBold" FontSize="11.5">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="✨ " FontSize="10.5" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{DynamicResource SettingsBtnWhatsNew}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+
+                                <!-- Check Updates Button -->
+                                <Button Command="{Binding CheckForUpdatesCommand}" Height="28" Padding="12,0" 
+                                        Background="{StaticResource AppBackgroundSecondaryBrush}" Foreground="{StaticResource AppTextBrush}" 
+                                        BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" Cursor="Hand" FontWeight="SemiBold" FontSize="11.5">
+                                    <Button.Template>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Border>
+                                        </ControlTemplate>
+                                    </Button.Template>
+                                    <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                        <TextBlock Text="🔄 " FontSize="10.5" VerticalAlignment="Center"/>
+                                        <TextBlock Text="{DynamicResource SettingsCheckUpdates}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </Button>
+                            </StackPanel>
                         </Grid>
 
                         <!-- Status text -->

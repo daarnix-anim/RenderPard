@@ -234,4 +234,23 @@
     <system:String x:Key="SettingsUpToDate">You are using the latest version</system:String>
     <system:String x:Key="SettingsUpdateAvailable">Update Available</system:String>
     <system:String x:Key="SettingsCheckFailed">Failed to check for updates</system:String>
+    <system:String x:Key="SettingsBtnWhatsNew">What's New</system:String>
+    <system:String x:Key="Win11ClassicMenuLabel">Direct Context Menu in Windows 11 (no Shift)</system:String>
+    <system:String x:Key="Win11ClassicMenuTooltip">Open the RenderPard context menu directly on normal right-click without holding Shift or clicking "Show more options" (automatically restarts File Explorer).</system:String>
+
+    <!-- App Description & WhatsNew Dialog -->
+    <system:String x:Key="AppTagline">Fast batch transcoding and instant trimming of video, photo, and audio in minimum clicks.</system:String>
+    <system:String x:Key="WhatsNewTitle">What's New in RenderPard</system:String>
+    <system:String x:Key="WhatsNewWelcomeHeader">Welcome to RenderPard</system:String>
+    <system:String x:Key="WhatsNewSubtitle">Quick overview of application features and key highlights of this release.</system:String>
+    <system:String x:Key="WhatsNewSectionCoreTitle">🎯 About &amp; Core Features:</system:String>
+    <system:String x:Key="WhatsNewSectionCoreDesc">RenderPard provides fast batch transcoding and accurate frame-by-frame trimming for video, audio, and photo files with GPU hardware acceleration.</system:String>
+    <system:String x:Key="WhatsNewSectionFeaturesTitle">✨ What's New in this Version:</system:String>
+    <system:String x:Key="WhatsNewFeature1">🚀 Interactive Update Process: live progress bar, downloaded MBs, real-time speed (MB/s), ETA and background downloading.</system:String>
+    <system:String x:Key="WhatsNewFeature2">🔍 Manual Update Check: "Check for Updates" button in settings with real-time status feedback.</system:String>
+    <system:String x:Key="WhatsNewFeature3">✂️ Clean Context Menu Icons: eliminated duplicate scissor icons, added signature RenderPard icon for transcoding presets.</system:String>
+    <system:String x:Key="WhatsNewFeature4">↕️ Drag-and-Drop Preset Sorting: easily reorder presets in settings with automatic Windows context menu sync.</system:String>
+    <system:String x:Key="WhatsNewFeature5">⚡ Stability &amp; Optimizations: faster queue processing and improved codec compatibility.</system:String>
+    <system:String x:Key="WhatsNewBtnGetStarted">🚀 Got it, let's go!</system:String>
+    <system:String x:Key="WhatsNewBtnGitHub">Full details on GitHub ↗</system:String>
 </ResourceDictionary>
