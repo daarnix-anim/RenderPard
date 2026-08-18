@@ -96,10 +96,45 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
+    public string AppVersion => "v" + (System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0");
+
+    [ObservableProperty]
+    private bool _isCheckingUpdates;
+
+    [ObservableProperty]
+    private string _updateCheckStatusText = string.Empty;
+
     [RelayCommand]
     private void ChangeLanguage(string lang)
     {
         Language = lang;
+    }
+
+    [RelayCommand]
+    private async Task CheckForUpdates()
+    {
+        if (IsCheckingUpdates) return;
+
+        IsCheckingUpdates = true;
+        UpdateCheckStatusText = Language == "en-US" ? "Checking for updates..." : "Проверка наличия обновлений...";
+
+        string currentVer = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
+        var result = await GitHubUpdater.CheckForUpdatesAsync("daarnix-anim", "RenderPard", currentVer, showDialogIfFound: true);
+
+        IsCheckingUpdates = false;
+
+        switch (result.Status)
+        {
+            case UpdateCheckStatus.UpToDate:
+                UpdateCheckStatusText = Language == "en-US" ? "You are using the latest version" : "У вас установлена последняя версия";
+                break;
+            case UpdateCheckStatus.UpdateAvailable:
+                UpdateCheckStatusText = Language == "en-US" ? $"Update available: {result.LatestVersion}" : $"Доступно обновление: {result.LatestVersion}";
+                break;
+            case UpdateCheckStatus.Error:
+                UpdateCheckStatusText = Language == "en-US" ? "Failed to check for updates" : "Не удалось проверить обновления";
+                break;
+        }
     }
 
     [RelayCommand]

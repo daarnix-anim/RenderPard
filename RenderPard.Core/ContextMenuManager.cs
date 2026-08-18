@@ -278,7 +278,7 @@ public static class ContextMenuManager
                     {
                         if (trimKey != null)
                         {
-                            trimKey.SetValue("MUIVerb", "✂ Обрезать (In / Out)...");
+                            trimKey.SetValue("MUIVerb", "Обрезать (In / Out)...");
                             trimKey.SetValue("Icon", !string.IsNullOrEmpty(cutIcon) && File.Exists(cutIcon) ? $"\"{cutIcon}\"" : $"\"{exePath}\"");
                             using (RegistryKey commandKey = trimKey.CreateSubKey("command"))
                             {
@@ -310,12 +310,16 @@ public static class ContextMenuManager
                         if (string.IsNullOrEmpty(presetIconPath) || !File.Exists(presetIconPath))
                         {
                             // Type-specific clean fallback icon with theme awareness
-                            string typeKey = preset.IsAudioPreset ? "audio" : (preset.IsImagePreset ? "image" : "video");
+                            string typeKey = preset.IsAudioPreset ? "audio" : (preset.IsImagePreset ? "image" : "renderpard");
                             string typeFallback = ResolveThemeIconPath(typeKey, iconsDir, customIconsDir, isLightTheme);
 
                             if (!string.IsNullOrEmpty(typeFallback) && File.Exists(typeFallback))
                             {
                                 presetIconPath = typeFallback;
+                            }
+                            else if (!string.IsNullOrEmpty(rootIcon) && File.Exists(rootIcon))
+                            {
+                                presetIconPath = rootIcon;
                             }
                             else
                             {

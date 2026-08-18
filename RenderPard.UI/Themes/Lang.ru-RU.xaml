@@ -191,8 +191,8 @@
     <system:String x:Key="TrimLossless">⚡ Мгновенный срез без пересжатия (Stream Copy)</system:String>
     <system:String x:Key="TrimAddToQueue">➕ Добавить в очередь</system:String>
     <system:String x:Key="TrimExportNow">⚡ Рендер сейчас</system:String>
-    <system:String x:Key="TrimCutButton">✂ Обрезать</system:String>
-    <system:String x:Key="TrimQuickButton">✂ Быстрая обрезка</system:String>
+    <system:String x:Key="TrimCutButton">Обрезать</system:String>
+    <system:String x:Key="TrimQuickButton">Быстрая обрезка</system:String>
     <system:String x:Key="TrimHotkeysHelp">Space: Пауза | I / [ : Точка входа | O / ] : Точка выхода | M : Добавить фрагмент | ←/→ : 1 кадр | Shift+←/→ : 1 сек</system:String>
 
     <!-- Multi-Segment Trimming -->
@@ -209,4 +209,29 @@
     <system:String x:Key="Crop16x9">🖥 16:9</system:String>
     <system:String x:Key="Crop1x1">⬛ 1:1</system:String>
     <system:String x:Key="CropCustom">✂ Свободный</system:String>
+
+    <!-- App Updates & Updater Dialog -->
+    <system:String x:Key="UpdateDialogTitle">Доступно обновление</system:String>
+    <system:String x:Key="UpdateDialogHeader">Доступно обновление RenderPard</system:String>
+    <system:String x:Key="UpdateInstalledVersion">Установлено: </system:String>
+    <system:String x:Key="UpdateNewVersion">Новая версия: </system:String>
+    <system:String x:Key="UpdateBadgeNew">НОВЫЙ РЕЛИЗ</system:String>
+    <system:String x:Key="UpdateWhatsNew">Что нового в этой версии:</system:String>
+    <system:String x:Key="UpdateDefaultNotes">• Улучшения производительности и оптимизация алгоритмов обработки&#x0a;• Исправления обнаруженных ошибок и повышение стабильности работы</system:String>
+    <system:String x:Key="UpdateBtnDownload">Скачать и обновить</system:String>
+    <system:String x:Key="UpdateBtnBackground">Свернуть в фон</system:String>
+    <system:String x:Key="UpdateBtnLater">Напомнить позже</system:String>
+    <system:String x:Key="UpdateBtnRestart">🚀 Перезапустить и установить</system:String>
+    <system:String x:Key="UpdateBtnRetry">Повторить попытку</system:String>
+    <system:String x:Key="UpdateBtnCancel">Отмена</system:String>
+    <system:String x:Key="UpdateBtnGithub">Открыть на GitHub ↗</system:String>
+    <system:String x:Key="UpdateReadyStatus">Обновление готово к установке!</system:String>
+    <system:String x:Key="UpdateReadyHint">Нажмите «Перезапустить и установить» для применения обновления.</system:String>
+    <system:String x:Key="UpdateBackgroundHint">Вы можете свернуть это окно в фон — загрузка продолжится автоматически.</system:String>
+    <system:String x:Key="SettingsAppVersion">Версия программы:</system:String>
+    <system:String x:Key="SettingsCheckUpdates">Проверить обновления</system:String>
+    <system:String x:Key="SettingsCheckingUpdates">Проверка наличия обновлений...</system:String>
+    <system:String x:Key="SettingsUpToDate">У вас установлена последняя версия</system:String>
+    <system:String x:Key="SettingsUpdateAvailable">Доступно обновление</system:String>
+    <system:String x:Key="SettingsCheckFailed">Не удалось проверить обновления</system:String>
 </ResourceDictionary>

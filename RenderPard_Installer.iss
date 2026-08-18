@@ -18,7 +18,7 @@ CloseApplications=force
 
 ; Output settings
 OutputDir=Output
-OutputBaseFilename=RenderPard_Setup_v1.5.6
+OutputBaseFilename=RenderPard_Setup_v1.5.7
 
 ; Compression
 Compression=lzma2/ultra64

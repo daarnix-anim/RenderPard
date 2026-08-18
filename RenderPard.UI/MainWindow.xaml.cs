@@ -152,6 +152,7 @@ public partial class MainWindow : Window
             }
 
             var contextMenu = new System.Windows.Controls.ContextMenu();
+            var iconConverter = new IconNameToImageSourceConverter();
             
             var headerItem = new System.Windows.Controls.MenuItem 
             { 
@@ -165,9 +166,32 @@ public partial class MainWindow : Window
             {
                 var trimItem = new System.Windows.Controls.MenuItem 
                 { 
-                    Header = "✂ Обрезать фрагмент (In / Out)...",
+                    Header = "Обрезать фрагмент (In / Out)...",
                     FontWeight = FontWeights.SemiBold
                 };
+
+                var trimIcon = iconConverter.Convert("cut", typeof(System.Windows.Media.ImageSource), string.Empty, System.Globalization.CultureInfo.CurrentCulture) as System.Windows.Media.ImageSource;
+                if (trimIcon != null)
+                {
+                    trimItem.Icon = new System.Windows.Controls.Image
+                    {
+                        Source = trimIcon,
+                        Width = 16,
+                        Height = 16
+                    };
+                }
+                else
+                {
+                    trimItem.Icon = new System.Windows.Controls.TextBlock
+                    {
+                        Text = "✂",
+                        Foreground = (System.Windows.Media.Brush)FindResource("AppLinkBrush"),
+                        FontSize = 13,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center
+                    };
+                }
+
                 trimItem.Click += (s, args) =>
                 {
                     _viewModel.OpenTrimWindowForFile(files[0]);
@@ -180,6 +204,22 @@ public partial class MainWindow : Window
             foreach (var preset in presets)
             {
                 var menuItem = new System.Windows.Controls.MenuItem { Header = preset.Name };
+
+                string iconKey = !string.IsNullOrEmpty(preset.CustomIcon) 
+                    ? preset.CustomIcon 
+                    : (preset.IsAudioPreset ? "audio" : (preset.IsImagePreset ? "image" : "renderpard"));
+
+                var presetIcon = iconConverter.Convert(iconKey, typeof(System.Windows.Media.ImageSource), string.Empty, System.Globalization.CultureInfo.CurrentCulture) as System.Windows.Media.ImageSource;
+                if (presetIcon != null)
+                {
+                    menuItem.Icon = new System.Windows.Controls.Image
+                    {
+                        Source = presetIcon,
+                        Width = 16,
+                        Height = 16
+                    };
+                }
+
                 menuItem.Click += (s, args) =>
                 {
                     foreach (var file in files)

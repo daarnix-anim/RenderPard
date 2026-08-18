@@ -245,11 +245,25 @@
                     <!-- Downloading state -->
                     <Border Background="#1C2028" CornerRadius="4" BorderBrush="#333846" BorderThickness="1" Padding="8,4" Margin="0,0,10,0" Visibility="{Binding IsUpdateDownloading, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="⬇" Foreground="{StaticResource AppLinkBrush}" FontWeight="Bold" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                            <StackPanel VerticalAlignment="Center">
-                                <TextBlock Text="{Binding UpdateStatusText}" Foreground="{StaticResource AppTextBrush}" FontSize="10.5" FontWeight="SemiBold"/>
-                                <ProgressBar Minimum="0" Maximum="1" Value="{Binding UpdateDownloadProgress, Mode=OneWay}" Height="3" Width="180" Margin="0,3,0,0" Background="#242833" Foreground="{StaticResource AppLinkBrush}" BorderThickness="0"/>
-                            </StackPanel>
+                            <Button Command="{Binding OpenUpdateDetailsCommand}" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="Нажмите для подробностей загрузки" Padding="0" Margin="0,0,8,0">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="Transparent">
+                                            <ContentPresenter/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="⬇" Foreground="{StaticResource AppLinkBrush}" FontWeight="Bold" FontSize="11" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <StackPanel VerticalAlignment="Center">
+                                        <TextBlock Text="{Binding UpdateStatusText}" Foreground="{StaticResource AppTextBrush}" FontSize="10.5" FontWeight="SemiBold"/>
+                                        <ProgressBar Minimum="0" Maximum="1" Value="{Binding UpdateDownloadProgress, Mode=OneWay}" Height="3" Width="200" Margin="0,3,0,0" Background="#242833" Foreground="{StaticResource AppLinkBrush}" BorderThickness="0"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Button>
+                            <Button Command="{Binding CancelUpdateDownloadCommand}" ToolTip="Отменить загрузку" Background="Transparent" BorderThickness="0" Foreground="#A0E74C3C" FontSize="11" Cursor="Hand" Padding="4,0" VerticalAlignment="Center">
+                                <TextBlock Text="✕" FontSize="10"/>
+                            </Button>
                         </StackPanel>
                     </Border>
 
@@ -263,7 +277,7 @@
                             </ControlTemplate>
                         </Button.Template>
                         <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                            <TextBlock Text="🔄 " FontSize="11" VerticalAlignment="Center"/>
+                            <TextBlock Text="🚀 " FontSize="11" VerticalAlignment="Center"/>
                             <TextBlock Text="{Binding UpdateReadyText}" VerticalAlignment="Center"/>
                             <TextBlock Text=" → Перезапустить" Margin="4,0,0,0" FontWeight="Bold" VerticalAlignment="Center"/>
                         </StackPanel>

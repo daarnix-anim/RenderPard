@@ -99,11 +99,12 @@ public partial class QueueViewModel : ObservableObject
         GitHubUpdater.DownloadProgressChanged += OnUpdateDownloadProgressChanged;
         GitHubUpdater.UpdateReady += OnUpdateReady;
         GitHubUpdater.UpdateFailed += OnUpdateFailed;
+        GitHubUpdater.DownloadCancelled += OnUpdateCancelled;
 
         StartQueueProcessor();
     }
 
-    private void OnUpdateDownloadProgressChanged(double progress, long bytesRead, long totalBytes)
+    private void OnUpdateDownloadProgressChanged(double progress, long bytesRead, long totalBytes, double speedBytesPerSec)
     {
         IsUpdateDownloading = true;
         IsUpdateReady = false;
@@ -111,11 +112,16 @@ public partial class QueueViewModel : ObservableObject
 
         double mbRead = bytesRead / (1024.0 * 1024.0);
         double mbTotal = totalBytes > 0 ? totalBytes / (1024.0 * 1024.0) : 0;
+        double mbSpeed = speedBytesPerSec / (1024.0 * 1024.0);
 
         string tag = GitHubUpdater.LatestVersionTag ?? "новой версии";
-        if (mbTotal > 0)
+        if (mbTotal > 0 && mbSpeed > 0.05)
         {
-            UpdateStatusText = $"Загрузка {tag}: {mbRead:0.0} / {mbTotal:0.0} МБ ({progress:P0})";
+            UpdateStatusText = $"Загрузка {tag}: {mbRead:0.0}/{mbTotal:0.0} МБ ({progress:P0}) • {mbSpeed:0.0} МБ/с";
+        }
+        else if (mbTotal > 0)
+        {
+            UpdateStatusText = $"Загрузка {tag}: {mbRead:0.0}/{mbTotal:0.0} МБ ({progress:P0})";
         }
         else
         {
@@ -127,13 +133,31 @@ public partial class QueueViewModel : ObservableObject
     {
         IsUpdateDownloading = false;
         IsUpdateReady = true;
-        UpdateReadyText = $"Обновление {versionTag} готово к установке";
+        UpdateReadyText = $"Обновление {versionTag} готово";
     }
 
     private void OnUpdateFailed(string error)
     {
         IsUpdateDownloading = false;
         IsUpdateReady = false;
+    }
+
+    private void OnUpdateCancelled()
+    {
+        IsUpdateDownloading = false;
+        IsUpdateReady = false;
+    }
+
+    [RelayCommand]
+    private void OpenUpdateDetails()
+    {
+        GitHubUpdater.OpenUpdateDialog();
+    }
+
+    [RelayCommand]
+    private void CancelUpdateDownload()
+    {
+        GitHubUpdater.CancelDownload();
     }
 
     [RelayCommand]

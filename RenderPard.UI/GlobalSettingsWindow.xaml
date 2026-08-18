@@ -6,13 +6,18 @@
         xmlns:local="clr-namespace:RenderPard.UI"
         xmlns:viewModels="clr-namespace:RenderPard.UI.ViewModels"
         mc:Ignorable="d"
-        Title="{DynamicResource GlobalSettingsTitle}" Height="250" Width="400"
+        Title="{DynamicResource GlobalSettingsTitle}" Height="340" Width="430"
         WindowStartupLocation="CenterOwner"
+        ResizeMode="NoResize"
         Style="{StaticResource AnipardWindowStyle}">
 
     <Window.DataContext>
         <viewModels:SettingsViewModel/>
     </Window.DataContext>
+
+    <Window.Resources>
+        <local:StringNotEmptyToVisibilityConverter x:Key="StringNotEmptyToVisibilityConverter"/>
+    </Window.Resources>
 
     <Grid>
         <Grid.RowDefinitions>
@@ -31,12 +36,13 @@
         </Border>
 
         <!-- Content -->
-        <Border Grid.Row="1" Background="{StaticResource AppBackgroundBrush}" Padding="20">
+        <Border Grid.Row="1" Background="{StaticResource AppBackgroundBrush}" Padding="20,18">
             <StackPanel>
-                <CheckBox Content="{DynamicResource OpenFolderOnCompletion}" IsChecked="{Binding OpenFolderOnCompletion}" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,15"/>
-                <CheckBox Content="{DynamicResource MinimizeToTrayOnClose}" IsChecked="{Binding MinimizeToTrayOnClose}" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,25"/>
+                <CheckBox Content="{DynamicResource OpenFolderOnCompletion}" IsChecked="{Binding OpenFolderOnCompletion}" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,14"/>
+                <CheckBox Content="{DynamicResource MinimizeToTrayOnClose}" IsChecked="{Binding MinimizeToTrayOnClose}" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,20"/>
                 
-                <Grid>
+                <!-- Language Selector -->
+                <Grid Margin="0,0,0,4">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
@@ -88,8 +94,50 @@
                         </Button>
                     </StackPanel>
 
-                    <TextBlock Grid.Column="1" Text="{DynamicResource LanguageLabel}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}"/>
+                    <TextBlock Grid.Column="1" Text="{DynamicResource LanguageLabel}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" FontSize="12"/>
                 </Grid>
+
+                <!-- Divider -->
+                <Border Height="1" Background="{StaticResource AppBorderBrush}" Margin="0,16,0,16"/>
+
+                <!-- App Updates Section -->
+                <Border Background="#14171E" CornerRadius="6" BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" Padding="12,10">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+
+                            <!-- Version Label -->
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Text="{DynamicResource SettingsAppVersion}" FontSize="11" Foreground="{StaticResource AppTextSecondaryBrush}"/>
+                                <TextBlock Text="{Binding AppVersion}" FontWeight="Bold" FontSize="13" Foreground="{StaticResource AppTextBrush}" Margin="0,2,0,0"/>
+                            </StackPanel>
+
+                            <!-- Check Updates Button -->
+                            <Button Grid.Column="1" Command="{Binding CheckForUpdatesCommand}" Height="28" Padding="12,0" 
+                                    Background="{StaticResource AppBackgroundSecondaryBrush}" Foreground="{StaticResource AppTextBrush}" 
+                                    BorderBrush="{StaticResource AppBorderBrush}" BorderThickness="1" Cursor="Hand" FontWeight="SemiBold" FontSize="11.5">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4" Padding="{TemplateBinding Padding}">
+                                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        </Border>
+                                    </ControlTemplate>
+                                </Button.Template>
+                                <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                    <TextBlock Text="🔄 " FontSize="10.5" VerticalAlignment="Center"/>
+                                    <TextBlock Text="{DynamicResource SettingsCheckUpdates}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Button>
+                        </Grid>
+
+                        <!-- Status text -->
+                        <TextBlock Text="{Binding UpdateCheckStatusText}" FontSize="11" Foreground="{StaticResource AppLinkBrush}" Margin="0,8,0,0" TextWrapping="Wrap"
+                                   Visibility="{Binding UpdateCheckStatusText, Converter={StaticResource StringNotEmptyToVisibilityConverter}}"/>
+                    </StackPanel>
+                </Border>
             </StackPanel>
         </Border>
     </Grid>
