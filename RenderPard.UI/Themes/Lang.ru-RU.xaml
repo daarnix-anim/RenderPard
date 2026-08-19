@@ -67,6 +67,8 @@
     <system:String x:Key="PresetName">Название:</system:String>
     <system:String x:Key="ShowInMenu">Показывать в контекстном меню Windows</system:String>
     <system:String x:Key="GifFps">Частота кадров (FPS):</system:String>
+    <system:String x:Key="MaxFps">Макс. FPS (0 - оригинал):</system:String>
+    <system:String x:Key="MaxDuration">Макс. длительность, сек (0 - без огр.):</system:String>
     <system:String x:Key="IncludeAudio">Включить аудио</system:String>
     <system:String x:Key="CopyAudio">Оставить оригинальную аудиодорожку</system:String>
     <system:String x:Key="NumberingLabel">Нумерация:</system:String>

@@ -176,9 +176,24 @@ public class PresetManager
             },
             new Preset
             {
-                Name = "Web_Split_Alpha",
+                Name = "TGstick",
                 IsBuiltIn = true,
                 SortOrder = 4,
+                CustomIcon = "telegram",
+                Container = ContainerFormat.WebM,
+                VideoCodec = VideoCodec.Vp9,
+                MaxLongSideSize = 512,
+                ForceExactLongSide = true,
+                MaxDurationSeconds = 3.0,
+                MaxFps = 30,
+                TargetVideoBitrateKbps = 450,
+                AudioMode = AudioMode.None
+            },
+            new Preset
+            {
+                Name = "Web_Split_Alpha",
+                IsBuiltIn = true,
+                SortOrder = 5,
                 CustomIcon = "cut",
                 Container = ContainerFormat.Mp4,
                 VideoCodec = VideoCodec.H265_Nvenc,
@@ -193,7 +208,7 @@ public class PresetManager
             {
                 Name = "GIF (Web)",
                 IsBuiltIn = true,
-                SortOrder = 5,
+                SortOrder = 6,
                 CustomIcon = "fmt_gif",
                 Container = ContainerFormat.Gif,
                 VideoCodec = VideoCodec.Gif,
@@ -207,7 +222,7 @@ public class PresetManager
             {
                 Name = "Фото в JPEG",
                 IsBuiltIn = true,
-                SortOrder = 6,
+                SortOrder = 7,
                 CustomIcon = "fmt_jpeg",
                 Container = ContainerFormat.Jpeg,
                 ImageQuality = 90
@@ -216,7 +231,7 @@ public class PresetManager
             {
                 Name = "Фото в WebP (Для Web)",
                 IsBuiltIn = true,
-                SortOrder = 7,
+                SortOrder = 8,
                 CustomIcon = "fmt_webp",
                 Container = ContainerFormat.Webp,
                 ImageQuality = 80
@@ -225,7 +240,7 @@ public class PresetManager
             {
                 Name = "Извлечь / Аудио в MP3",
                 IsBuiltIn = true,
-                SortOrder = 8,
+                SortOrder = 9,
                 Container = ContainerFormat.Mp3,
                 AudioCodec = AudioCodec.Mp3,
                 AudioBitrateKbps = 192,

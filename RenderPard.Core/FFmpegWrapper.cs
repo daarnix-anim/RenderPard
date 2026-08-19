@@ -301,6 +301,11 @@ public class FFmpegWrapper
                 sb.Append("-an ");
             }
 
+            if (task.Preset.MaxDurationSeconds > 0)
+            {
+                sb.Append($"-t {task.Preset.MaxDurationSeconds.ToString("0.###", CultureInfo.InvariantCulture)} ");
+            }
+
             AppendVideoOptions(sb);
             AppendContainerOption(sb);
 
@@ -314,15 +319,38 @@ public class FFmpegWrapper
             return sb.ToString();
         }
 
-        if (!task.IsMultiSegmentMerge && task.IsTrimmed)
+        if (!task.IsMultiSegmentMerge)
         {
-            if (task.TrimStartSeconds.HasValue && task.TrimStartSeconds.Value > 0)
+            if (task.IsTrimmed)
             {
-                sb.Append($"-ss {task.TrimStartSeconds.Value.ToString("0.###", CultureInfo.InvariantCulture)} ");
+                double start = task.TrimStartSeconds ?? 0;
+                if (start > 0)
+                {
+                    sb.Append($"-ss {start.ToString("0.###", CultureInfo.InvariantCulture)} ");
+                }
+
+                if (task.Preset.MaxDurationSeconds > 0)
+                {
+                    double rawEnd = task.TrimEndSeconds ?? (task.DurationSeconds > 0 ? task.DurationSeconds : start + 10000);
+                    double effectiveDuration = rawEnd - start;
+                    if (effectiveDuration > task.Preset.MaxDurationSeconds)
+                    {
+                        double cappedEnd = start + task.Preset.MaxDurationSeconds;
+                        sb.Append($"-to {cappedEnd.ToString("0.###", CultureInfo.InvariantCulture)} ");
+                    }
+                    else if (task.TrimEndSeconds.HasValue && task.TrimEndSeconds.Value > start)
+                    {
+                        sb.Append($"-to {task.TrimEndSeconds.Value.ToString("0.###", CultureInfo.InvariantCulture)} ");
+                    }
+                }
+                else if (task.TrimEndSeconds.HasValue && task.TrimEndSeconds.Value > (task.TrimStartSeconds ?? 0))
+                {
+                    sb.Append($"-to {task.TrimEndSeconds.Value.ToString("0.###", CultureInfo.InvariantCulture)} ");
+                }
             }
-            if (task.TrimEndSeconds.HasValue && task.TrimEndSeconds.Value > (task.TrimStartSeconds ?? 0))
+            else if (task.Preset.MaxDurationSeconds > 0)
             {
-                sb.Append($"-to {task.TrimEndSeconds.Value.ToString("0.###", CultureInfo.InvariantCulture)} ");
+                sb.Append($"-t {task.Preset.MaxDurationSeconds.ToString("0.###", CultureInfo.InvariantCulture)} ");
             }
         }
 
@@ -390,9 +418,9 @@ public class FFmpegWrapper
             else if (task.Preset.VideoCodec == VideoCodec.H265)
                 b.Append("-c:v libx265 -preset medium ");
             else if (task.Preset.VideoCodec == VideoCodec.Vp8)
-                b.Append("-c:v libvpx -crf 10 -b:v 1M -auto-alt-ref 0 ");
+                b.Append("-c:v libvpx -crf 10 -auto-alt-ref 0 ");
             else if (task.Preset.VideoCodec == VideoCodec.Vp9)
-                b.Append("-c:v libvpx-vp9 -crf 30 -b:v 0 -auto-alt-ref 0 ");
+                b.Append("-c:v libvpx-vp9 -crf 30 -auto-alt-ref 0 ");
             else if (task.Preset.VideoCodec == VideoCodec.Gif)
                 b.Append("-c:v gif ");
 
@@ -413,7 +441,16 @@ public class FFmpegWrapper
                 }
                 else if (task.Preset.VideoCodec == VideoCodec.Vp8 || task.Preset.VideoCodec == VideoCodec.Vp9)
                 {
-                     b.Append($"-b:v {targetBitrate}k ");
+                    if (targetBitrate > 0)
+                    {
+                        int maxRate = (int)(targetBitrate * 1.25);
+                        int bufSize = targetBitrate * 2;
+                        b.Append($"-b:v {targetBitrate}k -maxrate {maxRate}k -bufsize {bufSize}k ");
+                    }
+                    else
+                    {
+                        b.Append("-b:v 0 ");
+                    }
                 }
             }
         }
@@ -706,18 +743,45 @@ public class FFmpegWrapper
             }
             else
             {
-                if (aspectRatio == AspectRatioCategory.Landscape && logicalWidth > task.Preset.MaxLongSideSize)
+                if (task.Preset.ForceExactLongSide && task.Preset.MaxLongSideSize > 0)
                 {
-                    filters.Add($"scale='min({task.Preset.MaxLongSideSize},iw)':-2");
+                    if (aspectRatio == AspectRatioCategory.Landscape)
+                    {
+                        filters.Add($"scale={task.Preset.MaxLongSideSize}:-2");
+                    }
+                    else if (aspectRatio == AspectRatioCategory.Portrait)
+                    {
+                        filters.Add($"scale=-2:{task.Preset.MaxLongSideSize}");
+                    }
+                    else if (aspectRatio == AspectRatioCategory.Square)
+                    {
+                        filters.Add($"scale={task.Preset.MaxLongSideSize}:{task.Preset.MaxLongSideSize}");
+                    }
                 }
-                else if (aspectRatio == AspectRatioCategory.Portrait && logicalHeight > task.Preset.MaxLongSideSize)
+                else
                 {
-                    filters.Add($"scale=-2:'min({task.Preset.MaxLongSideSize},ih)'");
+                    if (aspectRatio == AspectRatioCategory.Landscape && logicalWidth > task.Preset.MaxLongSideSize)
+                    {
+                        filters.Add($"scale='min({task.Preset.MaxLongSideSize},iw)':-2");
+                    }
+                    else if (aspectRatio == AspectRatioCategory.Portrait && logicalHeight > task.Preset.MaxLongSideSize)
+                    {
+                        filters.Add($"scale=-2:'min({task.Preset.MaxLongSideSize},ih)'");
+                    }
+                    else if (aspectRatio == AspectRatioCategory.Square && logicalWidth > task.Preset.MaxLongSideSize)
+                    {
+                        filters.Add($"scale='min({task.Preset.MaxLongSideSize},iw)':-2");
+                    }
                 }
-                else if (aspectRatio == AspectRatioCategory.Square && logicalWidth > task.Preset.MaxLongSideSize)
-                {
-                    filters.Add($"scale='min({task.Preset.MaxLongSideSize},iw)':-2");
-                }
+            }
+        }
+
+        // 1.1 Video FPS Limiting (e.g. 30 fps for Telegram Stickers)
+        if (!task.Preset.IsImagePreset && task.Preset.Container != ContainerFormat.Gif && task.Preset.MaxFps > 0)
+        {
+            if (task.Fps > task.Preset.MaxFps || task.Fps <= 0)
+            {
+                filters.Add($"fps={task.Preset.MaxFps}");
             }
         }
 

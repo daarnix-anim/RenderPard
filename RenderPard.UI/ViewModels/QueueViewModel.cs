@@ -424,7 +424,7 @@ public partial class QueueViewModel : ObservableObject
                     if (wasProcessing && !hasPendingOrEncoding)
                     {
                         wasProcessing = false;
-                        if (App.Settings.OpenFolderOnCompletion && !string.IsNullOrEmpty(lastOutputDir) && Directory.Exists(lastOutputDir))
+                        if (App.Settings.OpenFolderOnCompletion && App.Settings.CreateSubfolderForFiles && !string.IsNullOrEmpty(lastOutputDir) && Directory.Exists(lastOutputDir))
                         {
                             System.Diagnostics.Process.Start("explorer.exe", lastOutputDir);
                         }

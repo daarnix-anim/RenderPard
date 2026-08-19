@@ -602,7 +602,13 @@
                                         <CheckBox Content="{DynamicResource AutoCalcBitrate}" IsChecked="{Binding UseWebPreLogic}" Foreground="{StaticResource AppTextBrush}" VerticalAlignment="Center"/>
                                         <TextBox Text="{Binding MaxSizeMb, UpdateSourceTrigger=PropertyChanged}" Width="60" Margin="10,0,0,0" IsEnabled="{Binding UseWebPreLogic}"/>
                                     </StackPanel>
-                                    <CheckBox Content="{DynamicResource ExtractAlphaMask}" IsChecked="{Binding ExtractAlphaMask}" Foreground="{StaticResource AppTextBrush}"/>
+                                    <CheckBox Content="{DynamicResource ExtractAlphaMask}" IsChecked="{Binding ExtractAlphaMask}" Foreground="{StaticResource AppTextBrush}" Margin="0,0,0,6"/>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                        <TextBlock Text="{DynamicResource MaxDuration}" Foreground="{StaticResource AppTextSecondaryBrush}" VerticalAlignment="Center"/>
+                                        <TextBox Text="{Binding MaxDurationSeconds, UpdateSourceTrigger=PropertyChanged}" Width="60" Margin="10,0,0,0"/>
+                                        <TextBlock Text="{DynamicResource MaxFps}" Foreground="{StaticResource AppTextSecondaryBrush}" VerticalAlignment="Center" Margin="20,0,0,0"/>
+                                        <TextBox Text="{Binding MaxFps, UpdateSourceTrigger=PropertyChanged}" Width="60" Margin="10,0,0,0"/>
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <!-- GIF FPS (Visible only if GIF) -->

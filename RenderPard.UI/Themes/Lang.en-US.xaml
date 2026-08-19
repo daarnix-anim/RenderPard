@@ -67,6 +67,8 @@
     <system:String x:Key="PresetName">Name:</system:String>
     <system:String x:Key="ShowInMenu">Show in Windows context menu</system:String>
     <system:String x:Key="GifFps">Framerate (FPS):</system:String>
+    <system:String x:Key="MaxFps">Max FPS (0 - original):</system:String>
+    <system:String x:Key="MaxDuration">Max Duration, sec (0 - unlim.):</system:String>
     <system:String x:Key="IncludeAudio">Include Audio</system:String>
     <system:String x:Key="CopyAudio">Keep original audio track</system:String>
     <system:String x:Key="NumberingLabel">Numbering:</system:String>

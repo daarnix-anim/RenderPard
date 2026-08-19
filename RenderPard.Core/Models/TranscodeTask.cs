@@ -67,6 +67,7 @@ public partial class TranscodeTask : ObservableObject
     {
         get
         {
+            double dur;
             if (IsMultiSegmentMerge && Segments != null)
             {
                 double total = 0;
@@ -74,15 +75,24 @@ public partial class TranscodeTask : ObservableObject
                 {
                     total += seg.DurationSeconds;
                 }
-                return Math.Max(0.1, total);
+                dur = Math.Max(0.1, total);
             }
-            if (IsTrimmed)
+            else if (IsTrimmed)
             {
                 double start = TrimStartSeconds ?? 0;
                 double end = TrimEndSeconds ?? (DurationSeconds > 0 ? DurationSeconds : start + 1);
-                return Math.Max(0.1, end - start);
+                dur = Math.Max(0.1, end - start);
             }
-            return DurationSeconds;
+            else
+            {
+                dur = DurationSeconds;
+            }
+
+            if (Preset != null && Preset.MaxDurationSeconds > 0 && dur > Preset.MaxDurationSeconds)
+            {
+                return Preset.MaxDurationSeconds;
+            }
+            return dur;
         }
     }
 

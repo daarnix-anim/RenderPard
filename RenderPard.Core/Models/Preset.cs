@@ -82,7 +82,28 @@ public class Preset : ObservableObject
     // Scale up to this size on the longest side. 1280px by default.
     public int MaxLongSideSize { get; set; } = 1280;
     
+    private bool _forceExactLongSide;
+    public bool ForceExactLongSide
+    {
+        get => _forceExactLongSide;
+        set => SetProperty(ref _forceExactLongSide, value);
+    }
+    
     public int TargetVideoBitrateKbps { get; set; } = 2000;
+    
+    private double _maxDurationSeconds;
+    public double MaxDurationSeconds
+    {
+        get => _maxDurationSeconds;
+        set => SetProperty(ref _maxDurationSeconds, value);
+    }
+    
+    private int _maxFps;
+    public int MaxFps
+    {
+        get => _maxFps;
+        set => SetProperty(ref _maxFps, value);
+    }
     
     private int _gifFps = 15;
     public int GifFps
@@ -246,6 +267,9 @@ public class Preset : ObservableObject
             VideoCodec = VideoCodec,
             GifFps = GifFps,
             MaxLongSideSize = MaxLongSideSize,
+            ForceExactLongSide = ForceExactLongSide,
+            MaxDurationSeconds = MaxDurationSeconds,
+            MaxFps = MaxFps,
             KeepOriginalResolution = KeepOriginalResolution,
             NumberingLogic = NumberingLogic,
             NamingLogic = NamingLogic,
