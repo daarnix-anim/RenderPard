@@ -189,9 +189,63 @@ public partial class App : Application
                 if (Directory.Exists(file))
                 {
                     var supportedExts = new System.Collections.Generic.HashSet<string>(RenderPard.Core.ContextMenuManager.SupportedExtensions, StringComparer.OrdinalIgnoreCase);
-                    var allFiles = Directory.EnumerateFiles(file, "*.*", SearchOption.AllDirectories)
-                                            .Where(f => supportedExts.Contains(Path.GetExtension(f)))
-                                            .ToList();
+                    var allFiles = new System.Collections.Generic.List<string>();
+                    
+                    var cts = new CancellationTokenSource();
+                    var progressWindow = new ScanningProgressWindow(cts);
+                    
+                    if (MainWindow != null && MainWindow.IsVisible)
+                        progressWindow.Owner = MainWindow;
+                    else
+                        Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
+                    var scanTask = Task.Run(() =>
+                    {
+                        int foundCount = 0;
+                        var dirs = new System.Collections.Generic.Stack<string>();
+                        dirs.Push(file);
+                        long lastUpdate = Environment.TickCount64;
+
+                        while (dirs.Count > 0)
+                        {
+                            if (cts.Token.IsCancellationRequested) return;
+                            string currentDir = dirs.Pop();
+                            
+                            if (Environment.TickCount64 - lastUpdate > 50)
+                            {
+                                Dispatcher.InvokeAsync(() => progressWindow.UpdateProgress(currentDir, foundCount));
+                                lastUpdate = Environment.TickCount64;
+                            }
+
+                            try
+                            {
+                                foreach (var subDir in Directory.EnumerateDirectories(currentDir))
+                                    dirs.Push(subDir);
+                                
+                                foreach (var f in Directory.EnumerateFiles(currentDir, "*.*"))
+                                {
+                                    if (cts.Token.IsCancellationRequested) return;
+                                    if (supportedExts.Contains(Path.GetExtension(f)))
+                                    {
+                                        allFiles.Add(f);
+                                        foundCount++;
+                                    }
+                                }
+                            }
+                            catch (UnauthorizedAccessException) { }
+                            catch (Exception) { }
+                        }
+                    }, cts.Token);
+
+                    scanTask.ContinueWith(t => Dispatcher.InvokeAsync(() => progressWindow.Close()));
+
+                    progressWindow.ShowDialog();
+
+                    if (Application.Current.ShutdownMode == ShutdownMode.OnExplicitShutdown)
+                        Application.Current.ShutdownMode = ShutdownMode.OnLastWindowClose;
+
+                    if (cts.Token.IsCancellationRequested)
+                        return;
                     
                     if (allFiles.Count == 0)
                     {
