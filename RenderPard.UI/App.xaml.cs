@@ -256,7 +256,7 @@ public partial class App : Application
                     var extCounts = allFiles.GroupBy(f => Path.GetExtension(f).ToLowerInvariant())
                                             .ToDictionary(g => g.Key, g => g.Count());
                     
-                    Dispatcher.Invoke(() => 
+                    Dispatcher.Invoke(async () => 
                     {
                         var dialog = new FolderImportDialog(extCounts);
                         if (dialog.ShowDialog() == true)
@@ -266,11 +266,7 @@ public partial class App : Application
                             
                             if (MainWindow is MainWindow window)
                             {
-                                foreach(var f in filesToAdd)
-                                {
-                                    window.EnqueueFile(f, preset);
-                                }
-                                window.StartQueue();
+                                await window.EnqueueFilesAsync(filesToAdd, preset);
                                 if (isSecondInstance) 
                                 { 
                                     window.WindowState = WindowState.Normal; 

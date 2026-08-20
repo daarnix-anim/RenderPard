@@ -206,14 +206,14 @@ public partial class QueueViewModel : ObservableObject
         }
     }
 
-    public void EnqueueFile(string filePath, Preset preset)
+    public async Task EnqueueFileAsync(string filePath, Preset preset)
     {
         if (!File.Exists(filePath)) return;
 
         string ext = Path.GetExtension(filePath).ToLower();
         if (ext == ".ai" || ext == ".pdf")
         {
-            Task.Run(() =>
+            await Task.Run(() =>
             {
                 try
                 {
@@ -228,13 +228,16 @@ public partial class QueueViewModel : ObservableObject
                 }
                 catch (System.Exception ex)
                 {
-                    System.Windows.MessageBox.Show($"Failed to extract pages from {Path.GetFileName(filePath)}:\n{ex.Message}");
+                    System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                    {
+                        System.Windows.MessageBox.Show($"Failed to extract pages from {Path.GetFileName(filePath)}:\n{ex.Message}");
+                    });
                 }
             });
         }
         else if (ext == ".cr2" || ext == ".nef" || ext == ".arw" || ext == ".dng" || ext == ".heic")
         {
-            Task.Run(() =>
+            await Task.Run(() =>
             {
                 try
                 {
@@ -255,6 +258,11 @@ public partial class QueueViewModel : ObservableObject
         {
             EnqueueSingleFile(filePath, filePath, preset, Path.GetFileNameWithoutExtension(filePath), false);
         }
+    }
+
+    public void EnqueueFile(string filePath, Preset preset)
+    {
+        _ = EnqueueFileAsync(filePath, preset);
     }
 
     private void EnqueueSingleFile(string sourceFile, string originalFileForDir, Preset preset, string originalName, bool isTempSource)

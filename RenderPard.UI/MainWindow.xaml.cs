@@ -115,10 +115,60 @@ public partial class MainWindow : Window
 
     public void EnqueueFile(string filePath, Preset preset)
     {
-        Dispatcher.InvokeAsync(() =>
+        _ = EnqueueFilesAsync(new[] { filePath }, preset);
+    }
+
+    public async System.Threading.Tasks.Task EnqueueFilesAsync(System.Collections.Generic.IEnumerable<string> files, Preset preset)
+    {
+        var filesList = files.ToList();
+        if (filesList.Count == 0) return;
+
+        bool showProgress = filesList.Count > 5 || filesList.Any(f => 
+            f.EndsWith(".ai", StringComparison.OrdinalIgnoreCase) || 
+            f.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) || 
+            f.EndsWith(".cr2", StringComparison.OrdinalIgnoreCase) || 
+            f.EndsWith(".nef", StringComparison.OrdinalIgnoreCase) || 
+            f.EndsWith(".arw", StringComparison.OrdinalIgnoreCase) || 
+            f.EndsWith(".dng", StringComparison.OrdinalIgnoreCase) || 
+            f.EndsWith(".heic", StringComparison.OrdinalIgnoreCase));
+
+        if (!showProgress)
         {
-            _viewModel.EnqueueFile(filePath, preset);
-        });
+            foreach (var f in filesList)
+            {
+                await _viewModel.EnqueueFileAsync(f, preset);
+            }
+            return;
+        }
+
+        var cts = new System.Threading.CancellationTokenSource();
+        var progressWindow = new AddingProgressWindow(cts, filesList.Count);
+        
+        if (this.IsVisible)
+        {
+            progressWindow.Owner = this;
+        }
+
+        var addTask = System.Threading.Tasks.Task.Run(async () =>
+        {
+            int addedCount = 0;
+            foreach (var f in filesList)
+            {
+                if (cts.Token.IsCancellationRequested) break;
+                await _viewModel.EnqueueFileAsync(f, preset);
+                addedCount++;
+                
+                // Throttle UI updates for very large lists
+                if (addedCount % 5 == 0 || addedCount == filesList.Count)
+                {
+                    await Dispatcher.InvokeAsync(() => progressWindow.UpdateProgress(f, addedCount));
+                }
+            }
+        }, cts.Token);
+
+        addTask.ContinueWith(t => Dispatcher.InvokeAsync(() => progressWindow.Close()));
+
+        progressWindow.ShowDialog();
     }
 
     public void OpenTrimWindow(string filePath, Preset? preset = null)
@@ -242,13 +292,9 @@ public partial class MainWindow : Window
                     };
                 }
 
-                menuItem.Click += (s, args) =>
+                menuItem.Click += async (s, args) =>
                 {
-                    foreach (var file in files)
-                    {
-                        EnqueueFile(file, preset);
-                    }
-                    StartQueue();
+                    await EnqueueFilesAsync(files, preset);
                 };
                 contextMenu.Items.Add(menuItem);
             }

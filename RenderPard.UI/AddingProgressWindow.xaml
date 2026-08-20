@@ -1,0 +1,30 @@
+<Window x:Class="RenderPard.UI.AddingProgressWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Подготовка файлов..." Height="200" Width="450"
+        Style="{DynamicResource WindowStyle}"
+        WindowStartupLocation="CenterScreen"
+        Topmost="True">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Добавление медиафайлов в очередь..." FontWeight="Bold" FontSize="16" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,10"/>
+        
+        <TextBlock x:Name="CurrentFileText" Text="Подготовка..." TextTrimming="CharacterEllipsis" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,5" Grid.Row="1"/>
+        
+        <TextBlock x:Name="ProgressText" Text="Добавлено: 0 / 0" Foreground="{DynamicResource TextBrush}" Margin="0,0,0,10" Grid.Row="2"/>
+
+        <ProgressBar x:Name="ProgressBar" Minimum="0" Maximum="100" Value="0" Height="10" Grid.Row="3" Margin="0,0,0,15"/>
+
+        <Button x:Name="CancelBtn" Content="Отмена" Click="Cancel_Click" Style="{DynamicResource SecondaryButtonStyle}" Width="100" HorizontalAlignment="Right" Grid.Row="4"/>
+    </Grid>
+</Window>
