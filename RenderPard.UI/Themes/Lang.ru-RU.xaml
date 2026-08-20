@@ -13,6 +13,9 @@
     <system:String x:Key="RegisterMenuTooltip">Добавить пункт в контекстное меню Windows</system:String>
     <system:String x:Key="RemoveMenuTooltip">Удалить пункт из контекстного меню Windows</system:String>
     <system:String x:Key="ClearCompleted">Очистить список</system:String>
+    <system:String x:Key="UndoAllCompleted">Откатить список</system:String>
+    <system:String x:Key="UndoAllTooltip">Удалить все новые конвертированные файлы и убрать из списка</system:String>
+    <system:String x:Key="UndoTaskTooltip">Удалить готовый файл и убрать из списка</system:String>
     <system:String x:Key="CancelAll">Отменить все</system:String>
     <system:String x:Key="DownloadFfmpeg">Скачать FFmpeg</system:String>
     <system:String x:Key="DownloadingFfmpeg">Загрузка FFmpeg...</system:String>

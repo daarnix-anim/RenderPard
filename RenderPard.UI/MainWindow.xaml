@@ -224,6 +224,9 @@
                                     <Button Command="{Binding DataContext.TrimTaskCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="{DynamicResource TrimCutButton}" Padding="4" Margin="0,0,4,0">
                                         <TextBlock Text="✂" Foreground="{StaticResource AppLinkBrush}" FontSize="13" VerticalAlignment="Center"/>
                                     </Button>
+                                    <Button Command="{Binding DataContext.UndoTaskCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="{DynamicResource UndoTaskTooltip}" Padding="4" Margin="0,0,4,0">
+                                        <TextBlock Text="↶" Foreground="#E74C3C" FontSize="16" FontWeight="Bold" VerticalAlignment="Center"/>
+                                    </Button>
                                     <Button Command="{Binding DataContext.RemoveTaskCommand, RelativeSource={RelativeSource AncestorType=DataGrid}}" CommandParameter="{Binding}" Background="Transparent" BorderThickness="0" Cursor="Hand" ToolTip="{DynamicResource RemoveTaskTooltip}" Padding="4">
                                         <Path Data="M19,4H15.5L14.5,3H9.5L8.5,4H5V6H19M6,19A2,2 0 0,0 8,21H16A2,2 0 0,0 18,19V7H6V19Z" Fill="{StaticResource AppTextSecondaryBrush}" Width="15" Height="15" Stretch="Uniform"/>
                                     </Button>
@@ -304,6 +307,7 @@
                             </Canvas>
                         </Viewbox>
                     </Button>
+                    <Button Content="{DynamicResource UndoAllCompleted}" Command="{Binding UndoAllCommand}" Width="135" Height="24" Margin="0,0,6,0" HorizontalContentAlignment="Center" ToolTip="{DynamicResource UndoAllTooltip}"/>
                     <Button Content="{DynamicResource ClearCompleted}" Command="{Binding ClearAllCommand}" Width="120" Height="24" Margin="0,0,6,0" HorizontalContentAlignment="Center"/>
                     <Button Content="{DynamicResource CancelAll}" Command="{Binding CancelAllCommand}" Width="100" Height="24" HorizontalContentAlignment="Center"/>
                 </StackPanel>

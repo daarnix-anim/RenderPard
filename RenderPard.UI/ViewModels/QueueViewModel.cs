@@ -218,10 +218,11 @@ public partial class QueueViewModel : ObservableObject
                 try
                 {
                     var tempImages = PdfExtractor.ExtractPages(filePath);
+                    string suffix = ext == ".ai" ? "Artboard" : "Page";
                     for (int i = 0; i < tempImages.Count; i++)
                     {
                         var pageImg = tempImages[i];
-                        string pageOriginalName = $"{Path.GetFileNameWithoutExtension(filePath)}_Page{i + 1}";
+                        string pageOriginalName = $"{Path.GetFileNameWithoutExtension(filePath)}_{suffix}{i + 1}";
                         EnqueueSingleFile(pageImg, filePath, preset, pageOriginalName, true);
                     }
                 }
@@ -471,6 +472,49 @@ public partial class QueueViewModel : ObservableObject
         {
             Tasks.Remove(t);
         }
+    }
+
+    [RelayCommand]
+    private void UndoAll()
+    {
+        var toRemove = new System.Collections.Generic.List<TranscodeTask>();
+        foreach (var task in Tasks)
+        {
+            if (task.Status == TranscodeTaskStatus.Completed)
+            {
+                try
+                {
+                    if (File.Exists(task.TargetFilePath))
+                    {
+                        File.Delete(task.TargetFilePath);
+                    }
+                }
+                catch { } // Ignore file locked exceptions
+                toRemove.Add(task);
+            }
+        }
+        foreach (var t in toRemove)
+        {
+            Tasks.Remove(t);
+        }
+    }
+
+    [RelayCommand]
+    private void UndoTask(TranscodeTask task)
+    {
+        if (task == null) return;
+        if (task.Status == TranscodeTaskStatus.Completed)
+        {
+            try
+            {
+                if (File.Exists(task.TargetFilePath))
+                {
+                    File.Delete(task.TargetFilePath);
+                }
+            }
+            catch { }
+        }
+        Tasks.Remove(task);
     }
 
     [RelayCommand]

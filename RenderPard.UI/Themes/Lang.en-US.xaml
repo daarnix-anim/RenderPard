@@ -13,6 +13,9 @@
     <system:String x:Key="RegisterMenuTooltip">Add entry to Windows context menu</system:String>
     <system:String x:Key="RemoveMenuTooltip">Remove entry from Windows context menu</system:String>
     <system:String x:Key="ClearCompleted">Clear Completed/Pending</system:String>
+    <system:String x:Key="UndoAllCompleted">Undo All Completed</system:String>
+    <system:String x:Key="UndoAllTooltip">Delete all converted output files and remove from list</system:String>
+    <system:String x:Key="UndoTaskTooltip">Delete converted file and remove from list</system:String>
     <system:String x:Key="CancelAll">Cancel All</system:String>
     <system:String x:Key="DownloadFfmpeg">Download FFmpeg</system:String>
     <system:String x:Key="DownloadingFfmpeg">Downloading FFmpeg...</system:String>
