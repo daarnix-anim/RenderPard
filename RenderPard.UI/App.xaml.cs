@@ -179,18 +179,64 @@ public partial class App : Application
             var presets = PresetManager.LoadPresets();
             var preset = presets.FirstOrDefault(p => p.Name == presetName) ?? presets.FirstOrDefault();
             
-            if (preset != null && MainWindow is MainWindow window)
+            if (preset != null)
             {
-                window.EnqueueFile(file, preset);
-                window.StartQueue();
-                
-                if (isSecondInstance)
+                if (Directory.Exists(file))
                 {
-                    Dispatcher.Invoke(() =>
+                    var supportedExts = new System.Collections.Generic.HashSet<string>(RenderPard.Core.ContextMenuManager.SupportedExtensions, StringComparer.OrdinalIgnoreCase);
+                    var allFiles = Directory.EnumerateFiles(file, "*.*", SearchOption.AllDirectories)
+                                            .Where(f => supportedExts.Contains(Path.GetExtension(f)))
+                                            .ToList();
+                    
+                    if (allFiles.Count == 0)
                     {
-                        window.WindowState = WindowState.Normal;
-                        window.Activate();
+                        MessageBox.Show("Не найдено поддерживаемых медиафайлов в этой папке.", "RenderPard", MessageBoxButton.OK, MessageBoxImage.Information);
+                        return;
+                    }
+
+                    var extCounts = allFiles.GroupBy(f => Path.GetExtension(f).ToLowerInvariant())
+                                            .ToDictionary(g => g.Key, g => g.Count());
+                    
+                    Dispatcher.Invoke(() => 
+                    {
+                        var dialog = new FolderImportDialog(extCounts);
+                        if (dialog.ShowDialog() == true)
+                        {
+                            var selectedExts = new System.Collections.Generic.HashSet<string>(dialog.SelectedExtensions, StringComparer.OrdinalIgnoreCase);
+                            var filesToAdd = allFiles.Where(f => selectedExts.Contains(Path.GetExtension(f))).ToList();
+                            
+                            if (MainWindow is MainWindow window)
+                            {
+                                foreach(var f in filesToAdd)
+                                {
+                                    window.EnqueueFile(f, preset);
+                                }
+                                window.StartQueue();
+                                if (isSecondInstance) 
+                                { 
+                                    window.WindowState = WindowState.Normal; 
+                                    window.Activate(); 
+                                }
+                            }
+                        }
                     });
+                }
+                else if (File.Exists(file))
+                {
+                    if (MainWindow is MainWindow window)
+                    {
+                        window.EnqueueFile(file, preset);
+                        window.StartQueue();
+                        
+                        if (isSecondInstance)
+                        {
+                            Dispatcher.Invoke(() =>
+                            {
+                                window.WindowState = WindowState.Normal;
+                                window.Activate();
+                            });
+                        }
+                    }
                 }
             }
         }
