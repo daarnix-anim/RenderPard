@@ -174,12 +174,36 @@ public class FFmpegWrapper
                 }
             }
 
+            if (format.TryGetProperty("format_name", out var formatNameProp))
+            {
+                task.SourceContainer = formatNameProp.GetString() ?? "";
+            }
+
+            if (format.TryGetProperty("bit_rate", out var bitRateProp))
+            {
+                if (int.TryParse(bitRateProp.GetString(), out int br))
+                {
+                    task.SourceVideoBitrateKbps = br / 1000;
+                }
+            }
+
             var streams = doc.RootElement.GetProperty("streams");
             foreach (var stream in streams.EnumerateArray())
             {
                 string? codecType = stream.GetProperty("codec_type").GetString();
                 if (codecType == "video")
                 {
+                    if (stream.TryGetProperty("codec_name", out var codecNameProp))
+                    {
+                        task.SourceVideoCodec = codecNameProp.GetString() ?? "";
+                    }
+                    if (task.SourceVideoBitrateKbps == 0 && stream.TryGetProperty("bit_rate", out var streamBitRateProp))
+                    {
+                        if (int.TryParse(streamBitRateProp.GetString(), out int br))
+                        {
+                            task.SourceVideoBitrateKbps = br / 1000;
+                        }
+                    }
                     task.VideoWidth = stream.GetProperty("width").GetInt32();
                     task.VideoHeight = stream.GetProperty("height").GetInt32();
                     
@@ -203,6 +227,10 @@ public class FFmpegWrapper
                 else if (codecType == "audio")
                 {
                     task.HasAudio = true;
+                    if (stream.TryGetProperty("codec_name", out var codecNameProp))
+                    {
+                        task.SourceAudioCodec = codecNameProp.GetString() ?? "";
+                    }
                 }
             }
         }
@@ -218,6 +246,32 @@ public class FFmpegWrapper
         var sb = new StringBuilder();
         sb.Append("-y "); // overwrite
         sb.Append("-progress pipe:2 "); // Progress formatting
+        
+        // Override logic if MatchSourceProperties is true
+        if (task.Preset.MatchSourceProperties && !task.Preset.IsImagePreset)
+        {
+            if (task.SourceVideoBitrateKbps > 0)
+                task.Preset.TargetVideoBitrateKbps = task.SourceVideoBitrateKbps;
+            
+            string sc = task.SourceContainer.ToLower();
+            if (sc.Contains("mp4")) task.Preset.Container = ContainerFormat.Mp4;
+            else if (sc.Contains("mov")) task.Preset.Container = ContainerFormat.Mp4;
+            else if (sc.Contains("webm")) task.Preset.Container = ContainerFormat.WebM;
+            else if (sc.Contains("gif")) task.Preset.Container = ContainerFormat.Gif;
+            
+            string svc = task.SourceVideoCodec.ToLower();
+            if (svc == "h264") task.Preset.VideoCodec = VideoCodec.H264_Nvenc;
+            else if (svc == "hevc") task.Preset.VideoCodec = VideoCodec.H265_Nvenc;
+            else if (svc == "av1") task.Preset.VideoCodec = VideoCodec.Av1_Nvenc;
+            else if (svc == "vp8") task.Preset.VideoCodec = VideoCodec.Vp8;
+            else if (svc == "vp9") task.Preset.VideoCodec = VideoCodec.Vp9;
+            else if (svc == "gif") task.Preset.VideoCodec = VideoCodec.Gif;
+            
+            if (task.HasAudio)
+            {
+                task.Preset.AudioMode = AudioMode.Copy;
+            }
+        }
 
         if (task.IsMultiSegmentMerge && task.Segments != null && task.Segments.Count > 1)
         {

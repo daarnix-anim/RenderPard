@@ -397,6 +397,8 @@
                                         <RowDefinition Height="Auto"/>
                                         <RowDefinition Height="6"/>
                                         <RowDefinition Height="Auto"/>
+                                        <RowDefinition Height="12"/>
+                                        <RowDefinition Height="Auto"/>
                                     </Grid.RowDefinitions>
                                     
                                     <TextBlock Grid.Row="0" Grid.Column="0" Text="{DynamicResource PresetName}" Foreground="{StaticResource AppTextSecondaryBrush}"/>
@@ -431,11 +433,14 @@
                                             <Image Source="{Binding CustomIcon, Converter={StaticResource IconNameToImageSourceConverter}}" Stretch="Uniform" />
                                         </Button>
                                     </StackPanel>
+
+                                    <!-- Match Source Properties -->
+                                    <CheckBox Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Content="{DynamicResource MatchSourceProperties}" IsChecked="{Binding MatchSourceProperties}" Foreground="{StaticResource AppTextBrush}" Visibility="{Binding IsVideoPreset, Converter={StaticResource VideoSettingsVisibilityConverter}}" ToolTip="{DynamicResource MatchSourcePropertiesTooltip}" />
                                 </Grid>
 
                                 <!-- Container Format -->
                                 <TextBlock Grid.Row="2" Grid.Column="0" Text="{DynamicResource ContainerFormat}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}"/>
-                                <ComboBox Grid.Row="2" Grid.Column="1" SelectedItem="{Binding Container}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:ContainerFormat}}}">
+                                <ComboBox Grid.Row="2" Grid.Column="1" SelectedItem="{Binding Container}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:ContainerFormat}}}" IsEnabled="{Binding MatchSourceProperties, Converter={StaticResource InverseBooleanConverter}}">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedStringConverter}}"/>
@@ -445,7 +450,7 @@
 
                                 <!-- Video Codec (Hidden if GIF or Image or Audio) -->
                                 <TextBlock Grid.Row="4" Grid.Column="0" Text="{DynamicResource VideoCodec}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding IsVideoPreset, Converter={StaticResource VideoSettingsVisibilityConverter}}"/>
-                                <ComboBox Grid.Row="4" Grid.Column="1" SelectedItem="{Binding VideoCodec}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:VideoCodec}}}" Visibility="{Binding IsVideoPreset, Converter={StaticResource VideoSettingsVisibilityConverter}}">
+                                <ComboBox Grid.Row="4" Grid.Column="1" SelectedItem="{Binding VideoCodec}" ItemsSource="{Binding Source={local:EnumBindingSource {x:Type models:VideoCodec}}}" Visibility="{Binding IsVideoPreset, Converter={StaticResource VideoSettingsVisibilityConverter}}" IsEnabled="{Binding MatchSourceProperties, Converter={StaticResource InverseBooleanConverter}}">
                                     <ComboBox.ItemTemplate>
                                         <DataTemplate>
                                             <TextBlock Text="{Binding Converter={StaticResource EnumToLocalizedStringConverter}}"/>
@@ -455,7 +460,7 @@
 
                                 <!-- Target Bitrate (Hidden if GIF or Image or Audio) -->
                                 <TextBlock Grid.Row="6" Grid.Column="0" Text="{DynamicResource TargetBitrate}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding IsVideoPreset, Converter={StaticResource VideoSettingsVisibilityConverter}}"/>
-                                <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding TargetVideoBitrateKbps, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding IsVideoPreset, Converter={StaticResource VideoSettingsVisibilityConverter}}"/>
+                                <TextBox Grid.Row="6" Grid.Column="1" Text="{Binding TargetVideoBitrateKbps, UpdateSourceTrigger=PropertyChanged}" Visibility="{Binding IsVideoPreset, Converter={StaticResource VideoSettingsVisibilityConverter}}" IsEnabled="{Binding MatchSourceProperties, Converter={StaticResource InverseBooleanConverter}}"/>
 
                                 <!-- Max Long Side -->
                                 <TextBlock Grid.Row="8" Grid.Column="0" Text="{DynamicResource MaxLongSidePx}" VerticalAlignment="Center" Foreground="{StaticResource AppTextSecondaryBrush}" Visibility="{Binding Converter={StaticResource MaxLongSideVisibilityConverter}}"/>

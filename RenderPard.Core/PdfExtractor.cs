@@ -3,12 +3,29 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Runtime.InteropServices;
 using PdfiumViewer;
 
 namespace RenderPard.Core;
 
 public static class PdfExtractor
 {
+    static PdfExtractor()
+    {
+        NativeLibrary.SetDllImportResolver(typeof(PdfiumViewer.PdfDocument).Assembly, (libraryName, assembly, searchPath) =>
+        {
+            if (libraryName.Equals("pdfium.dll", StringComparison.OrdinalIgnoreCase))
+            {
+                string arch = Environment.Is64BitProcess ? "x64" : "x86";
+                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, arch, "pdfium.dll");
+                if (File.Exists(path))
+                {
+                    return NativeLibrary.Load(path);
+                }
+            }
+            return IntPtr.Zero;
+        });
+    }
     /// <summary>
     /// Extracts all pages from a PDF or AI (PDF-compatible) file into a temporary directory as PNGs.
     /// Returns a list of paths to the extracted images.

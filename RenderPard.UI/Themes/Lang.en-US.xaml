@@ -67,6 +67,8 @@
     <system:String x:Key="KeepOriginalResolution">Keep original resolution</system:String>
     <system:String x:Key="AutoCalcBitrate">Auto-calc bitrate for target size (MB):</system:String>
     <system:String x:Key="ExtractAlphaMask">Extract alpha channel to video + mask (_mask.mp4)</system:String>
+    <system:String x:Key="MatchSourceProperties">Re-encode in original format (match codec and bitrate)</system:String>
+    <system:String x:Key="MatchSourcePropertiesTooltip">Automatically detects source codec and bitrate to re-encode without parameter loss</system:String>
     <system:String x:Key="PresetName">Name:</system:String>
     <system:String x:Key="ShowInMenu">Show in Windows context menu</system:String>
     <system:String x:Key="GifFps">Framerate (FPS):</system:String>

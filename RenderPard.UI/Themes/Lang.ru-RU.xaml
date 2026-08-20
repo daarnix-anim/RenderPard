@@ -67,6 +67,8 @@
     <system:String x:Key="KeepOriginalResolution">Оставить разрешение исходника</system:String>
     <system:String x:Key="AutoCalcBitrate">Авто-расчет битрейта для целевого размера (МБ):</system:String>
     <system:String x:Key="ExtractAlphaMask">Разбивать альфа-канал на видео и маску (_mask.mp4)</system:String>
+    <system:String x:Key="MatchSourceProperties">Переконвертировать в исходный формат (сохранить кодек и битрейт)</system:String>
+    <system:String x:Key="MatchSourcePropertiesTooltip">Автоматически подбирает кодек и битрейт под оригинал (идеально для починки файлов)</system:String>
     <system:String x:Key="PresetName">Название:</system:String>
     <system:String x:Key="ShowInMenu">Показывать в контекстном меню Windows</system:String>
     <system:String x:Key="GifFps">Частота кадров (FPS):</system:String>

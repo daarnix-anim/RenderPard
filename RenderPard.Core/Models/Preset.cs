@@ -28,6 +28,19 @@ public class Preset : ObservableObject
     }
     public NamingMode NamingLogic { get; set; } = NamingMode.Suffix;
 
+    private bool _matchSourceProperties;
+    public bool MatchSourceProperties
+    {
+        get => _matchSourceProperties;
+        set
+        {
+            if (SetProperty(ref _matchSourceProperties, value))
+            {
+                OnPropertyChanged(nameof(MatchSourceProperties));
+            }
+        }
+    }
+
     private ContainerFormat _container = ContainerFormat.Mp4;
     public ContainerFormat Container
     {
@@ -263,6 +276,7 @@ public class Preset : ObservableObject
             ShowInContextMenu = ShowInContextMenu,
             CustomIcon = CustomIcon,
             SortOrder = SortOrder,
+            MatchSourceProperties = MatchSourceProperties,
             Container = Container,
             VideoCodec = VideoCodec,
             GifFps = GifFps,

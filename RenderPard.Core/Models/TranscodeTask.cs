@@ -40,6 +40,11 @@ public partial class TranscodeTask : ObservableObject
     private string _errorMessage = string.Empty;
     
     // Extracted metadata
+    public string SourceVideoCodec { get; set; } = string.Empty;
+    public string SourceAudioCodec { get; set; } = string.Empty;
+    public int SourceVideoBitrateKbps { get; set; }
+    public string SourceContainer { get; set; } = string.Empty;
+
     public int VideoWidth { get; set; }
     public int VideoHeight { get; set; }
     public double DurationSeconds { get; set; }
