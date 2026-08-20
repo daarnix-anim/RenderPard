@@ -6,7 +6,8 @@
         mc:Ignorable="d"
         Title="Сканирование..." Height="200" Width="450"
         Style="{DynamicResource WindowStyle}"
-        WindowStartupLocation="CenterScreen">
+        WindowStartupLocation="CenterScreen"
+        Topmost="True">
     <Grid Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
