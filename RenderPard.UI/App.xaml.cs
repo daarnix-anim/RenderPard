@@ -72,10 +72,15 @@ public partial class App : Application
         }
         catch { }
 
+        // Prevent WPF from shutting down if a dialog is shown and closed during ProcessArgs
+        this.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+
         // Process own args
         ProcessArgs(e.Args, isSecondInstance: false);
 
         mainWindow.Show();
+        
+        this.ShutdownMode = ShutdownMode.OnLastWindowClose;
     }
 
     private void StartListeningForArgs()
@@ -130,17 +135,17 @@ public partial class App : Application
         {
             if (args[i] == "--preset" && i + 1 < args.Length)
             {
-                presetName = args[i + 1];
+                presetName = args[i + 1].Trim('"');
                 i++;
             }
             else if (args[i] == "--file" && i + 1 < args.Length)
             {
-                file = args[i + 1];
+                file = args[i + 1].Trim('"');
                 i++;
             }
             else if (args[i] == "--trim" && i + 1 < args.Length)
             {
-                string trimFile = args[i + 1];
+                string trimFile = args[i + 1].Trim('"');
                 i++;
                 if (MainWindow is MainWindow window)
                 {
