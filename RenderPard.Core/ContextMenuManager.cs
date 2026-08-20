@@ -43,6 +43,8 @@ public static class ContextMenuManager
             RegisterForExtension(ext, presets, exePath);
         }
 
+        RegisterDirectoryMenu(presets, exePath);
+
         NotifyShell();
     }
 
@@ -61,6 +63,8 @@ public static class ContextMenuManager
         {
             UnregisterForExtension(ext);
         }
+
+        try { Registry.CurrentUser.DeleteSubKeyTree($@"Software\Classes\Directory\shell\{MenuName}", false); } catch { }
 
         NotifyShell();
     }
@@ -291,6 +295,88 @@ public static class ContextMenuManager
         if (File.Exists(p5)) return p5;
 
         return string.Empty;
+    }
+
+    private static void RegisterDirectoryMenu(List<Preset> presets, string exePath)
+    {
+        try { Registry.CurrentUser.DeleteSubKeyTree($@"Software\Classes\Directory\shell\{MenuName}", false); } catch { }
+
+        var videoPresets = presets.Where(p => p.ShowInContextMenu && (p.IsVideoPreset || p.IsAudioPreset)).ToList();
+        var audioPresets = presets.Where(p => p.ShowInContextMenu && p.IsAudioPreset).ToList();
+        var imagePresets = presets.Where(p => p.ShowInContextMenu && p.IsImagePreset).ToList();
+
+        if (!videoPresets.Any() && !audioPresets.Any() && !imagePresets.Any()) return;
+
+        bool isLightTheme = IsWindowsLightTheme();
+        string exeDir = Path.GetDirectoryName(exePath) ?? "";
+        string iconsDir = Path.Combine(exeDir, "Icons");
+        string customIconsDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "RenderPard", "CustomIcons");
+
+        string rootIcon = ResolveThemeIconPath("renderpard", iconsDir, customIconsDir, isLightTheme);
+
+        string basePath = $@"Software\Classes\Directory\shell\{MenuName}";
+
+        using (RegistryKey baseKey = Registry.CurrentUser.CreateSubKey(basePath))
+        {
+            if (baseKey == null) return;
+            baseKey.SetValue("MUIVerb", "RenderPard");
+            baseKey.SetValue("Icon", !string.IsNullOrEmpty(rootIcon) && File.Exists(rootIcon) ? $"\"{rootIcon}\"" : $"\"{exePath}\"");
+            baseKey.SetValue("SubCommands", "");
+        }
+
+        if (videoPresets.Any()) RegisterDirectorySubMenu("Video", "RenderPard 🎬 (Видео)", videoPresets, exePath, isLightTheme, iconsDir, customIconsDir, rootIcon);
+        if (audioPresets.Any()) RegisterDirectorySubMenu("Audio", "RenderPard 🎵 (Аудио)", audioPresets, exePath, isLightTheme, iconsDir, customIconsDir, rootIcon);
+        if (imagePresets.Any()) RegisterDirectorySubMenu("Image", "RenderPard 🖼 (Изображения)", imagePresets, exePath, isLightTheme, iconsDir, customIconsDir, rootIcon);
+    }
+
+    private static void RegisterDirectorySubMenu(string category, string displayTitle, List<Preset> presets, string exePath, bool isLightTheme, string iconsDir, string customIconsDir, string rootIcon)
+    {
+        string shellPath = $@"Software\Classes\Directory\shell\{MenuName}\shell\{category}";
+        using (RegistryKey categoryKey = Registry.CurrentUser.CreateSubKey(shellPath))
+        {
+            if (categoryKey == null) return;
+            categoryKey.SetValue("MUIVerb", displayTitle);
+            
+            string iconName = category == "Video" ? "video" : (category == "Audio" ? "audio" : "image");
+            string categoryIcon = ResolveThemeIconPath(iconName, iconsDir, customIconsDir, isLightTheme);
+            if (!string.IsNullOrEmpty(categoryIcon) && File.Exists(categoryIcon))
+                categoryKey.SetValue("Icon", $"\"{categoryIcon}\"");
+            else if (!string.IsNullOrEmpty(rootIcon) && File.Exists(rootIcon))
+                categoryKey.SetValue("Icon", $"\"{rootIcon}\"");
+                
+            categoryKey.SetValue("SubCommands", "");
+        }
+
+        for (int i = 0; i < presets.Count; i++)
+        {
+            var preset = presets[i];
+            string safeName = string.Join("_", preset.Name.Split(Path.GetInvalidFileNameChars()));
+            string presetKeyPath = $@"{shellPath}\shell\{i:D3}_{safeName}";
+            
+            using (RegistryKey presetKey = Registry.CurrentUser.CreateSubKey(presetKeyPath))
+            {
+                if (presetKey == null) continue;
+                presetKey.SetValue("MUIVerb", preset.Name);
+                
+                string presetIconPath = ResolveThemeIconPath(preset.CustomIcon, iconsDir, customIconsDir, isLightTheme);
+                if (string.IsNullOrEmpty(presetIconPath) || !File.Exists(presetIconPath))
+                {
+                    string typeKey = preset.IsAudioPreset ? "audio" : (preset.IsImagePreset ? "image" : "renderpard");
+                    string typeFallback = ResolveThemeIconPath(typeKey, iconsDir, customIconsDir, isLightTheme);
+                    presetIconPath = (!string.IsNullOrEmpty(typeFallback) && File.Exists(typeFallback)) ? typeFallback : (!string.IsNullOrEmpty(rootIcon) && File.Exists(rootIcon) ? rootIcon : exePath);
+                }
+                
+                presetKey.SetValue("Icon", $"\"{presetIconPath}\"");
+                
+                using (RegistryKey commandKey = presetKey.CreateSubKey("command"))
+                {
+                    if (commandKey != null)
+                        commandKey.SetValue("", $"\"{exePath}\" --preset \"{preset.Name}\" --file \"%1\"");
+                }
+            }
+        }
     }
 
     private static void RegisterSubMenu(string ext, string keyName, string displayTitle, List<Preset> presets, string exePath)
