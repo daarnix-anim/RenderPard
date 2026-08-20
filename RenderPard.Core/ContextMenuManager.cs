@@ -12,10 +12,10 @@ namespace RenderPard.Core;
 [SupportedOSPlatform("windows")]
 public static class ContextMenuManager
 {
-    private static readonly string[] VideoExtensions = { ".mp4", ".mov", ".mkv", ".avi", ".m4v", ".webm", ".wmv", ".flv", ".ts", ".mts", ".m2ts", ".3gp" };
-    private static readonly string[] AudioExtensions = { ".wav", ".wave", ".ogg", ".opus", ".m4a", ".aac", ".flac", ".aif", ".aiff", ".aifc", ".amr", ".3ga", ".caf", ".wma", ".weba", ".mp2", ".ac3", ".alac", ".ape", ".wv", ".mp3" };
-    private static readonly string[] ImageExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".ai", ".pdf", ".heic", ".cr2", ".nef", ".arw", ".dng" };
-    private static readonly string[] SupportedExtensions = VideoExtensions.Concat(AudioExtensions).Concat(ImageExtensions).Distinct().ToArray();
+    public static readonly string[] VideoExtensions = { ".mp4", ".mov", ".mkv", ".avi", ".m4v", ".webm", ".wmv", ".flv", ".ts", ".mts", ".m2ts", ".3gp" };
+    public static readonly string[] AudioExtensions = { ".wav", ".wave", ".ogg", ".opus", ".m4a", ".aac", ".flac", ".aif", ".aiff", ".aifc", ".amr", ".3ga", ".caf", ".wma", ".weba", ".mp2", ".ac3", ".alac", ".ape", ".wv", ".mp3" };
+    public static readonly string[] ImageExtensions = { ".jpg", ".jpeg", ".png", ".webp", ".bmp", ".ai", ".pdf", ".heic", ".cr2", ".nef", ".arw", ".dng" };
+    public static readonly string[] SupportedExtensions = VideoExtensions.Concat(AudioExtensions).Concat(ImageExtensions).Distinct().ToArray();
     private const string MenuName = "RenderPard";
 
     [System.Runtime.InteropServices.DllImport("shell32.dll", CharSet = System.Runtime.InteropServices.CharSet.Auto, SetLastError = true)]
