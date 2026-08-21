@@ -144,13 +144,44 @@ namespace RenderPard.UI
         }
     }
     
+    public class MxfSettingsVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is RenderPard.Core.Models.ContainerFormat format && format == RenderPard.Core.Models.ContainerFormat.MXF)
+            {
+                return System.Windows.Visibility.Visible;
+            }
+            if (value is RenderPard.Core.Models.Preset preset && preset.IsMXF)
+            {
+                return System.Windows.Visibility.Visible;
+            }
+            return System.Windows.Visibility.Collapsed;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => throw new NotImplementedException();
+    }
+
     public class MaxLongSideVisibilityConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
+            if (value is RenderPard.Core.Models.ContainerFormat format)
+            {
+                if (format == RenderPard.Core.Models.ContainerFormat.MXF ||
+                    format == RenderPard.Core.Models.ContainerFormat.Mp3 ||
+                    format == RenderPard.Core.Models.ContainerFormat.Wav ||
+                    format == RenderPard.Core.Models.ContainerFormat.Ogg ||
+                    format == RenderPard.Core.Models.ContainerFormat.Flac ||
+                    format == RenderPard.Core.Models.ContainerFormat.Aac)
+                {
+                    return System.Windows.Visibility.Collapsed;
+                }
+                return System.Windows.Visibility.Visible;
+            }
             if (value is RenderPard.Core.Models.Preset preset)
             {
-                if (preset.IsImagePreset || preset.IsMXF || preset.VideoCodec == RenderPard.Core.Models.VideoCodec.XdcamHd422)
+                if (preset.IsImagePreset || preset.IsMXF || preset.VideoCodec == RenderPard.Core.Models.VideoCodec.XdcamHd422 || preset.IsAudioPreset)
                 {
                     return System.Windows.Visibility.Collapsed;
                 }
@@ -187,6 +218,12 @@ namespace RenderPard.UI
                 {
                     return System.Windows.Visibility.Collapsed;
                 }
+                return System.Windows.Visibility.Visible;
+            }
+            if (value is RenderPard.Core.Models.Preset preset)
+            {
+                if (preset.IsMXF || preset.Container == RenderPard.Core.Models.ContainerFormat.Gif || preset.IsImagePreset || preset.IsAudioPreset)
+                    return System.Windows.Visibility.Collapsed;
                 return System.Windows.Visibility.Visible;
             }
             return System.Windows.Visibility.Visible;

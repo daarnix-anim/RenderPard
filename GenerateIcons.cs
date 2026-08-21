@@ -9,50 +9,56 @@ class Program
     {
         var icons = new System.Collections.Generic.Dictionary<string, string>
         {
-            { "youtube", "https://img.icons8.com/ios-filled/256/FFFFFF/youtube-play.png" },
-            { "tiktok", "https://img.icons8.com/ios-filled/256/FFFFFF/tiktok.png" },
-            { "instagram", "https://img.icons8.com/ios-filled/256/FFFFFF/instagram-new.png" },
-            { "vk", "https://img.icons8.com/ios-filled/256/FFFFFF/vk-com.png" },
-            { "telegram", "https://img.icons8.com/ios-filled/256/FFFFFF/telegram-app.png" },
-            { "vimeo", "https://img.icons8.com/ios-filled/256/FFFFFF/vimeo.png" },
-            { "whatsapp", "https://img.icons8.com/ios-filled/256/FFFFFF/whatsapp.png" },
-            { "discord", "https://img.icons8.com/ios-filled/256/FFFFFF/discord-logo.png" },
-            { "twitch", "https://img.icons8.com/ios-filled/256/FFFFFF/twitch.png" },
-            { "video", "https://img.icons8.com/ios-filled/256/FFFFFF/video.png" },
-            { "image", "https://img.icons8.com/ios-filled/256/FFFFFF/image.png" },
-            { "audio", "https://img.icons8.com/ios-filled/256/FFFFFF/musical-notes.png" },
-            { "tv", "https://img.icons8.com/ios-filled/256/FFFFFF/tv.png" },
-            { "camera", "https://img.icons8.com/ios-filled/256/FFFFFF/camera.png" },
-            { "settings", "https://img.icons8.com/ios-filled/256/FFFFFF/settings.png" }
+            // Orange / Amber colored audio icons for high-visibility differentiation in Context Menu
+            { "audio_color", "https://img.icons8.com/ios-filled/256/FF9800/musical-notes.png" },
+            { "fmt_mp3_color", "https://img.icons8.com/ios-filled/256/FF9800/mp3.png" },
+            { "fmt_wav_color", "https://img.icons8.com/ios-filled/256/FF9800/wav.png" },
+            { "fmt_flac_color", "https://img.icons8.com/ios-filled/256/FF9800/flac.png" },
+            { "fmt_aac_color", "https://img.icons8.com/ios-filled/256/FF9800/aac.png" },
+            { "fmt_ogg_color", "https://img.icons8.com/ios-filled/256/FF9800/ogg.png" },
+            { "tv_color", "https://img.icons8.com/ios-filled/256/FF9800/tv.png" }
         };
 
-        string outDir = Path.Combine("RenderPard.UI", "Icons");
-        Directory.CreateDirectory(outDir);
+        string[] targetDirs = new[]
+        {
+            Path.Combine("RenderPard.UI", "Icons"),
+            Path.Combine("PublishOutput", "Icons")
+        };
+
+        foreach (var dir in targetDirs)
+        {
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+        }
 
         using var client = new HttpClient();
+        client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0");
+
         foreach (var icon in icons)
         {
             try
             {
                 byte[] pngBytes = await client.GetByteArrayAsync(icon.Value);
-                string outPath = Path.Combine(outDir, icon.Key + ".ico");
-                using (var fs = new FileStream(outPath, FileMode.Create))
-                using (var bw = new BinaryWriter(fs))
+                foreach (var dir in targetDirs)
                 {
-                    bw.Write((short)0);
-                    bw.Write((short)1);
-                    bw.Write((short)1);
-                    bw.Write((byte)0); // width 256
-                    bw.Write((byte)0); // height 256
-                    bw.Write((byte)0);
-                    bw.Write((byte)0);
-                    bw.Write((short)1);
-                    bw.Write((short)32);
-                    bw.Write((int)pngBytes.Length);
-                    bw.Write((int)22);
-                    bw.Write(pngBytes);
+                    string outPath = Path.Combine(dir, icon.Key + ".ico");
+                    using (var fs = new FileStream(outPath, FileMode.Create))
+                    using (var bw = new BinaryWriter(fs))
+                    {
+                        bw.Write((short)0);
+                        bw.Write((short)1);
+                        bw.Write((short)1);
+                        bw.Write((byte)0); // width 256
+                        bw.Write((byte)0); // height 256
+                        bw.Write((byte)0);
+                        bw.Write((byte)0);
+                        bw.Write((short)1);
+                        bw.Write((short)32);
+                        bw.Write((int)pngBytes.Length);
+                        bw.Write((int)22);
+                        bw.Write(pngBytes);
+                    }
+                    Console.WriteLine($"Generated {outPath}");
                 }
-                Console.WriteLine($"Generated {icon.Key}.ico");
             }
             catch (Exception ex)
             {

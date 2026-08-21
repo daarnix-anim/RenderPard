@@ -369,7 +369,13 @@ public static class ContextMenuManager
             using (RegistryKey presetKey = Registry.CurrentUser.CreateSubKey(presetKeyPath))
             {
                 if (presetKey == null) continue;
-                presetKey.SetValue("MUIVerb", preset.Name);
+                
+                string displayName = preset.Name;
+                if (preset.IsAudioPreset && category == "Video")
+                {
+                    displayName = displayName.StartsWith("🎵") ? displayName : $"🎵 {displayName}";
+                }
+                presetKey.SetValue("MUIVerb", displayName);
                 
                 if (preset.IsAudioPreset && isFirstAudio && i > 0)
                 {
@@ -377,11 +383,31 @@ public static class ContextMenuManager
                     isFirstAudio = false;
                 }
                 
-                string presetIconPath = ResolveThemeIconPath(preset.CustomIcon, iconsDir, customIconsDir, isLightTheme);
+                string presetIconPath = string.Empty;
+                if (preset.IsAudioPreset)
+                {
+                    string colorKey = $"{preset.CustomIcon}_color";
+                    presetIconPath = ResolveThemeIconPath(colorKey, iconsDir, customIconsDir, isLightTheme);
+                    if (string.IsNullOrEmpty(presetIconPath) || !File.Exists(presetIconPath))
+                    {
+                        presetIconPath = ResolveThemeIconPath("audio_color", iconsDir, customIconsDir, isLightTheme);
+                    }
+                }
+
                 if (string.IsNullOrEmpty(presetIconPath) || !File.Exists(presetIconPath))
                 {
-                    string typeKey = preset.IsAudioPreset ? "audio" : (preset.IsImagePreset ? "image" : "renderpard");
+                    presetIconPath = ResolveThemeIconPath(preset.CustomIcon, iconsDir, customIconsDir, isLightTheme);
+                }
+
+                if (string.IsNullOrEmpty(presetIconPath) || !File.Exists(presetIconPath))
+                {
+                    string typeKey = preset.IsAudioPreset ? "audio_color" : (preset.IsImagePreset ? "image" : "renderpard");
                     string typeFallback = ResolveThemeIconPath(typeKey, iconsDir, customIconsDir, isLightTheme);
+                    if (string.IsNullOrEmpty(typeFallback) || !File.Exists(typeFallback))
+                    {
+                        typeKey = preset.IsAudioPreset ? "audio" : (preset.IsImagePreset ? "image" : "renderpard");
+                        typeFallback = ResolveThemeIconPath(typeKey, iconsDir, customIconsDir, isLightTheme);
+                    }
                     presetIconPath = (!string.IsNullOrEmpty(typeFallback) && File.Exists(typeFallback)) ? typeFallback : (!string.IsNullOrEmpty(rootIcon) && File.Exists(rootIcon) ? rootIcon : exePath);
                 }
                 
@@ -483,7 +509,12 @@ public static class ContextMenuManager
                     {
                         if (presetKey == null) continue;
 
-                        presetKey.SetValue("MUIVerb", preset.Name);
+                        string displayName = preset.Name;
+                        if (preset.IsAudioPreset && (VideoExtensions.Contains(ext) || keyName.Contains("Video")))
+                        {
+                            displayName = displayName.StartsWith("🎵") ? displayName : $"🎵 {displayName}";
+                        }
+                        presetKey.SetValue("MUIVerb", displayName);
                         
                         if (preset.IsAudioPreset && isFirstAudio && i > 0)
                         {
@@ -491,13 +522,32 @@ public static class ContextMenuManager
                             isFirstAudio = false;
                         }
                         
-                        string presetIconPath = ResolveThemeIconPath(preset.CustomIcon, iconsDir, customIconsDir, isLightTheme);
+                        string presetIconPath = string.Empty;
+                        if (preset.IsAudioPreset)
+                        {
+                            string colorKey = $"{preset.CustomIcon}_color";
+                            presetIconPath = ResolveThemeIconPath(colorKey, iconsDir, customIconsDir, isLightTheme);
+                            if (string.IsNullOrEmpty(presetIconPath) || !File.Exists(presetIconPath))
+                            {
+                                presetIconPath = ResolveThemeIconPath("audio_color", iconsDir, customIconsDir, isLightTheme);
+                            }
+                        }
+
+                        if (string.IsNullOrEmpty(presetIconPath) || !File.Exists(presetIconPath))
+                        {
+                            presetIconPath = ResolveThemeIconPath(preset.CustomIcon, iconsDir, customIconsDir, isLightTheme);
+                        }
 
                         if (string.IsNullOrEmpty(presetIconPath) || !File.Exists(presetIconPath))
                         {
                             // Type-specific clean fallback icon with theme awareness
-                            string typeKey = preset.IsAudioPreset ? "audio" : (preset.IsImagePreset ? "image" : "renderpard");
+                            string typeKey = preset.IsAudioPreset ? "audio_color" : (preset.IsImagePreset ? "image" : "renderpard");
                             string typeFallback = ResolveThemeIconPath(typeKey, iconsDir, customIconsDir, isLightTheme);
+                            if (string.IsNullOrEmpty(typeFallback) || !File.Exists(typeFallback))
+                            {
+                                typeKey = preset.IsAudioPreset ? "audio" : (preset.IsImagePreset ? "image" : "renderpard");
+                                typeFallback = ResolveThemeIconPath(typeKey, iconsDir, customIconsDir, isLightTheme);
+                            }
 
                             if (!string.IsNullOrEmpty(typeFallback) && File.Exists(typeFallback))
                             {

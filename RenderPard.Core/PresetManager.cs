@@ -206,9 +206,23 @@ public class PresetManager
             },
             new Preset
             {
-                Name = "GIF (Web)",
+                Name = "ТВ Вещание (MXF XDCAM)",
                 IsBuiltIn = true,
                 SortOrder = 6,
+                CustomIcon = "tv",
+                Container = ContainerFormat.MXF,
+                VideoCodec = VideoCodec.XdcamHd422,
+                MaxLongSideSize = 1080,
+                TargetVideoBitrateKbps = 50000,
+                AudioMode = AudioMode.Encode,
+                AudioCodec = AudioCodec.Pcm24,
+                AudioBitrateKbps = 0
+            },
+            new Preset
+            {
+                Name = "GIF (Web)",
+                IsBuiltIn = true,
+                SortOrder = 7,
                 CustomIcon = "fmt_gif",
                 Container = ContainerFormat.Gif,
                 VideoCodec = VideoCodec.Gif,
