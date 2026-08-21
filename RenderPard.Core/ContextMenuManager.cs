@@ -184,9 +184,14 @@ public static class ContextMenuManager
         }
         catch { }
 
-        var videoPresets = presets.Where(p => p.ShowInContextMenu && (p.IsVideoPreset || p.IsAudioPreset)).ToList();
-        var audioPresets = presets.Where(p => p.ShowInContextMenu && p.IsAudioPreset).ToList();
-        var imagePresets = presets.Where(p => p.ShowInContextMenu && p.IsImagePreset).ToList();
+        var videoPresets = presets.Where(p => p.ShowInContextMenu && (p.IsVideoPreset || p.IsAudioPreset))
+                                  .OrderBy(p => p.IsAudioPreset ? 1 : 0)
+                                  .ThenBy(p => p.SortOrder)
+                                  .ToList();
+        var audioPresets = presets.Where(p => p.ShowInContextMenu && p.IsAudioPreset)
+                                  .OrderBy(p => p.SortOrder).ToList();
+        var imagePresets = presets.Where(p => p.ShowInContextMenu && p.IsImagePreset)
+                                  .OrderBy(p => p.SortOrder).ToList();
 
         if (isVideo && videoPresets.Any())
             RegisterSubMenu(ext, $"{MenuName}_Video", "RenderPard 🎬", videoPresets, exePath);
@@ -301,9 +306,14 @@ public static class ContextMenuManager
     {
         try { Registry.CurrentUser.DeleteSubKeyTree($@"Software\Classes\Directory\shell\{MenuName}", false); } catch { }
 
-        var videoPresets = presets.Where(p => p.ShowInContextMenu && (p.IsVideoPreset || p.IsAudioPreset)).ToList();
-        var audioPresets = presets.Where(p => p.ShowInContextMenu && p.IsAudioPreset).ToList();
-        var imagePresets = presets.Where(p => p.ShowInContextMenu && p.IsImagePreset).ToList();
+        var videoPresets = presets.Where(p => p.ShowInContextMenu && (p.IsVideoPreset || p.IsAudioPreset))
+                                  .OrderBy(p => p.IsAudioPreset ? 1 : 0)
+                                  .ThenBy(p => p.SortOrder)
+                                  .ToList();
+        var audioPresets = presets.Where(p => p.ShowInContextMenu && p.IsAudioPreset)
+                                  .OrderBy(p => p.SortOrder).ToList();
+        var imagePresets = presets.Where(p => p.ShowInContextMenu && p.IsImagePreset)
+                                  .OrderBy(p => p.SortOrder).ToList();
 
         if (!videoPresets.Any() && !audioPresets.Any() && !imagePresets.Any()) return;
 
@@ -349,6 +359,7 @@ public static class ContextMenuManager
             categoryKey.SetValue("SubCommands", "");
         }
 
+        bool isFirstAudio = true;
         for (int i = 0; i < presets.Count; i++)
         {
             var preset = presets[i];
@@ -359,6 +370,12 @@ public static class ContextMenuManager
             {
                 if (presetKey == null) continue;
                 presetKey.SetValue("MUIVerb", preset.Name);
+                
+                if (preset.IsAudioPreset && isFirstAudio && i > 0)
+                {
+                    presetKey.SetValue("CommandFlags", 0x20, RegistryValueKind.DWord);
+                    isFirstAudio = false;
+                }
                 
                 string presetIconPath = ResolveThemeIconPath(preset.CustomIcon, iconsDir, customIconsDir, isLightTheme);
                 if (string.IsNullOrEmpty(presetIconPath) || !File.Exists(presetIconPath))
@@ -453,6 +470,7 @@ public static class ContextMenuManager
                     }
                 }
 
+                bool isFirstAudio = true;
                 for (int i = 0; i < presets.Count; i++)
                 {
                     var preset = presets[i];
@@ -466,6 +484,12 @@ public static class ContextMenuManager
                         if (presetKey == null) continue;
 
                         presetKey.SetValue("MUIVerb", preset.Name);
+                        
+                        if (preset.IsAudioPreset && isFirstAudio && i > 0)
+                        {
+                            presetKey.SetValue("CommandFlags", 0x20, RegistryValueKind.DWord);
+                            isFirstAudio = false;
+                        }
                         
                         string presetIconPath = ResolveThemeIconPath(preset.CustomIcon, iconsDir, customIconsDir, isLightTheme);
 
